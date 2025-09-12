@@ -1,4 +1,8 @@
 {
+  "files.eol": "\n", // Use LF line endings
+  "editor.tabSize": 2, // Set tab size to 2 spaces
+  "explorer.compactFolders": false, // Disable compact folders in explorer
+
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
 
