@@ -3,14 +3,15 @@
   "bracketSpacing": true,
   "htmlWhitespaceSensitivity": "ignore",
   "insertPragma": false,
-  "jsxBracketSameLine": false,
+  "bracketSameLine": false,
   "jsxSingleQuote": true,
-  "printWidth": 100,
+  "printWidth": 150,
   "quoteProps": "as-needed",
   "semi": true,
   "requirePragma": false,
   "singleQuote": true,
   "tabWidth": 2,
   "trailingComma": "es5",
-  "useTabs": false
+  "useTabs": false,
+  "plugins": []
 }

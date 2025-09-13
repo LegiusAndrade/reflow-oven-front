@@ -9,8 +9,8 @@
   "editor.rulers": [150], // Add a ruler at 150 characters
 
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit", // Fix all ESLint issues on save
-    "source.organizeImports": true // Enable organize imports on save
+    "source.fixAll.eslint": "explicit", // Fix all ESLint issues
+    "source.organizeImports": "always" // Always organize imports
   },
 
   "explorer.compactFolders": false, // Do not compact folders in the explorer
