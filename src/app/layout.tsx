@@ -1,13 +1,13 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
-import { Roboto } from 'next/font/google';
+import { Nunito } from 'next/font/google';
 import './globals.css';
 
-// Setup Roboto
-const roboto = Roboto({
+// Setup Nunito
+const nunito = Nunito({
   subsets: ['latin'],
   weight: ['400', '500', '700'],
-  variable: '--font-roboto',
+  variable: '--font-nunito',
 });
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='pt-BR'>
-      <body className={`${roboto.variable} antialiased`}>{children}</body>
+      <body className={`${nunito.variable} antialiased`}>{children}</body>
     </html>
   );
 }
