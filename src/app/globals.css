@@ -1,5 +1,146 @@
 @import 'tailwindcss';
 
+/* Global font for the document */
 :root {
   font-family: var(--font-nunito), sans-serif;
+}
+
+/* ---------------------------
+   1) COLOR TOKENS (PALETTES)
+   --------------------------- */
+@layer base {
+  :root {
+    /* Federal Blue */
+    --federal-50: #e6e6ef;
+    --federal-100: #b1b1cd;
+    --federal-200: #8b8cb5;
+    --federal-300: #565793;
+    --federal-400: #35367e;
+    --federal-500: #03045e;
+    --federal-600: #030456;
+    --federal-700: #020343;
+    --federal-800: #020234;
+    --federal-900: #010227;
+
+    /* Honolulu Blue */
+    --honolulu-50: #e6f1f8;
+    --honolulu-100: #b0d5e8;
+    --honolulu-200: #8ac0dd;
+    --honolulu-300: #54a4ce;
+    --honolulu-400: #3392c5;
+    --honolulu-500: #0077b6;
+    --honolulu-600: #006c8a;
+    --honolulu-700: #005481;
+    --honolulu-800: #004164;
+    --honolulu-900: #00324c;
+
+    /* Deep Sky Blue */
+    --deep-50: #edf9ff;
+    --deep-100: #c8ecff;
+    --deep-200: #ade3ff;
+    --deep-300: #88d7ff;
+    --deep-400: #71cfff;
+    --deep-500: #4dc3ff;
+    --deep-600: #46b1e8;
+    --deep-700: #378ab5;
+    --deep-800: #2a68bc;
+    --deep-900: #20526b;
+
+    /* Non Photo Blue */
+    --nonphoto-50: #f4fcfd;
+    --nonphoto-100: #ddf5fa;
+    --nonphoto-200: #ccf1f8;
+    --nonphoto-300: #b5eaf4;
+    --nonphoto-400: #a6e6f2;
+    --nonphoto-500: #90eeff;
+    --nonphoto-600: #83ccd9;
+    --nonphoto-700: #669faa;
+    --nonphoto-800: #4f7b83;
+    --nonphoto-900: #3c5e64;
+  }
+}
+
+/* ---------------------------
+   2) THEMES (LIGHT / DARK / ETC.)
+   Only override semantic tokens here.
+   --------------------------- */
+@layer base {
+  /* Light (default) */
+  :root {
+    --bg-1: var(--nonphoto-50);
+    --bg-2: var(--nonphoto-200);
+
+    --fg: #0b0d14; /* main foreground text */
+    --surface: var(--nonphoto-100);
+    --muted: var(--nonphoto-400);
+
+    --brand: var(--deep-500);
+    --brand-hover: var(--deep-600);
+  }
+
+  /* Dark */
+  [data-theme='dark'] {
+    --bg-1: var(--federal-900);
+    --bg-2: var(--federal-700);
+
+    --fg: #ffffff;
+    --surface: var(--federal-800);
+    --muted: var(--federal-400);
+
+    --brand: var(--honolulu-500);
+    --brand-hover: var(--honolulu-400);
+  }
+
+  /* Optional: Vibrant sample theme */
+  [data-theme='vibrant'] {
+    --bg-1: var(--deep-50);
+    --bg-2: var(--deep-200);
+
+    --fg: #002b36;
+    --surface: var(--deep-100);
+    --muted: var(--deep-400);
+
+    --brand: var(--honolulu-500);
+    --brand-hover: var(--honolulu-700);
+  }
+}
+
+/* -------------------------------------------
+   3) APP BACKGROUND with banding reduction
+   - Adds a mid stop using color-mix to smooth steps
+   - Uses OKLCH interpolation when available
+   - Locks background to viewport to avoid repaint seams
+   ------------------------------------------- */
+
+/* Fallback: sRGB interpolation with an extra mid stop */
+.bg-app {
+  /* Smooth three-stop gradient */
+  background: linear-gradient(236deg, var(--bg-1) 26%, color-mix(in srgb, var(--bg-1) 35%, var(--bg-2)) 58%, var(--bg-2) 94%);
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* keeps gradient anchored to the viewport */
+}
+
+/* Prefer OKLCH interpolation when supported (smoother in dark blues) */
+@supports (background: linear-gradient(in oklch, black, white)) {
+  .bg-app {
+    background: linear-gradient(236deg in oklch, var(--bg-1) 26%, color-mix(in oklch, var(--bg-1) 35%, var(--bg-2)) 58%, var(--bg-2) 94%);
+  }
+}
+
+/* Optional: subtle vignette to break remaining banding on large screens */
+.bg-app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* two very soft radial overlays; tune alpha to taste */
+  background: radial-gradient(1200px 800px at 15% -10%, #ffffff12 0, transparent 60%),
+    radial-gradient(900px 700px at 100% 110%, #0000001c 0, transparent 70%);
+  mix-blend-mode: soft-light;
+  opacity: 0.45; /* lower if it shows too much */
+}
+
+/* Text uses the theme's foreground token */
+.text-fg {
+  color: var(--fg);
 }
