@@ -1,11 +1,10 @@
 # reflow-oven-ui-nextjs
 
 <div style="text-align: center;">
-  <img src="./assets/reflow_oven.png" alt="Reflow Oven" width="500"/>
+  <img src="./docs/assets/reflow_oven.png" alt="Reflow Oven" width="500"/>
 </div>
 
 ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
-
 
 ## 📌 Descrição
 
@@ -25,11 +24,10 @@ Este é o frontend desenvolvido em **Next.js 15** para um forno de refusão com 
 - ❌ Exibição de falhas e alertas
 - 🧠 Planejado para controle de malha fechada (PID)
 
-
 # 👨‍🔧 Autor
 
-| Nome | GitHub |
-|------|--------|
+| Nome                               | GitHub                                              |
+| ---------------------------------- | --------------------------------------------------- |
 | Eng. Eletrônico Criador do Projeto | [@LegiusAndrade](https://github.com/LegiusAndrade/) |
 
 ---
