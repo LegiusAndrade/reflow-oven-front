@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='pt-BR' data-theme='dark'>
+    <html lang='pt-BR' data-theme='dark' className={nunito.variable}>
       <head>
         {/* Google Material Symbols */}
         <link
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel='stylesheet'
         />
       </head>
-      <body className={`${nunito.variable} antialiased bg-app text-fg`}>{children}</body>
+      <body className='antialiased bg-app'>{children}</body>
     </html>
   );
 }
