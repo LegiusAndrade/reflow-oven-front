@@ -80,15 +80,38 @@
 
   /* Dark */
   [data-theme='dark'] {
+    /* Background */
     --bg-1: var(--federal-900);
     --bg-2: var(--federal-700);
 
-    --fg: #ffffff;
-    --surface: var(--federal-800);
-    --muted: var(--federal-400);
+    /* btn-link normal */
+    --btn-link-fg: var(--deep-500);
+    --btn-link-bg: var(--federal-800);
+    --btn-link-bd: transparent;
 
-    --brand: var(--honolulu-500);
-    --brand-hover: var(--honolulu-400);
+    /* btn-link hover */
+    --btn-link-hover-fg: var(--deep-500);
+    --btn-link-hover-bg: var(--federal-700);
+    --btn-link-hover-bd: transparent;
+
+    /* btn-link focus */
+    --btn-link-focus-fg: var(--deep-500);
+    --btn-link-focus-bg: var(--federal-700);
+    --btn-link-focus-bd: var(--nonphoto-100);
+
+    /* btn-link active */
+    --btn-link-active-fg: var(--nonphoto-50);
+    --btn-link-active-bg: var(--honolulu-300);
+    --btn-link-active-bd: transparent;
+
+    /* btn-link disabled */
+    --btn-link-disabled-fg: var(--nonphoto-100);
+    --btn-link-disabled-bg: var(--federal-800);
+    --btn-link-disabled-bd: transparent;
+
+    /* Sidebar */
+    --sidebar-bg: var(--federal-800);
+    --sidebar-separator-bg: var(--federal-400);
   }
 
   /* Optional: Vibrant sample theme */
@@ -103,6 +126,60 @@
     --brand: var(--honolulu-500);
     --brand-hover: var(--honolulu-700);
   }
+}
+
+/* -------------------------------------------
+   2.5) UTILITY CLASSES for theme tokens
+   - Use these to apply theme colors in components
+   - Avoid using color tokens directly in components
+   ------------------------------------------- */
+
+.btn-link {
+  background: var(--btn-link-bg);
+  color: var(--btn-link-fg);
+  border-color: var(--btn-link-bd);
+  padding: 12px 1rem;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-link:hover {
+  background: var(--btn-link-hover-bg);
+  color: var(--btn-link-hover-fg);
+  border-color: var(--btn-link-hover-bd);
+}
+
+.btn-link:focus {
+  background: var(--btn-link-focus-bg);
+  color: var(--btn-link-focus-fg);
+  border-color: var(--btn-link-focus-bd);
+}
+
+.btn-link:active {
+  background: var(--btn-link-active-bg);
+  color: var(--btn-link-active-fg);
+  border-color: var(--btn-link-active-bd);
+}
+
+.btn-link-disabled {
+  background: var(--btn-link-disabled-bg);
+  color: var(--btn-link-disabled-fg);
+  border-color: var(--btn-link-disabled-bd);
+  padding: 12px 1rem;
+  gap: 8px;
+  border-radius: 12px;
+  opacity: 0.6;
+}
+
+.sidebar {
+  background: var(--sidebar-bg);
+}
+
+.sidebar-separator {
+  background: var(--sidebar-separator-bg);
+  opacity: 1;
 }
 
 /* -------------------------------------------
