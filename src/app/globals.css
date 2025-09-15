@@ -112,6 +112,11 @@
     /* Sidebar */
     --sidebar-bg: var(--federal-800);
     --sidebar-separator-bg: var(--federal-400);
+
+    /* Top Bar */
+    --top-bar-bg: var(--federal-800);
+    --top-bar-fg: var(--deep-100);
+    --top-shadow-fg: var(--federal-900);
   }
 
   /* Optional: Vibrant sample theme */
@@ -180,6 +185,12 @@
 .sidebar-separator {
   background: var(--sidebar-separator-bg);
   opacity: 1;
+}
+
+.top-bar {
+  background: var(--top-bar-bg);
+  color: var(--top-bar-fg);
+  box-shadow: 0 4px 4px 0 var(--top-shadow-fg);
 }
 
 /* -------------------------------------------
