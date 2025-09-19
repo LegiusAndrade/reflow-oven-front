@@ -24,7 +24,7 @@ export function LinkButton({ label, icon, href, iconSizePx = 24, fill = 1, weigh
         'select-none', // Prevent text selection (improves button UX)
         disabled ? 'btn-link-disabled cursor-not-allowed pointer-events-none' : 'btn-link', // Apply disabled styles if disabled, otherwise apply normal button styles
         'px-6 py-4 text-base ', // Default padding and text size
-        'lg:px-6 lg:py-4 lg:text-lg', // Medium padding on medium screens and up
+        'lg:px-6 lg:py-3 lg:text-lg', // Medium padding on medium screens and up
         'xl:px-6 xl:py-4 xl:text-lg' // Larger padding on large screens and up
       )}
     >
