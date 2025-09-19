@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 export interface IIconWifiProps {
   signal: 'OFF' | 'BAD' | 0 | 1 | 2 | 3 | 4;
 }
@@ -13,5 +15,5 @@ export default function IconWifi({ signal }: IIconWifiProps) {
     4: 'signal_wifi_4_bar',
   };
 
-  return <div className={iconSignalWifi[signal]}></div>;
+  return <span className={clsx('material-symbols-rounded')}>{iconSignalWifi[signal]}</span>;
 }
