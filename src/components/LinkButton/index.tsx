@@ -23,10 +23,9 @@ export function LinkButton({ label, icon, href, iconSizePx = 24, fill = 1, weigh
         'justify-start', // Align items to the start of the main axis (left by default in a row layout)
         'select-none', // Prevent text selection (improves button UX)
         disabled ? 'btn-link-disabled cursor-not-allowed pointer-events-none' : 'btn-link', // Apply disabled styles if disabled, otherwise apply normal button styles
-        'px-6 py-4 text-md ', // Largest padding on extra large screens and up
-        'sm:px-2 sm:py-2', // Small padding on small screens and up
-        'lg:px-2 lg:py-1', // Medium padding on medium screens and up
-        'xl:px-2 xl:py-3' // Larger padding on large screens and up
+        'px-6 py-4 text-base ', // Default padding and text size
+        'lg:px-6 lg:py-4 lg:text-lg', // Medium padding on medium screens and up
+        'xl:px-6 xl:py-4 xl:text-lg' // Larger padding on large screens and up
       )}
     >
       <span
