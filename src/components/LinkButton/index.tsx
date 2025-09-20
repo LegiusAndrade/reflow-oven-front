@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import Link from 'next/link';
+import { IconGeneral } from '../Icon/IconGeneral';
 
 interface ILinkButtonProps {
   label: string;
@@ -8,10 +9,9 @@ interface ILinkButtonProps {
   href: string;
   iconSizePx?: number;
   fill?: 0 | 1; // 0 = outline, 1 = filled
-  weight?: number; // 100..700
 }
 
-export function LinkButton({ label, icon, href, iconSizePx = 24, fill = 1, weight = 400, disabled = false }: ILinkButtonProps) {
+export function LinkButton({ label, icon, href, fill = 1, iconSizePx = 24, disabled = false }: ILinkButtonProps) {
   //sm(640), md(768), lg(1024), xl(1280), 2xl(1536)
 
   return (
@@ -25,18 +25,10 @@ export function LinkButton({ label, icon, href, iconSizePx = 24, fill = 1, weigh
         disabled ? 'btn-link-disabled cursor-not-allowed pointer-events-none' : 'btn-link', // Apply disabled styles if disabled, otherwise apply normal button styles
         'px-6 py-4 text-base ', // Default padding and text size
         'lg:px-6 lg:py-3 lg:text-lg', // Medium padding on medium screens and up
-        'xl:px-6 xl:py-4 xl:text-lg' // Larger padding on large screens and up
+        'xl:px-8 xl:py-4 xl:text-lg' // Larger padding on large screens and up
       )}
     >
-      <span
-        className={clsx('material-symbols-rounded')}
-        style={{
-          fontSize: `${iconSizePx}px`,
-          fontVariationSettings: `'FILL' ${fill}, 'wght' ${weight}, 'GRAD' 0, 'opsz' ${iconSizePx}`,
-        }}
-      >
-        {icon}
-      </span>
+      <IconGeneral icon={icon} iconSizePx={iconSizePx} fill={fill} />
       <span className='ml-2'>{label}</span>
     </Link>
   );
