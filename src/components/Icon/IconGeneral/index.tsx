@@ -7,13 +7,13 @@ interface IIconGeneralProps {
   className?: string;
 }
 
-export function IconGeneral({ icon, iconSizePx = 24, fill = 1 }: IIconGeneralProps) {
+export function IconGeneral({ icon, fill = 1, className }: { icon: string; fill?: 0 | 1; className?: string }) {
   return (
     <span
-      className={clsx('material-symbols-rounded')}
+      className={clsx('material-symbols-rounded leading-none', className)}
       style={{
-        fontSize: `${iconSizePx}px`,
-        fontVariationSettings: `'FILL' ${fill}, 'wght 400', 'GRAD' 0, 'opsz' ${iconSizePx}`,
+        fontSize: 'var(--icon-size, 24px)',
+        fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' var(--icon-size, 24)`,
       }}
     >
       {icon}
