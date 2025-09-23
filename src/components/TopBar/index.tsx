@@ -19,7 +19,11 @@ export default function TopBar({ status, signalWifi, connectedServer, statusNoti
       <div className='ml-auto flex items-center gap-6'>
         <div className='flex items-center gap-3'>
           <IconWifi signal={signalWifi.signal} />
-          <IconGeneral icon={connectedServer ? 'public' : 'public_off'} fill={1} />
+          <IconGeneral
+            className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]'
+            icon={connectedServer ? 'public' : 'public_off'}
+            fill={1}
+          />
           <IconNotification status={statusNotification.status} amount={statusNotification.amount} />
         </div>
         <div className='tabular-nums'>

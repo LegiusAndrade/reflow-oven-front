@@ -15,5 +15,5 @@ const iconSignalWifi = {
 };
 
 export default function IconWifi({ signal }: IIconWifiProps) {
-  return <IconGeneral className='[--icon-size:24px] lg:[--icon-size:48px]' icon={iconSignalWifi[signal]} fill={1} />;
+  return <IconGeneral className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]' icon={iconSignalWifi[signal]} fill={1} />;
 }

@@ -10,15 +10,17 @@ const iconSignalNotification = {
   ACTIVE: 'notifications',
 };
 export default function IconNotification({ status, amount }: IIconNotificationProps) {
-  console.log('IconNotification -> status, amount', status, amount);
-  console.log('IconNotification -> iconSignalNotification[status]', iconSignalNotification[status]);
   return (
     <div className='relative inline-flex'>
       {/* Icon Notification */}
-      <IconGeneral icon={iconSignalNotification[status]} iconSizePx={32} fill={status == 'NONE' ? 0 : 1} weight={400} />
+      <IconGeneral
+        icon={iconSignalNotification[status]}
+        className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]'
+        fill={status == 'NONE' ? 0 : 1}
+      />
 
       {/* Badge */}
-      {amount && status === 'ACTIVE' && (
+      {amount > 0 && status === 'ACTIVE' && (
         <span className='absolute -top-1 -right-1 bg-red-500 text-xs font-bold px-1.5 py-0.5 rounded-full shadow'>{amount}</span>
       )}
     </div>
