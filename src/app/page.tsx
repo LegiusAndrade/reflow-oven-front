@@ -1,7 +1,11 @@
-import InitialScreen from "@/components/InitialScreen";
+import { AppShell } from "@/components/AppShell";
+import { ProgramGallery } from "@/components/ProgramGallery";
 import { MOCK_PROGRAMS } from "@/lib/programs";
-import { MOCK_READINGS } from "@/lib/sensors";
 
 export default function Home() {
-  return <InitialScreen programs={MOCK_PROGRAMS} readings={MOCK_READINGS} />;
+  return (
+    <AppShell>
+      <ProgramGallery programs={MOCK_PROGRAMS} />
+    </AppShell>
+  );
 }
