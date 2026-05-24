@@ -90,10 +90,10 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
       <footer className='grid grid-cols-[1fr_auto_1fr] items-center gap-4'>
         <span className='text-sm opacity-70'>{`${filtered.length} programa${filtered.length === 1 ? "" : "s"}`}</span>
         <Pagination pages={pages} active={activePage} onChange={setPage} />
-        <button type='button' className='btn-action flex cursor-pointer items-center gap-2 justify-self-end rounded-xl px-4 py-2.5 font-semibold'>
+        <Link href='/programas/novo' className='btn-action flex cursor-pointer items-center gap-2 justify-self-end rounded-xl px-4 py-2.5 font-semibold'>
           <IconGeneral icon='add' fill={0} className='[--icon-size:1.25rem]' />
           Novo Programa
-        </button>
+        </Link>
       </footer>
     </section>
   );
