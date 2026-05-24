@@ -1,9 +1,12 @@
+import MenuToggle from "../MenuToggle";
 import { IconGeneral } from "../Icon/IconGeneral";
 import type { SensorReadings } from "@/lib/sensors";
 
 export interface IBottomBarProps {
   readings: SensorReadings;
-  /** Called when the hamburger button is tapped (opens the navigation drawer). */
+  /** Whether the navigation drawer is open (drives the hamburger → X morph). */
+  menuOpen?: boolean;
+  /** Toggles the navigation drawer. */
   onMenuClick?: () => void;
 }
 
@@ -24,19 +27,12 @@ function Divider() {
  * Persistent bottom bar shown on every screen: a hamburger menu on the left and
  * the live sensor strip on the right (board/oven temps, fan RPMs, voltage @ current).
  */
-export default function BottomBar({ readings, onMenuClick }: IBottomBarProps) {
+export default function BottomBar({ readings, menuOpen = false, onMenuClick }: IBottomBarProps) {
   const { boardTempC, boardFanRpm, ovenTempC, ovenFanRpm, voltageV, currentA } = readings;
 
   return (
     <div className='bottom-bar flex select-none items-center gap-4 rounded-t-xl px-6 py-3'>
-      <button
-        type='button'
-        onClick={onMenuClick}
-        aria-label='Abrir menu'
-        className='grid cursor-pointer place-items-center rounded-full p-1 transition-colors hover:bg-white/10'
-      >
-        <IconGeneral icon='menu' fill={0} className='[--icon-size:28px]' />
-      </button>
+      <MenuToggle open={menuOpen} onClick={onMenuClick} />
 
       <div className='ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-base tabular-nums sm:text-lg'>
         <Reading icon='developer_board' value={`${boardTempC} ºC`} />

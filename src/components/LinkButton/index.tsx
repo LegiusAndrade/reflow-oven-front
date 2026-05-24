@@ -11,26 +11,19 @@ interface ILinkButtonProps {
   fill?: 0 | 1; // 0 = outline, 1 = filled
 }
 
-export function LinkButton({ label, icon, href, fill = 1, iconSizePx = 24, disabled = false }: ILinkButtonProps) {
-  //sm(640), md(768), lg(1024), xl(1280), 2xl(1536)
-
+// Sizing mirrors the Figma SideBar buttons: 16px/12px padding, 22px icon, 16px text, 12px gap.
+export function LinkButton({ label, icon, href, fill = 1, iconSizePx = 22, disabled = false }: ILinkButtonProps) {
   return (
     <Link
       href={href}
       style={{ ["--icon-size"]: `${iconSizePx}px` } as React.CSSProperties}
       className={clsx(
-        "inline-flex", // Display as an inline-level flex container (stays inline with text/siblings)
-        "items-center", // Center items on the cross axis (vertical by default in a row layout)
-        "justify-start", // Align items to the start of the main axis (left by default in a row layout)
-        "select-none", // Prevent text selection (improves button UX)
-        disabled ? "btn-link-disabled cursor-not-allowed pointer-events-none" : "btn-link", // Apply disabled styles if disabled, otherwise apply normal button styles
-        "px-6 py-4 text-base ", // Default padding and text size
-        "lg:px-6 lg:py-3 lg:text-lg", // Medium padding on medium screens and up
-        "xl:px-8 xl:py-4 xl:text-lg" // Larger padding on large screens and up
+        "flex select-none items-center justify-start gap-3 px-4 py-3 text-base",
+        disabled ? "btn-link-disabled pointer-events-none cursor-not-allowed" : "btn-link"
       )}
     >
       <IconGeneral icon={icon} fill={fill} />
-      <span className='ml-2'>{label}</span>
+      <span>{label}</span>
     </Link>
   );
 }
