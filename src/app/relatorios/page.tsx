@@ -1,10 +1,11 @@
 import { AppShell } from "@/components/AppShell";
-import { ComingSoon } from "@/components/ComingSoon";
+import { RelatoriosScreen } from "@/components/RelatoriosScreen";
+import { MOCK_EXECUTIONS } from "@/lib/reports";
 
 export default function RelatoriosPage() {
   return (
     <AppShell>
-      <ComingSoon title='Relatórios' />
+      <RelatoriosScreen executions={MOCK_EXECUTIONS} />
     </AppShell>
   );
 }
