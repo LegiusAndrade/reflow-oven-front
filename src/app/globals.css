@@ -84,6 +84,9 @@
     --bg-1: var(--federal-900);
     --bg-2: var(--federal-700);
 
+    /* Foreground text (deep-100 reads well on the dark gradient) */
+    --fg: var(--deep-100);
+
     /* btn-link normal */
     --btn-link-fg: var(--deep-500);
     --btn-link-bg: var(--federal-800);
@@ -117,6 +120,20 @@
     --top-bar-bg: var(--federal-800);
     --top-bar-fg: var(--deep-100);
     --top-shadow-fg: var(--federal-900);
+
+    /* Bottom Bar (mirrors the top bar, shadow pointing up) */
+    --bottom-bar-bg: var(--federal-800);
+    --bottom-bar-fg: var(--deep-100);
+    --bottom-shadow-fg: var(--federal-900);
+
+    /* Card (program preview / panels) */
+    --card-bg: var(--federal-700);
+    --card-shadow: var(--federal-900);
+
+    /* Action button (primary call to action) */
+    --btn-action-fg: var(--deep-500);
+    --btn-action-bg: var(--federal-500);
+    --btn-action-hover-bg: var(--federal-400);
   }
 
   /* Optional: Vibrant sample theme */
@@ -187,6 +204,29 @@
   background: var(--top-bar-bg);
   color: var(--top-bar-fg);
   box-shadow: 0 4px 4px 0 var(--top-shadow-fg);
+}
+
+.bottom-bar {
+  background: var(--bottom-bar-bg);
+  color: var(--bottom-bar-fg);
+  box-shadow: 0 -4px 4px 0 var(--bottom-shadow-fg);
+}
+
+.card {
+  background: var(--card-bg);
+  box-shadow: 0 0 4px 3px var(--card-shadow);
+}
+
+.btn-action {
+  background: var(--btn-action-bg);
+  color: var(--btn-action-fg);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  background: var(--btn-action-hover-bg);
 }
 
 /* -------------------------------------------

@@ -1,16 +1,7 @@
-import { Sidebar } from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
+import InitialScreen from "@/components/InitialScreen";
+import { MOCK_PROGRAMS } from "@/lib/programs";
+import { MOCK_READINGS } from "@/lib/sensors";
 
 export default function Home() {
-  return (
-    <>
-      <TopBar
-        status='Aguardando Iniciar Processo...'
-        statusNotification={{ amount: 3, status: "ACTIVE" }}
-        connectedServer={true}
-        signalWifi={{ signal: "OFF" }}
-      />
-      <Sidebar />
-    </>
-  );
+  return <InitialScreen programs={MOCK_PROGRAMS} readings={MOCK_READINGS} />;
 }
