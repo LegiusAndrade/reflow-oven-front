@@ -54,8 +54,10 @@ export function TemperatureProfileChart({ points, className }: ITemperatureProfi
 
   const ready = w > 0 && h > 0 && points.length >= 2;
 
+  // The SVG is positioned absolutely so it never inflates this container — otherwise the
+  // container can grow but not shrink back (a ResizeObserver feedback loop).
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={`relative overflow-hidden ${className ?? ""}`}>
       {ready ? <Plot points={points} w={w} h={h} /> : null}
     </div>
   );
@@ -83,7 +85,7 @@ function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }
   const peak = points.reduce((a, b) => (b.temp > a.temp ? b : a));
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role='img' aria-label={`Perfil de temperatura, pico de ${peak.temp} graus Celsius`}>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className='absolute inset-0' role='img' aria-label={`Perfil de temperatura, pico de ${peak.temp} graus Celsius`}>
       <defs>
         <linearGradient id='profile-area' x1='0' y1='0' x2='0' y2='1'>
           <stop offset='0%' style={{ stopColor: "var(--brand)" }} stopOpacity={0.35} />
