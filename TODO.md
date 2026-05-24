@@ -2,18 +2,11 @@
 
 Roadmap da interface. (Também espelhado no task list da sessão do Claude Code.)
 
-## Em andamento
-
-- [ ] **Gráfico do perfil de temperatura** no card central da tela inicial — curva
-      temperatura × tempo do programa selecionado.
-      _Primeira versão pronta; afinando tamanhos de fonte (mínimo = texto "Execuções")._
-
 ## Próximas
 
-- [ ] **Refinar o menu/Sidebar como drawer** — fechar com ESC, foco/acessibilidade,
-      indicar item ativo e revisar a animação.
-- [ ] **Mock de leituras "ao vivo"** — simular sensores variando no tempo (ex.: hook
-      `useLiveReadings`) para ver a régua da BottomBar em ação antes do RS422 real.
+- [ ] **Refinar o menu/Sidebar como drawer** — fechar com ESC, foco/acessibilidade e
+      indicar o item ativo. (animação hambúrguer⇄X, posição, tamanho e alinhamento ao topo já feitos)
+- [ ] **Ação do botão "Iniciar"** — hoje o botão é visual; ligar à execução de um programa.
 - [ ] **Demais telas do Figma** — Programas (lista/busca), Relatórios
       (Execuções/Alterações/Erros), Configurações (Geral/Usuário/Rede/Notificação),
       Detalhes de Execução. Reusar TopBar, BottomBar, Sidebar e os tokens.
@@ -22,5 +15,10 @@ Roadmap da interface. (Também espelhado no task list da sessão do Claude Code.
 
 - [x] Upgrade Next 16 / React 19.2 / TS 6 / Tailwind 4.3 (ESLint fixo em 9.x, flat config)
 - [x] Merge do upgrade na `develop`
-- [x] Tela inicial/monitoramento: TopBar + carrossel + BottomBar (sensores) + Sidebar como drawer
-- [x] `DeviceFrame` 1024×600 com auto-escala (pixel-perfeito no device, escala no note)
+- [x] Tela de monitoramento: TopBar + galeria de programas + BottomBar + Sidebar (drawer)
+- [x] Gráfico do perfil de temperatura (SVG próprio, responsivo, auto-compacto)
+- [x] Sensores "ao vivo" (mock `useLiveReadings`)
+- [x] Menu animado (hambúrguer⇄X), itens no topo, largura fluida
+- [x] Layout **responsivo de verdade**: tipografia fluida (`clamp()` no `@theme`), galeria
+      **paginada** (1 card em 1024×600; +colunas conforme a largura, +linhas conforme a
+      altura) — sem zoom/`DeviceFrame`
