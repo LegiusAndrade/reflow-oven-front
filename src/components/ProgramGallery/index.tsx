@@ -79,7 +79,7 @@ function PageArrow({ direction, onClick, disabled, className }: IPageArrowProps)
       disabled={disabled}
       aria-label={direction === "prev" ? "Programas anteriores" : "Próximos programas"}
       className={clsx(
-        "absolute top-1/2 z-10 grid size-12 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/40 backdrop-blur-sm transition-colors hover:bg-black/60 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-black/40",
+        "absolute top-1/2 z-10 grid size-12 -translate-y-1/2 scale-100 cursor-pointer place-items-center rounded-full bg-black/40 backdrop-blur-sm transition duration-150 hover:scale-110 hover:bg-black/60 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100 disabled:hover:bg-black/40",
         className
       )}
     >

@@ -38,6 +38,12 @@ Use the `@/*` path alias for imports from `src/` (e.g. `@/app/...`).
 
 The **Nunito** font is wired up via `next/font` in `src/app/layout.tsx` and exposed as the `--font-nunito` CSS variable. Icons use the **Material Symbols Rounded** webfont (loaded via `<link>` in `layout.tsx`), rendered through the `IconGeneral` component (sets `font-variation-settings` and reads the `--icon-size` CSS variable). Class composition uses **`clsx`**. Color tokens / theme live in `src/app/globals.css`.
 
+### UI & styling
+
+- Style with the **semantic utility classes** in `globals.css` (`.card`, `.top-bar`, `.bottom-bar`, `.sidebar`, `.btn-action`, `.btn-link`) instead of raw color tokens.
+- **Every interactive button gets a hover + press animation** — don't ship a static button. `.btn-action` and `.btn-link` already include it; for icon/compact buttons add the **`.btn-press`** utility (scales up on hover, down on `:active`). The persistent menu chrome (`AppShell`: TopBar/BottomBar/drawer) is shared across all routes.
+- **Size fluidly, not with fixed px.** The type scale is fluid+capped via `clamp()` in the `@theme` block (`text-sm`…`text-2xl`). For layout prefer content/relative sizing or `clamp()`, so it adapts from the **1024×600** touchscreen baseline up to larger screens (there is no zoom wrapper).
+
 ## Reference
 
 `docs/` holds the project design (`Esboço projeto.drawio`) and setup guides in `docs/MD_files/` (ESLint, Prettier, EditorConfig, VS Code).

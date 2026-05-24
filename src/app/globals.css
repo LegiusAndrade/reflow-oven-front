@@ -201,6 +201,7 @@
   background: var(--btn-link-active-bg);
   color: var(--btn-link-active-fg);
   border-color: var(--btn-link-active-bd);
+  transform: scale(0.98);
 }
 
 .btn-link-disabled {
@@ -256,6 +257,26 @@
 
 .btn-action:hover {
   background: var(--btn-action-hover-bg);
+  transform: scale(1.03);
+}
+
+.btn-action:active {
+  transform: scale(0.97);
+}
+
+/* Hover/press feedback for compact & icon buttons (see CLAUDE.md conventions). */
+.btn-press {
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.btn-press:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.btn-press:active:not(:disabled) {
+  transform: scale(0.94);
 }
 
 /* -------------------------------------------
