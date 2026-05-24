@@ -211,6 +211,15 @@
   opacity: 0.6;
 }
 
+/* Current page in the nav menu */
+.btn-link-active {
+  background: var(--btn-link-active-bg);
+  color: var(--btn-link-active-fg);
+  border: 1px solid var(--btn-link-active-bd);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
 .sidebar {
   background: var(--sidebar-bg);
 }

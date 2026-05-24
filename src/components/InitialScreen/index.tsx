@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomBar from "@/components/BottomBar";
 import { ProgramGallery } from "@/components/ProgramGallery";
 import { Sidebar } from "@/components/Sidebar";
@@ -23,6 +23,22 @@ export interface IInitialScreenProps {
 export default function InitialScreen({ programs, readings }: IInitialScreenProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const liveReadings = useLiveReadings(readings);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // While open: close on Esc, move focus into the drawer, and restore focus on close.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    drawerRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [drawerOpen]);
 
   return (
     <div className='text-fg flex h-screen flex-col overflow-hidden'>
@@ -51,9 +67,11 @@ export default function InitialScreen({ programs, readings }: IInitialScreenProp
 
         {/* Slide-out navigation drawer */}
         <div
+          ref={drawerRef}
           role='dialog'
           aria-modal='true'
           aria-label='Menu de navegação'
+          inert={!drawerOpen}
           className={clsx(
             "absolute inset-y-0 left-0 z-50 w-fit transition-transform duration-300",
             drawerOpen ? "translate-x-0" : "-translate-x-full"
