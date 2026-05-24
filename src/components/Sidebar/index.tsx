@@ -6,15 +6,15 @@ import { LinkButton } from "../LinkButton";
 // every button as wide as the widest one. Spacing mirrors the Figma SideBar.
 export function Sidebar() {
   return (
-    <aside className='sidebar inline-flex h-full flex-col items-stretch gap-2 rounded-xl px-2 pb-px pt-4'>
+    <aside className='sidebar inline-flex h-full min-w-[clamp(11.5rem,15vw,15rem)] flex-col items-stretch gap-2 rounded-xl px-2 pb-px pt-4'>
       {/* Logo */}
       <Image src='/Logo.svg' alt='Logo' width={92} height={92} priority className='shrink-0 self-center' />
 
       {/* Divider */}
       <div className='sidebar-separator h-0.5 rounded-full blur-[2px]' />
 
-      {/* Nav */}
-      <nav className='flex flex-1 flex-col justify-center gap-3'>
+      {/* Nav — items stay at the top */}
+      <nav className='flex flex-col gap-3'>
         <LinkButton label='Página Inicial' icon='home' href='/' />
         <LinkButton label='Programas' icon='article' href='/' />
         <LinkButton label='Relatório' icon='analytics' href='/' />

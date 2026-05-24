@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
-import DeviceFrame from "@/components/DeviceFrame";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -25,9 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel='stylesheet'
         />
       </head>
-      <body className='antialiased bg-neutral-950'>
-        <DeviceFrame>{children}</DeviceFrame>
-      </body>
+      <body className='antialiased bg-app'>{children}</body>
     </html>
   );
 }
