@@ -5,6 +5,7 @@ import { useState } from "react";
 import BottomBar from "@/components/BottomBar";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Sidebar } from "@/components/Sidebar";
+import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import TopBar from "@/components/TopBar";
 import type { Program } from "@/lib/programs";
 import type { SensorReadings } from "@/lib/sensors";
@@ -38,17 +39,20 @@ export default function InitialScreen({ programs, readings }: IInitialScreenProp
 
       <main className='flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 py-6'>
         {/* Carousel: prev/next arrows around the program preview */}
-        <div className='flex w-full max-w-[840px] flex-1 items-center gap-3'>
+        <div className='flex w-full max-w-[940px] flex-1 items-center gap-3'>
           <CarouselArrow direction='prev' disabled={count <= 1} onClick={() => go(-1)} />
-          <div className='card grid h-full flex-1 place-items-center rounded-xl'>
-            {/* TODO: live temperature-profile chart / program preview */}
-            <span className='opacity-40'>Pré-visualização do perfil</span>
+          <div className='card h-full flex-1 overflow-hidden rounded-xl p-3'>
+            {program ? (
+              <TemperatureProfileChart points={program.profile} className='h-full w-full' />
+            ) : (
+              <div className='grid h-full place-items-center opacity-40'>Nenhum programa</div>
+            )}
           </div>
           <CarouselArrow direction='next' disabled={count <= 1} onClick={() => go(1)} />
         </div>
 
         {/* Actions: start button + current program info */}
-        <div className='flex w-full max-w-[840px] items-center justify-between gap-4'>
+        <div className='flex w-full max-w-[940px] items-center justify-between gap-4'>
           <button type='button' className='btn-action cursor-pointer px-5 py-3 text-base font-semibold sm:text-lg'>
             INICIAR PROGRAMA
           </button>
