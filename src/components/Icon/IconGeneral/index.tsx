@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import clsx from "clsx";
 
 interface IIconGeneralProps {
   icon: string; // ex: "home"
@@ -9,11 +9,11 @@ interface IIconGeneralProps {
 export function IconGeneral({ icon, fill = 1, className }: IIconGeneralProps) {
   return (
     <span
-      className={clsx('material-symbols-rounded leading-none', className)}
+      className={clsx("material-symbols-rounded leading-none", className)}
       style={{
-        fontSize: 'var(--icon-size, 24px)',
+        fontSize: "var(--icon-size, 24px)",
         fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0`,
-        fontOpticalSizing: 'auto',
+        fontOpticalSizing: "auto",
       }}
     >
       {icon}

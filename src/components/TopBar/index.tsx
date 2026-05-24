@@ -1,6 +1,6 @@
-import { IconGeneral } from '../Icon/IconGeneral';
-import IconNotification, { IIconNotificationProps } from '../Icon/Notification';
-import IconWifi, { IIconWifiProps } from '../Icon/Wifi';
+import { IconGeneral } from "../Icon/IconGeneral";
+import IconNotification, { IIconNotificationProps } from "../Icon/Notification";
+import IconWifi, { IIconWifiProps } from "../Icon/Wifi";
 
 interface ITopBarProps {
   status: string;
@@ -21,13 +21,13 @@ export default function TopBar({ status, signalWifi, connectedServer, statusNoti
           <IconWifi signal={signalWifi.signal} />
           <IconGeneral
             className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]'
-            icon={connectedServer ? 'public' : 'public_off'}
+            icon={connectedServer ? "public" : "public_off"}
             fill={1}
           />
           <IconNotification status={statusNotification.status} amount={statusNotification.amount} />
         </div>
         <div className='tabular-nums'>
-          <span className='sm:text-2xl'>{`12:20 09/05/25`}</span>
+          <span className='sm:text-2xl'>{"12:20 09/05/25"}</span>
         </div>
       </div>
     </div>
