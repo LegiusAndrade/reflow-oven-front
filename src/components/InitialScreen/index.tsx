@@ -28,7 +28,7 @@ export default function InitialScreen({ programs, readings }: IInitialScreenProp
   const go = (delta: number) => setIndex((i) => (count === 0 ? 0 : (i + delta + count) % count));
 
   return (
-    <div className='text-fg relative flex h-screen flex-col overflow-hidden'>
+    <div className='text-fg relative flex h-full flex-col overflow-hidden'>
       <TopBar
         status='Aguardando Iniciar Processo...'
         statusNotification={{ amount: 3, status: "ACTIVE" }}
