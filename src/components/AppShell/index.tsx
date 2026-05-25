@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { useEffect, useRef, useState } from "react";
 import BottomBar from "@/components/BottomBar";
 import { Sidebar } from "@/components/Sidebar";
+import { Toaster } from "@/components/Toaster";
 import TopBar from "@/components/TopBar";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { MOCK_READINGS } from "@/lib/sensors";
@@ -71,6 +72,8 @@ export function AppShell({ children, status = "Aguardando Iniciar Processo..." }
         >
           <Sidebar />
         </div>
+
+        <Toaster />
       </div>
 
       <BottomBar readings={liveReadings} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} />

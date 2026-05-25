@@ -2,6 +2,8 @@ import type { Program } from "./programs";
 
 /** localStorage key for user-created programs (bump the suffix if the shape changes). */
 const STORAGE_KEY = "reflow:programs:v1";
+/** Tombstoned program ids — so deleting a seed program keeps it from reappearing. */
+const HIDDEN_KEY = "reflow:programs:hidden:v1";
 
 /** Fired on `window` after the stored set changes, so views in this tab can refresh. */
 export const PROGRAMS_CHANGED_EVENT = "reflow:programs-changed";
@@ -51,6 +53,37 @@ export function getStoredProgramsServerSnapshot(): Program[] {
   return EMPTY;
 }
 
+// --- deleted/hidden ids (tombstones) -----------------------------------------------------
+const EMPTY_IDS: string[] = [];
+let cachedHiddenRaw: string | null = null;
+let cachedHiddenIds: string[] = EMPTY_IDS;
+
+/** Ids the user has deleted (read fresh). */
+export function loadHiddenIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(HIDDEN_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Cached client snapshot of deleted ids for `useSyncExternalStore`. */
+export function getHiddenIdsSnapshot(): string[] {
+  if (typeof window === "undefined") return EMPTY_IDS;
+  const raw = window.localStorage.getItem(HIDDEN_KEY);
+  if (raw === cachedHiddenRaw) return cachedHiddenIds;
+  cachedHiddenRaw = raw;
+  cachedHiddenIds = loadHiddenIds();
+  return cachedHiddenIds;
+}
+
+export function getHiddenIdsServerSnapshot(): string[] {
+  return EMPTY_IDS;
+}
+
 function persist(programs: Program[]): void {
   if (typeof window === "undefined") return;
   try {
@@ -68,7 +101,17 @@ export function upsertStoredProgram(program: Program): void {
   persist([program, ...others]);
 }
 
-/** Remove a stored program by id (no-op if it isn't user-created). */
-export function removeStoredProgram(id: string): void {
-  persist(loadStoredPrograms().filter((p) => p.id !== id));
+/** Delete a program: drop any stored copy and tombstone the id so seed programs stay gone. */
+export function deleteProgram(id: string): void {
+  if (typeof window === "undefined") return;
+  const remainingStored = loadStoredPrograms().filter((p) => p.id !== id);
+  const hidden = loadHiddenIds();
+  const nextHidden = hidden.includes(id) ? hidden : [...hidden, id];
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(remainingStored));
+    window.localStorage.setItem(HIDDEN_KEY, JSON.stringify(nextHidden));
+    window.dispatchEvent(new Event(PROGRAMS_CHANGED_EVENT));
+  } catch {
+    // Best-effort — ignore quota/serialization failures.
+  }
 }

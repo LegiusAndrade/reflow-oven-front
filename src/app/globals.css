@@ -289,6 +289,23 @@
   transform: scale(0.94);
 }
 
+/* Toast / notification enter animation (see the Toaster component) */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-item {
+  animation: toast-in 0.2s ease-out;
+  box-shadow: 0 10px 30px -10px var(--card-shadow);
+}
+
 /* -------------------------------------------
    3) APP BACKGROUND with banding reduction
    - Adds a mid stop using color-mix to smooth steps

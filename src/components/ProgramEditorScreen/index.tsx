@@ -19,6 +19,7 @@ import {
 } from "@/lib/limits";
 import type { ProfilePoint, ProfileSegment, Program, Ramp } from "@/lib/programs";
 import { upsertStoredProgram } from "@/lib/programStore";
+import { showToast } from "@/lib/toast";
 
 type Segment = ProfileSegment & { id: string };
 
@@ -132,6 +133,8 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
       segments: segments.map(({ temp, durationSec, ramp }) => ({ temp, durationSec, ramp })),
     };
     upsertStoredProgram(program);
+    // TODO(backend): show this on the API success response (and a "error" toast on failure).
+    showToast(initialProgram ? "Programa atualizado" : "Programa criado");
     router.push("/programas");
   };
 

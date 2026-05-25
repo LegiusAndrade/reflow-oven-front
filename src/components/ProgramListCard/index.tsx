@@ -2,10 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import type { Program } from "@/lib/programs";
+import { deleteProgram } from "@/lib/programStore";
+import { showToast } from "@/lib/toast";
 
 function formatDuration(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -17,6 +20,7 @@ function formatDuration(sec: number): string {
 export function ProgramListCard({ program }: { program: Program }) {
   const router = useRouter();
   const [chartOpen, setChartOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const peak = Math.max(...program.profile.map((p) => p.temp));
   const total = program.profile.at(-1)?.t ?? 0;
 
@@ -46,7 +50,7 @@ export function ProgramListCard({ program }: { program: Program }) {
         <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
         <CardAction icon='edit' label='Editar' onClick={() => router.push(`/programas/${encodeURIComponent(program.id)}/editar`)} />
         <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
-        <CardAction icon='delete' label='Deletar' />
+        <CardAction icon='delete' label='Deletar' onClick={() => setConfirmDeleteOpen(true)} />
       </div>
 
       <Modal open={chartOpen} title={program.name} onClose={() => setChartOpen(false)}>
@@ -66,6 +70,22 @@ export function ProgramListCard({ program }: { program: Program }) {
           </dl>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        tone='danger'
+        title='Deletar programa?'
+        description={`"${program.name}" será removido permanentemente. Esta ação não pode ser desfeita.`}
+        confirmLabel='Deletar'
+        cancelLabel='Cancelar'
+        onConfirm={() => {
+          deleteProgram(program.id);
+          // TODO(backend): show this on the API success response (and a "error" toast on failure).
+          showToast("Programa deletado");
+          setConfirmDeleteOpen(false);
+        }}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </article>
   );
 }

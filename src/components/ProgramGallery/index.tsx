@@ -1,10 +1,10 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramCard } from "@/components/ProgramCard";
-import { useStoredPrograms } from "@/hooks/useStoredPrograms";
+import { useAllPrograms } from "@/hooks/useAllPrograms";
 import type { Program } from "@/lib/programs";
 
 // Minimum comfortable card size; drives how many fit per page.
@@ -35,11 +35,7 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
     return () => ro.disconnect();
   }, []);
 
-  const stored = useStoredPrograms();
-  const allPrograms = useMemo(() => {
-    const storedIds = new Set(stored.map((p) => p.id));
-    return [...stored, ...programs.filter((p) => !storedIds.has(p.id))];
-  }, [stored, programs]);
+  const allPrograms = useAllPrograms(programs);
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));

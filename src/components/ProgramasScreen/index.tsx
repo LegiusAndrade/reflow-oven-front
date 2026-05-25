@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramListCard } from "@/components/ProgramListCard";
-import { useStoredPrograms } from "@/hooks/useStoredPrograms";
+import { useAllPrograms } from "@/hooks/useAllPrograms";
 import type { Program } from "@/lib/programs";
 
 const CARD_MIN_W = 320;
@@ -30,11 +30,7 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
     return () => ro.disconnect();
   }, []);
 
-  const stored = useStoredPrograms();
-  const allPrograms = useMemo(() => {
-    const storedIds = new Set(stored.map((p) => p.id));
-    return [...stored, ...programs.filter((p) => !storedIds.has(p.id))];
-  }, [stored, programs]);
+  const allPrograms = useAllPrograms(programs);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return q ? allPrograms.filter((p) => p.name.toLowerCase().includes(q)) : allPrograms;
@@ -42,6 +38,9 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));
+  // Fixed row height (the height a full page uses) so the last page keeps the same card size
+  // as earlier pages instead of stretching a lone row to fill the grid.
+  const rowHeight = h > 0 ? (h - (rows - 1) * GAP) / rows : CARD_MIN_H;
   const perPage = cols * rows;
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const activePage = Math.min(page, pages - 1);
@@ -83,8 +82,8 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
       {/* Cards (paginated to fit the area) */}
       <div
         ref={gridRef}
-        className='grid min-h-0 flex-1'
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: "1fr", gap: `${GAP}px` }}
+        className='grid min-h-0 flex-1 content-start'
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: `${rowHeight}px`, gap: `${GAP}px` }}
       >
         {shown.map((program) => (
           <ProgramListCard key={program.id} program={program} />
