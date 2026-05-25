@@ -44,6 +44,12 @@ The **Nunito** font is wired up via `next/font` in `src/app/layout.tsx` and expo
 - **Every interactive button gets a hover + press animation** — don't ship a static button. `.btn-action` and `.btn-link` already include it; for icon/compact buttons add the **`.btn-press`** utility (scales up on hover, down on `:active`). The persistent menu chrome (`AppShell`: TopBar/BottomBar/drawer) is shared across all routes.
 - **Size fluidly, not with fixed px.** The type scale is fluid+capped via `clamp()` in the `@theme` block (`text-sm`…`text-2xl`). For layout prefer content/relative sizing or `clamp()`, so it adapts from the **1024×600** touchscreen baseline up to larger screens (there is no zoom wrapper).
 
+### Limits
+
+Anything the user can type or grow **must have an explicit limit** — a max length for text, `min`/`max` for numeric fields, and a max count for lists (profile points, table rows, items). Never ship an unbounded input or list.
+
+Keep every cap in **`src/lib/limits.ts`** as a named constant (C-style `#define`, e.g. `PROGRAM_NAME_MAX_LENGTH`, `PROFILE_MAX_POINTS`, `POINT_TEMP_MAX`). Import the constant at the call site — never hard-code a magic number — so a limit can be tuned in one place.
+
 ## Reference
 
 `docs/` holds the project design (`Esboço projeto.drawio`) and setup guides in `docs/MD_files/` (ESLint, Prettier, EditorConfig, VS Code).

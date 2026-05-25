@@ -11,6 +11,8 @@ export type Program = {
   id: string;
   /** Display name, e.g. "ReflowOven SMD 270ºC" */
   name: string;
+  /** Optional longer description (shown in the editor). */
+  description?: string;
   /** How many times this profile has been run */
   runCount: number;
   /** Last execution date, already formatted for display */

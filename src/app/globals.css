@@ -264,6 +264,16 @@
   transform: scale(0.97);
 }
 
+.btn-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-action:disabled:hover {
+  background: var(--btn-action-bg);
+  transform: none;
+}
+
 /* Hover/press feedback for compact & icon buttons (see CLAUDE.md conventions). */
 .btn-press {
   transition:

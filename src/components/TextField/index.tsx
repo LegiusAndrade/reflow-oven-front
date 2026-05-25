@@ -6,6 +6,7 @@ export interface ITextFieldProps {
   value: string;
   onChange: (_value: string) => void;
   type?: string;
+  maxLength?: number;
   className?: string;
 }
 
@@ -14,7 +15,7 @@ export interface ITextFieldProps {
  * (like a placeholder) and animates up onto the top border when focused or filled.
  * Driven purely by CSS via the `peer` + `:placeholder-shown` trick (placeholder is a space).
  */
-export function TextField({ id, label, value, onChange, type = "text", className }: ITextFieldProps) {
+export function TextField({ id, label, value, onChange, type = "text", maxLength, className }: ITextFieldProps) {
   return (
     <div className={clsx("relative", className)}>
       <input
@@ -22,6 +23,7 @@ export function TextField({ id, label, value, onChange, type = "text", className
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        maxLength={maxLength}
         placeholder=' '
         className='peer w-full rounded-xl border border-white/15 bg-transparent px-3 pb-2 pt-4 outline-none transition-colors focus:border-[var(--brand)]'
       />

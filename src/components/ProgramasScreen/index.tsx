@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramListCard } from "@/components/ProgramListCard";
+import { useStoredPrograms } from "@/hooks/useStoredPrograms";
 import type { Program } from "@/lib/programs";
 
 const CARD_MIN_W = 320;
@@ -29,10 +30,12 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
     return () => ro.disconnect();
   }, []);
 
+  const stored = useStoredPrograms();
+  const allPrograms = useMemo(() => [...stored, ...programs], [stored, programs]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? programs.filter((p) => p.name.toLowerCase().includes(q)) : programs;
-  }, [programs, query]);
+    return q ? allPrograms.filter((p) => p.name.toLowerCase().includes(q)) : allPrograms;
+  }, [allPrograms, query]);
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));
