@@ -11,9 +11,8 @@ import type { ProfilePoint } from "@/lib/programs";
 type Ramp = "Linear" | "Fixo" | "Parábola positiva" | "Parábola negativa";
 type Segment = { id: string; temp: number; durationSec: number; ramp: Ramp };
 
-let idCounter = 0;
 const makeSegment = (temp: number, durationSec: number, ramp: Ramp): Segment => ({
-  id: `seg-${idCounter++}`,
+  id: crypto.randomUUID(),
   temp,
   durationSec,
   ramp,
