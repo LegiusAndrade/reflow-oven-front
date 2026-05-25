@@ -18,6 +18,39 @@ export function loadStoredPrograms(): Program[] {
   }
 }
 
+// --- useSyncExternalStore plumbing -------------------------------------------------------
+// getSnapshot must return a *stable* reference unless the data actually changed, so we cache
+// the parsed list keyed by the raw JSON string and only re-parse when that string differs.
+const EMPTY: Program[] = [];
+let cachedRaw: string | null = null;
+let cachedPrograms: Program[] = EMPTY;
+
+/** Subscribe to stored-program changes (this tab via our event, other tabs via `storage`). */
+export function subscribeStoredPrograms(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(PROGRAMS_CHANGED_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(PROGRAMS_CHANGED_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+/** Cached client snapshot for `useSyncExternalStore`. */
+export function getStoredProgramsSnapshot(): Program[] {
+  if (typeof window === "undefined") return EMPTY;
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (raw === cachedRaw) return cachedPrograms;
+  cachedRaw = raw;
+  cachedPrograms = loadStoredPrograms();
+  return cachedPrograms;
+}
+
+/** Server snapshot — no localStorage there, so always the same empty array. */
+export function getStoredProgramsServerSnapshot(): Program[] {
+  return EMPTY;
+}
+
 function persist(programs: Program[]): void {
   if (typeof window === "undefined") return;
   try {
@@ -29,9 +62,10 @@ function persist(programs: Program[]): void {
   }
 }
 
-/** Add a newly created program to the front of the stored list. */
-export function addStoredProgram(program: Program): void {
-  persist([program, ...loadStoredPrograms()]);
+/** Insert a new program at the front, or replace the existing one with the same id. */
+export function upsertStoredProgram(program: Program): void {
+  const others = loadStoredPrograms().filter((p) => p.id !== program.id);
+  persist([program, ...others]);
 }
 
 /** Remove a stored program by id (no-op if it isn't user-created). */

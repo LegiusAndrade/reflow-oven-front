@@ -6,6 +6,16 @@ export type ProfilePoint = {
   temp: number;
 };
 
+/** Ramp shape between two setpoints in the editor. */
+export type Ramp = "Linear" | "Fixo" | "Parábola positiva" | "Parábola negativa";
+
+/** One editable leg of a profile — the editor's source of truth; `profile` is derived from these. */
+export type ProfileSegment = {
+  temp: number;
+  durationSec: number;
+  ramp: Ramp;
+};
+
 /** A reflow temperature profile the user can select and run. */
 export type Program = {
   id: string;
@@ -19,6 +29,8 @@ export type Program = {
   lastUsed: string;
   /** Setpoint curve (temperature × time), ordered by `t`. */
   profile: ProfilePoint[];
+  /** Editable segments the curve was built from (lets the editor round-trip losslessly). */
+  segments?: ProfileSegment[];
 };
 
 /** A reflow-shaped curve (ramp → soak → peak → cooldown) derived from a peak/duration. */

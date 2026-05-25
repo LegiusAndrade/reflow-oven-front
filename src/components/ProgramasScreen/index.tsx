@@ -31,7 +31,10 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
   }, []);
 
   const stored = useStoredPrograms();
-  const allPrograms = useMemo(() => [...stored, ...programs], [stored, programs]);
+  const allPrograms = useMemo(() => {
+    const storedIds = new Set(stored.map((p) => p.id));
+    return [...stored, ...programs.filter((p) => !storedIds.has(p.id))];
+  }, [stored, programs]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return q ? allPrograms.filter((p) => p.name.toLowerCase().includes(q)) : allPrograms;

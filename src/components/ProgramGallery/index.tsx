@@ -36,7 +36,10 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
   }, []);
 
   const stored = useStoredPrograms();
-  const allPrograms = useMemo(() => [...stored, ...programs], [stored, programs]);
+  const allPrograms = useMemo(() => {
+    const storedIds = new Set(stored.map((p) => p.id));
+    return [...stored, ...programs.filter((p) => !storedIds.has(p.id))];
+  }, [stored, programs]);
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));

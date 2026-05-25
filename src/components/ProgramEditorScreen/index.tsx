@@ -17,11 +17,10 @@ import {
   PROGRAM_DESCRIPTION_MAX_LENGTH,
   PROGRAM_NAME_MAX_LENGTH,
 } from "@/lib/limits";
-import type { ProfilePoint, Program } from "@/lib/programs";
-import { addStoredProgram } from "@/lib/programStore";
+import type { ProfilePoint, ProfileSegment, Program, Ramp } from "@/lib/programs";
+import { upsertStoredProgram } from "@/lib/programStore";
 
-type Ramp = "Linear" | "Fixo" | "Parábola positiva" | "Parábola negativa";
-type Segment = { id: string; temp: number; durationSec: number; ramp: Ramp };
+type Segment = ProfileSegment & { id: string };
 
 const makeSegment = (temp: number, durationSec: number, ramp: Ramp): Segment => ({
   id: crypto.randomUUID(),
@@ -84,12 +83,27 @@ function incomingTemps(segments: Segment[]): number[] {
   });
 }
 
+/**
+ * Segments to seed the editor with when editing a program: its stored segments when present,
+ * otherwise a Linear approximation rebuilt from the sampled profile (e.g. the seed programs).
+ */
+function programToSegments(program: Program): Segment[] {
+  if (program.segments?.length) {
+    return program.segments.map((s) => makeSegment(s.temp, s.durationSec, s.ramp));
+  }
+  const segs: Segment[] = [];
+  for (let i = 1; i < program.profile.length; i++) {
+    segs.push(makeSegment(program.profile[i].temp, program.profile[i].t - program.profile[i - 1].t, "Linear"));
+  }
+  return segs;
+}
+
 /** Create/edit a program: name, description and an editable temperature profile with live preview. */
-export function ProgramEditorScreen({ title = "Novo Programa" }: { title?: string }) {
+export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }: { title?: string; initialProgram?: Program }) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [segments, setSegments] = useState<Segment[]>(DEFAULT_SEGMENTS);
+  const [name, setName] = useState(initialProgram?.name ?? "");
+  const [description, setDescription] = useState(initialProgram?.description ?? "");
+  const [segments, setSegments] = useState<Segment[]>(() => (initialProgram ? programToSegments(initialProgram) : DEFAULT_SEGMENTS));
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const profile = useMemo(() => toProfile(segments), [segments]);
@@ -103,20 +117,21 @@ export function ProgramEditorScreen({ title = "Novo Programa" }: { title?: strin
     setConfirmClearOpen(false);
   };
 
-  // Saving creates a new stored program (localStorage) and returns to the list. It needs a
-  // name and at least one point; otherwise SALVAR stays disabled.
+  // Saving upserts the program in localStorage and returns to the list. Editing keeps the
+  // original id/run stats; a new program gets a fresh id. Needs a name and at least one point.
   const canSave = name.trim().length > 0 && segments.length > 0;
   const handleSave = () => {
     if (!canSave) return;
     const program: Program = {
-      id: crypto.randomUUID(),
+      id: initialProgram?.id ?? crypto.randomUUID(),
       name: name.trim(),
       description: description.trim() || undefined,
-      runCount: 0,
-      lastUsed: "Nunca",
+      runCount: initialProgram?.runCount ?? 0,
+      lastUsed: initialProgram?.lastUsed ?? "Nunca",
       profile,
+      segments: segments.map(({ temp, durationSec, ramp }) => ({ temp, durationSec, ramp })),
     };
-    addStoredProgram(program);
+    upsertStoredProgram(program);
     router.push("/programas");
   };
 
@@ -182,8 +197,9 @@ export function ProgramEditorScreen({ title = "Novo Programa" }: { title?: strin
                             disabled={held}
                             min={POINT_TEMP_MIN}
                             max={POINT_TEMP_MAX}
+                            step={1}
                             title={held ? "Fixo mantém a temperatura atual" : undefined}
-                            onChange={(e) => update(s.id, { temp: clamp(Number(e.target.value), POINT_TEMP_MIN, POINT_TEMP_MAX) })}
+                            onChange={(e) => update(s.id, { temp: Math.round(clamp(Number(e.target.value), POINT_TEMP_MIN, POINT_TEMP_MAX)) })}
                             className={clsx(numberInputClass, held && "cursor-not-allowed opacity-50")}
                           />
                         </td>

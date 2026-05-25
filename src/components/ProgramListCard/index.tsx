@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
@@ -14,6 +15,7 @@ function formatDuration(sec: number): string {
 
 /** Management card for the Programas screen: title, favorite, key specs and actions. */
 export function ProgramListCard({ program }: { program: Program }) {
+  const router = useRouter();
   const [chartOpen, setChartOpen] = useState(false);
   const peak = Math.max(...program.profile.map((p) => p.temp));
   const total = program.profile.at(-1)?.t ?? 0;
@@ -42,7 +44,7 @@ export function ProgramListCard({ program }: { program: Program }) {
       <div className='mt-auto flex items-center gap-1 text-[var(--brand)]'>
         <CardAction icon='monitoring' label='Ver Gráfico' onClick={() => setChartOpen(true)} />
         <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
-        <CardAction icon='edit' label='Editar' />
+        <CardAction icon='edit' label='Editar' onClick={() => router.push(`/programas/${encodeURIComponent(program.id)}/editar`)} />
         <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
         <CardAction icon='delete' label='Deletar' />
       </div>
