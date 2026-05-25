@@ -20,7 +20,7 @@ export function Sidebar() {
   return (
     <aside className='sidebar inline-flex h-full min-w-[clamp(11.5rem,15vw,15rem)] flex-col items-stretch gap-2 rounded-xl p-2'>
       {/* Logo */}
-      <Image src='/Logo.svg' alt='Logo' width={92} height={92} priority className='shrink-0 self-center' />
+      <Image src='/Logo.svg' alt='Logo' width={92} height={92} priority className='size-[92px] shrink-0 self-center' />
 
       {/* Divider */}
       <div className='sidebar-separator h-0.5 rounded-full blur-[2px]' />
