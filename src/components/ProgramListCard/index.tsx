@@ -1,4 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { Modal } from "@/components/Modal";
+import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import type { Program } from "@/lib/programs";
 
 function formatDuration(sec: number): string {
@@ -9,6 +14,7 @@ function formatDuration(sec: number): string {
 
 /** Management card for the Programas screen: title, favorite, key specs and actions. */
 export function ProgramListCard({ program }: { program: Program }) {
+  const [chartOpen, setChartOpen] = useState(false);
   const peak = Math.max(...program.profile.map((p) => p.temp));
   const total = program.profile.at(-1)?.t ?? 0;
 
@@ -34,20 +40,39 @@ export function ProgramListCard({ program }: { program: Program }) {
       <p className='text-sm opacity-70'>{`Último Uso: ${program.lastUsed}`}</p>
 
       <div className='mt-auto flex items-center gap-1 text-[var(--brand)]'>
-        <CardAction icon='monitoring' label='Ver Gráfico' />
+        <CardAction icon='monitoring' label='Ver Gráfico' onClick={() => setChartOpen(true)} />
         <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
         <CardAction icon='edit' label='Editar' />
         <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
         <CardAction icon='delete' label='Deletar' />
       </div>
+
+      <Modal open={chartOpen} title={program.name} onClose={() => setChartOpen(false)}>
+        <div className='flex h-full flex-col gap-3'>
+          <div className='min-h-0 flex-1'>
+            <TemperatureProfileChart points={program.profile} className='h-full w-full' />
+          </div>
+          <dl className='flex flex-wrap justify-center gap-x-8 gap-y-1'>
+            <div className='flex gap-1'>
+              <dt className='opacity-70'>Temp. Máx:</dt>
+              <dd className='font-semibold'>{peak} °C</dd>
+            </div>
+            <div className='flex gap-1'>
+              <dt className='opacity-70'>Tempo Total:</dt>
+              <dd className='font-semibold'>{formatDuration(total)}</dd>
+            </div>
+          </dl>
+        </div>
+      </Modal>
     </article>
   );
 }
 
-function CardAction({ icon, label }: { icon: string; label: string }) {
+function CardAction({ icon, label, onClick }: { icon: string; label: string; onClick?: () => void }) {
   return (
     <button
       type='button'
+      onClick={onClick}
       className='btn-press flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm hover:bg-white/5'
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
