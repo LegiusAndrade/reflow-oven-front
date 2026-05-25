@@ -85,7 +85,7 @@ function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }
   const peak = points.reduce((a, b) => (b.temp > a.temp ? b : a));
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className='absolute inset-0' role='img' aria-label={`Perfil de temperatura, pico de ${peak.temp} graus Celsius`}>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className='absolute inset-0' role='img' aria-label={`Perfil de temperatura, pico de ${Math.round(peak.temp)} graus Celsius`}>
       <defs>
         <linearGradient id='profile-area' x1='0' y1='0' x2='0' y2='1'>
           <stop offset='0%' style={{ stopColor: "var(--brand)" }} stopOpacity={0.35} />
@@ -133,7 +133,7 @@ function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }
       {/* Peak marker */}
       <circle cx={sx(peak.t)} cy={sy(peak.temp)} r={compact ? 3 : 4} className='[fill:var(--brand)]' />
       <text x={sx(peak.t)} y={sy(peak.temp) - 8} textAnchor='middle' className={peakLabelClass(compact)}>
-        {`${peak.temp}°C`}
+        {`${Math.round(peak.temp)}°C`}
       </text>
     </svg>
   );
