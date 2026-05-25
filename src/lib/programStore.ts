@@ -4,6 +4,8 @@ import type { Program } from "./programs";
 const STORAGE_KEY = "reflow:programs:v1";
 /** Tombstoned program ids — so deleting a seed program keeps it from reappearing. */
 const HIDDEN_KEY = "reflow:programs:hidden:v1";
+/** Favorited program ids (works for seed programs too, which we don't mutate). */
+const FAVORITES_KEY = "reflow:programs:favorites:v1";
 
 /** Fired on `window` after the stored set changes, so views in this tab can refresh. */
 export const PROGRAMS_CHANGED_EVENT = "reflow:programs-changed";
@@ -82,6 +84,49 @@ export function getHiddenIdsSnapshot(): string[] {
 
 export function getHiddenIdsServerSnapshot(): string[] {
   return EMPTY_IDS;
+}
+
+// --- favorites ---------------------------------------------------------------------------
+let cachedFavoritesRaw: string | null = null;
+let cachedFavoriteIds: string[] = EMPTY_IDS;
+
+/** Favorited program ids (read fresh). */
+export function loadFavoriteIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(FAVORITES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Cached client snapshot of favorite ids for `useSyncExternalStore`. */
+export function getFavoriteIdsSnapshot(): string[] {
+  if (typeof window === "undefined") return EMPTY_IDS;
+  const raw = window.localStorage.getItem(FAVORITES_KEY);
+  if (raw === cachedFavoritesRaw) return cachedFavoriteIds;
+  cachedFavoritesRaw = raw;
+  cachedFavoriteIds = loadFavoriteIds();
+  return cachedFavoriteIds;
+}
+
+export function getFavoriteIdsServerSnapshot(): string[] {
+  return EMPTY_IDS;
+}
+
+/** Toggle a program's favorite flag (works for stored and seed programs). */
+export function toggleFavorite(id: string): void {
+  if (typeof window === "undefined") return;
+  const favorites = loadFavoriteIds();
+  const next = favorites.includes(id) ? favorites.filter((f) => f !== id) : [...favorites, id];
+  try {
+    window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(PROGRAMS_CHANGED_EVENT));
+  } catch {
+    // Best-effort — ignore quota/serialization failures.
+  }
 }
 
 function persist(programs: Program[]): void {

@@ -6,15 +6,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramListCard } from "@/components/ProgramListCard";
 import { useAllPrograms } from "@/hooks/useAllPrograms";
+import { useFavoriteIds } from "@/hooks/useFavoriteIds";
 import type { Program } from "@/lib/programs";
 
 const CARD_MIN_W = 320;
 const CARD_MIN_H = 190;
 const GAP = 16;
 
+type FilterMode = "all" | "favorites";
+
 /** Programas screen: search/filter over a paginated grid of program management cards. */
 export function ProgramasScreen({ programs }: { programs: Program[] }) {
   const [query, setQuery] = useState("");
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [page, setPage] = useState(0);
   const gridRef = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
@@ -31,10 +35,15 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
   }, []);
 
   const allPrograms = useAllPrograms(programs);
+  const favoriteIds = useFavoriteIds();
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? allPrograms.filter((p) => p.name.toLowerCase().includes(q)) : allPrograms;
-  }, [allPrograms, query]);
+    const favorites = new Set(favoriteIds);
+    return allPrograms.filter((p) => {
+      if (filterMode === "favorites" && !favorites.has(p.id)) return false;
+      return q ? p.name.toLowerCase().includes(q) : true;
+    });
+  }, [allPrograms, query, filterMode, favoriteIds]);
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));
@@ -73,10 +82,14 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
             className='w-full bg-transparent outline-none placeholder:opacity-60'
           />
         </label>
-        <button type='button' className='btn-press flex min-w-[15rem] items-center justify-between gap-2 rounded-xl border border-white/15 px-4 py-2.5'>
-          <span className='opacity-80'>Filtrar por...</span>
-          <IconGeneral icon='expand_more' fill={0} className='[--icon-size:1.25rem]' />
-        </button>
+        <FilterMenu
+          value={filterMode}
+          favoriteCount={favoriteIds.length}
+          onChange={(mode) => {
+            setFilterMode(mode);
+            setPage(0);
+          }}
+        />
       </div>
 
       {/* Cards (paginated to fit the area) */}
@@ -158,5 +171,72 @@ function PagerArrow({ icon, label, onClick, disabled }: { icon: string; label: s
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
     </button>
+  );
+}
+
+/** "Filtrar por..." dropdown (currently: all vs. favorites only). */
+function FilterMenu({ value, favoriteCount, onChange }: { value: FilterMode; favoriteCount: number; onChange: (_mode: FilterMode) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const label = value === "favorites" ? "Apenas favoritos" : "Todos os programas";
+
+  return (
+    <div ref={ref} className='relative'>
+      <button
+        type='button'
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup='listbox'
+        aria-expanded={open}
+        className='btn-press flex min-w-[15rem] items-center justify-between gap-2 rounded-xl border border-white/15 px-4 py-2.5'
+      >
+        <span className='flex items-center gap-2'>
+          <IconGeneral icon='filter_list' fill={0} className='opacity-70 [--icon-size:1.25rem]' />
+          <span className='opacity-80'>{label}</span>
+        </span>
+        <IconGeneral icon='expand_more' fill={0} className={clsx("[--icon-size:1.25rem] transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <ul role='listbox' className='card absolute right-0 z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 py-1'>
+          <FilterOption icon='list' label='Todos os programas' selected={value === "all"} onClick={() => onChange("all")} />
+          <FilterOption icon='star' label={favoriteCount ? `Apenas favoritos (${favoriteCount})` : "Apenas favoritos"} selected={value === "favorites"} onClick={() => onChange("favorites")} />
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function FilterOption({ icon, label, selected, onClick }: { icon: string; label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <li>
+      <button
+        type='button'
+        role='option'
+        aria-selected={selected}
+        onClick={onClick}
+        className={clsx("flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left hover:bg-white/10", selected && "text-[var(--brand)]")}
+      >
+        <IconGeneral icon={icon} fill={selected ? 1 : 0} className='[--icon-size:1.25rem]' />
+        <span className='flex-1'>{label}</span>
+        {selected && <IconGeneral icon='check' fill={0} className='[--icon-size:1.125rem]' />}
+      </button>
+    </li>
   );
 }

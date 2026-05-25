@@ -1,13 +1,15 @@
 "use client";
 
+import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
+import { useFavoriteIds } from "@/hooks/useFavoriteIds";
 import type { Program } from "@/lib/programs";
-import { deleteProgram } from "@/lib/programStore";
+import { deleteProgram, toggleFavorite } from "@/lib/programStore";
 import { showToast } from "@/lib/toast";
 
 function formatDuration(sec: number): string {
@@ -21,6 +23,7 @@ export function ProgramListCard({ program }: { program: Program }) {
   const router = useRouter();
   const [chartOpen, setChartOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const isFavorite = useFavoriteIds().includes(program.id);
   const peak = Math.max(...program.profile.map((p) => p.temp));
   const total = program.profile.at(-1)?.t ?? 0;
 
@@ -28,8 +31,14 @@ export function ProgramListCard({ program }: { program: Program }) {
     <article className='card flex h-full flex-col gap-3 rounded-xl p-4'>
       <header className='flex items-start justify-between gap-2 border-b border-white/10 pb-2'>
         <h3 className='truncate text-lg font-semibold'>{program.name}</h3>
-        <button type='button' aria-label='Favoritar programa' className='btn-press shrink-0 cursor-pointer text-[var(--brand)]'>
-          <IconGeneral icon='star' fill={1} className='[--icon-size:1.5rem]' />
+        <button
+          type='button'
+          onClick={() => toggleFavorite(program.id)}
+          aria-pressed={isFavorite}
+          aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          className={clsx("btn-press shrink-0 cursor-pointer text-[var(--brand)]", !isFavorite && "opacity-50 hover:opacity-100")}
+        >
+          <IconGeneral icon='star' fill={isFavorite ? 1 : 0} className='[--icon-size:1.75rem]' />
         </button>
       </header>
 
