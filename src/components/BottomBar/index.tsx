@@ -32,7 +32,10 @@ export default function BottomBar({ readings, menuOpen = false, onMenuClick }: I
 
   return (
     <div className='bottom-bar flex select-none items-center gap-4 rounded-t-xl px-6 py-3'>
-      <MenuToggle open={menuOpen} onClick={onMenuClick} />
+      {/* Hidden when the sidebar is docked (large + tall screens); shown otherwise */}
+      <span className='dock:hidden'>
+        <MenuToggle open={menuOpen} onClick={onMenuClick} />
+      </span>
 
       <div className='ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-base tabular-nums sm:text-lg'>
         <Reading icon='developer_board' value={`${boardTempC} ºC`} />

@@ -44,21 +44,28 @@ export function AppShell({ children, status = "Aguardando Iniciar Processo..." }
     <div className='text-fg flex h-screen flex-col overflow-hidden'>
       <TopBar status={status} statusNotification={{ amount: 3, status: "ACTIVE" }} connectedServer={true} signalWifi={{ signal: "OFF" }} />
 
-      {/* Content region between the bars; also bounds the menu drawer. */}
-      <div className='relative min-h-0 flex-1'>
-        <main className='h-full overflow-hidden p-[clamp(0.75rem,2vw,2rem)]'>{children}</main>
+      {/* Content region between the bars. On xl+ the sidebar is docked (always open); below
+          xl it bounds the slide-out drawer. */}
+      <div className='relative flex min-h-0 flex-1'>
+        {/* Docked sidebar (xl and up) */}
+        {/* Docked sidebar (dock breakpoint): full height, flush against the top/bottom bars */}
+        <aside className='hidden h-full shrink-0 dock:block'>
+          <Sidebar />
+        </aside>
 
-        {/* Backdrop */}
+        <main className='h-full flex-1 overflow-hidden p-[clamp(0.75rem,2vw,2rem)]'>{children}</main>
+
+        {/* Backdrop (drawer mode, below xl) */}
         <div
           aria-hidden='true'
           onClick={() => setDrawerOpen(false)}
           className={clsx(
-            "absolute inset-0 z-40 bg-black/50 transition-opacity duration-300",
+            "absolute inset-0 z-40 bg-black/50 transition-opacity duration-300 dock:hidden",
             drawerOpen ? "opacity-100" : "pointer-events-none opacity-0"
           )}
         />
 
-        {/* Slide-out navigation drawer */}
+        {/* Slide-out navigation drawer (below xl) */}
         <div
           ref={drawerRef}
           role='dialog'
@@ -66,11 +73,11 @@ export function AppShell({ children, status = "Aguardando Iniciar Processo..." }
           aria-label='Menu de navegação'
           inert={!drawerOpen}
           className={clsx(
-            "absolute inset-y-0 left-0 z-50 w-fit transition-transform duration-300",
+            "absolute inset-y-0 left-0 z-50 w-fit transition-transform duration-300 dock:hidden",
             drawerOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <Sidebar />
+          <Sidebar className='rounded-xl' />
         </div>
 
         <Toaster />

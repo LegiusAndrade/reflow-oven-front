@@ -1,5 +1,6 @@
 "use client";
 
+import { clsx } from "clsx";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LinkButton } from "../LinkButton";
@@ -14,11 +15,11 @@ const NAV_ITEMS = [
 
 // Fills the drawer's height and sizes its width to the content (≈ the Figma 187px),
 // growing a little on large screens via min-w. items-stretch equalizes button widths.
-export function Sidebar() {
+export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className='sidebar inline-flex h-full min-w-[clamp(11.5rem,15vw,15rem)] flex-col items-stretch gap-2 rounded-xl p-2'>
+    <aside className={clsx("sidebar inline-flex h-full min-w-[clamp(11.5rem,15vw,15rem)] flex-col items-stretch gap-2 p-2", className)}>
       {/* Logo */}
       <Image src='/Logo.svg' alt='Logo' width={92} height={92} priority className='size-[92px] shrink-0 self-center' />
 

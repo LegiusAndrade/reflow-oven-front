@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+/* Dock the sidebar only when there's room both ways (≥1280px wide AND ≥600px tall, measured on
+   the *viewport* — the browser's inner height, which is smaller than the screen because of the
+   tabs/address bar). Otherwise the menu collapses to the slide-out drawer + hamburger. The
+   1280px width already excludes the 1024×600 device, so the height floor only guards short windows. */
+@custom-variant dock (@media (min-width: 1280px) and (min-height: 600px));
+
 /* ---------------------------------------------------------
    FLUID TYPE SCALE
    Each step grows a little with the viewport via clamp(), then
@@ -304,6 +310,11 @@
 .toast-item {
   animation: toast-in 0.2s ease-out;
   box-shadow: 0 10px 30px -10px var(--card-shadow);
+}
+
+/* react-day-picker (Relatórios date filter) — the calendar ships no day hover by default */
+.rdp-day_button:hover:not([disabled]) {
+  background-color: color-mix(in srgb, var(--brand) 18%, transparent);
 }
 
 /* -------------------------------------------
