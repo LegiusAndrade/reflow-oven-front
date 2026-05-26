@@ -177,8 +177,8 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                 list extends as points are added (then scrolls). */}
             <div className='max-h-[16rem] overflow-y-auto rounded-xl border border-white/10 [@media(min-height:44rem)]:max-h-none [@media(min-height:44rem)]:min-h-0'>
               <table className='w-full border-collapse text-left'>
-                <thead className='sticky top-0 bg-[var(--bg-2)] text-sm'>
-                  <tr className='[&>th]:px-3 [&>th]:py-2.5 [&>th]:font-semibold'>
+                <thead className='sticky top-0 z-10 text-sm'>
+                  <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-3 [&>th]:py-2.5 [&>th]:font-semibold'>
                     <th className='w-10'>#</th>
                     <th>Temp (°C)</th>
                     <th>Tempo (s)</th>
