@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramListCard } from "@/components/ProgramListCard";
+import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { useAllPrograms } from "@/hooks/useAllPrograms";
 import { useFavoriteIds } from "@/hooks/useFavoriteIds";
 import type { Program } from "@/lib/programs";
@@ -13,12 +14,39 @@ const CARD_MIN_W = 320;
 const CARD_MIN_H = 190;
 const GAP = 16;
 
-type FilterMode = "all" | "favorites";
+type FilterMode = "all" | "favorites" | "unused" | "used";
+type SortMode = "default" | "recent" | "most-used" | "name" | "temp" | "duration";
 
-/** Programas screen: search/filter over a paginated grid of program management cards. */
+const FILTER_OPTIONS: ISelectOption<FilterMode>[] = [
+  { value: "all", label: "Todos os programas", icon: "list" },
+  { value: "favorites", label: "Apenas favoritos", icon: "star" },
+  { value: "unused", label: "Nunca usados", icon: "hourglass_empty" },
+  { value: "used", label: "Já usados", icon: "task_alt" },
+];
+
+const SORT_OPTIONS: ISelectOption<SortMode>[] = [
+  { value: "default", label: "Padrão", icon: "sort" },
+  { value: "recent", label: "Usado recentemente", icon: "schedule" },
+  { value: "most-used", label: "Mais usado", icon: "trending_up" },
+  { value: "name", label: "Nome (A–Z)", icon: "sort_by_alpha" },
+  { value: "temp", label: "Temperatura máxima", icon: "thermostat" },
+  { value: "duration", label: "Tempo total", icon: "timer" },
+];
+
+const peakTemp = (p: Program) => Math.max(...p.profile.map((pt) => pt.temp));
+const totalTime = (p: Program) => p.profile.at(-1)?.t ?? 0;
+
+/** Parse "dd/mm/aaaa" to a timestamp; "Nunca" (or anything unparseable) sorts oldest. */
+function lastUsedTime(value: string): number {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])).getTime() : 0;
+}
+
+/** Programas screen: search/filter/sort over a paginated grid of program management cards. */
 export function ProgramasScreen({ programs }: { programs: Program[] }) {
   const [query, setQuery] = useState("");
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("default");
   const [page, setPage] = useState(0);
   const gridRef = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
@@ -36,14 +64,40 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
 
   const allPrograms = useAllPrograms(programs);
   const favoriteIds = useFavoriteIds();
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const favorites = new Set(favoriteIds);
     return allPrograms.filter((p) => {
       if (filterMode === "favorites" && !favorites.has(p.id)) return false;
+      if (filterMode === "unused" && p.runCount > 0) return false;
+      if (filterMode === "used" && p.runCount === 0) return false;
       return q ? p.name.toLowerCase().includes(q) : true;
     });
   }, [allPrograms, query, filterMode, favoriteIds]);
+
+  const sorted = useMemo(() => {
+    if (sortMode === "default") return filtered;
+    const arr = [...filtered];
+    switch (sortMode) {
+      case "recent":
+        arr.sort((a, b) => lastUsedTime(b.lastUsed) - lastUsedTime(a.lastUsed));
+        break;
+      case "most-used":
+        arr.sort((a, b) => b.runCount - a.runCount);
+        break;
+      case "name":
+        arr.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+        break;
+      case "temp":
+        arr.sort((a, b) => peakTemp(b) - peakTemp(a));
+        break;
+      case "duration":
+        arr.sort((a, b) => totalTime(b) - totalTime(a));
+        break;
+    }
+    return arr;
+  }, [filtered, sortMode]);
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));
@@ -51,9 +105,9 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
   // as earlier pages instead of stretching a lone row to fill the grid.
   const rowHeight = h > 0 ? (h - (rows - 1) * GAP) / rows : CARD_MIN_H;
   const perPage = cols * rows;
-  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pages = Math.max(1, Math.ceil(sorted.length / perPage));
   const activePage = Math.min(page, pages - 1);
-  const shown = filtered.slice(activePage * perPage, activePage * perPage + perPage);
+  const shown = sorted.slice(activePage * perPage, activePage * perPage + perPage);
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
@@ -68,7 +122,7 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
         </Link>
       </header>
 
-      {/* Search + filter */}
+      {/* Search + filter + sort */}
       <div className='flex flex-wrap items-center gap-3'>
         <label className='flex flex-1 items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5'>
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
@@ -82,13 +136,25 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
             className='w-full bg-transparent outline-none placeholder:opacity-60'
           />
         </label>
-        <FilterMenu
+        <SelectMenu
+          icon='filter_list'
+          options={FILTER_OPTIONS}
           value={filterMode}
-          favoriteCount={favoriteIds.length}
           onChange={(mode) => {
             setFilterMode(mode);
             setPage(0);
           }}
+          className='min-w-[13.5rem]'
+        />
+        <SelectMenu
+          icon='swap_vert'
+          options={SORT_OPTIONS}
+          value={sortMode}
+          onChange={(mode) => {
+            setSortMode(mode);
+            setPage(0);
+          }}
+          className='min-w-[13.5rem]'
         />
       </div>
 
@@ -101,12 +167,12 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
         {shown.map((program) => (
           <ProgramListCard key={program.id} program={program} />
         ))}
-        {filtered.length === 0 && <p className='opacity-60'>Nenhum programa encontrado.</p>}
+        {sorted.length === 0 && <p className='opacity-60'>Nenhum programa encontrado.</p>}
       </div>
 
       {/* Footer: pagination centered, new program on the right */}
       <footer className='grid grid-cols-[1fr_auto_1fr] items-center gap-4'>
-        <span className='text-sm opacity-70'>{`${filtered.length} programa${filtered.length === 1 ? "" : "s"}`}</span>
+        <span className='text-sm opacity-70'>{`${sorted.length} programa${sorted.length === 1 ? "" : "s"}`}</span>
         <Pagination pages={pages} active={activePage} onChange={setPage} />
         <Link href='/programas/novo' className='btn-action flex cursor-pointer items-center gap-2 justify-self-end rounded-xl px-4 py-2.5 font-semibold'>
           <IconGeneral icon='add' fill={0} className='[--icon-size:1.25rem]' />
@@ -171,72 +237,5 @@ function PagerArrow({ icon, label, onClick, disabled }: { icon: string; label: s
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
     </button>
-  );
-}
-
-/** "Filtrar por..." dropdown (currently: all vs. favorites only). */
-function FilterMenu({ value, favoriteCount, onChange }: { value: FilterMode; favoriteCount: number; onChange: (_mode: FilterMode) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  const label = value === "favorites" ? "Apenas favoritos" : "Todos os programas";
-
-  return (
-    <div ref={ref} className='relative'>
-      <button
-        type='button'
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup='listbox'
-        aria-expanded={open}
-        className='btn-press flex min-w-[15rem] items-center justify-between gap-2 rounded-xl border border-white/15 px-4 py-2.5'
-      >
-        <span className='flex items-center gap-2'>
-          <IconGeneral icon='filter_list' fill={0} className='opacity-70 [--icon-size:1.25rem]' />
-          <span className='opacity-80'>{label}</span>
-        </span>
-        <IconGeneral icon='expand_more' fill={0} className={clsx("[--icon-size:1.25rem] transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && (
-        <ul role='listbox' className='card absolute right-0 z-30 mt-2 w-full overflow-hidden rounded-xl border border-white/10 py-1'>
-          <FilterOption icon='list' label='Todos os programas' selected={value === "all"} onClick={() => onChange("all")} />
-          <FilterOption icon='star' label={favoriteCount ? `Apenas favoritos (${favoriteCount})` : "Apenas favoritos"} selected={value === "favorites"} onClick={() => onChange("favorites")} />
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function FilterOption({ icon, label, selected, onClick }: { icon: string; label: string; selected: boolean; onClick: () => void }) {
-  return (
-    <li>
-      <button
-        type='button'
-        role='option'
-        aria-selected={selected}
-        onClick={onClick}
-        className={clsx("flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left hover:bg-white/10", selected && "text-[var(--brand)]")}
-      >
-        <IconGeneral icon={icon} fill={selected ? 1 : 0} className='[--icon-size:1.25rem]' />
-        <span className='flex-1'>{label}</span>
-        {selected && <IconGeneral icon='check' fill={0} className='[--icon-size:1.125rem]' />}
-      </button>
-    </li>
   );
 }
