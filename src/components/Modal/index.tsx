@@ -66,7 +66,7 @@ export function Modal({ open, title, onClose, children, panelClassName }: IModal
             </button>
           </header>
         )}
-        <div className='min-h-0 flex-1 p-4'>{children}</div>
+        <div className='min-h-0 flex-1 overflow-y-auto p-4'>{children}</div>
       </div>
     </div>
   );

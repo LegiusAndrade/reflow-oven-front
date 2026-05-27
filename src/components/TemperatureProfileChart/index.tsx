@@ -29,15 +29,24 @@ function ticks(max: number, step: number): number[] {
 
 export interface ITemperatureProfileChartProps {
   points: ProfilePoint[];
+  /** Optional second curve drawn dashed (e.g. a "before"/"programmed" profile to compare against). */
+  comparePoints?: ProfilePoint[];
+  /** Optional point to flag on the chart (e.g. where a run faulted). */
+  marker?: { t: number; temp: number; label: string };
   className?: string;
 }
+
+/** Dashed-overlay color for `comparePoints` (amber reads as "previous/reference", distinct from the brand curve). */
+const COMPARE_COLOR = "#fbbf24";
+/** Fault-marker color (red). */
+const MARKER_COLOR = "#f87171";
 
 /**
  * Reflow profile (temperature × time) as a lightweight SVG line chart. It measures its
  * container and draws in real pixels; text uses Tailwind's fluid type scale. When the
  * rendered width is small it auto-switches to a compact preview (curve + peak, no axes).
  */
-export function TemperatureProfileChart({ points, className }: ITemperatureProfileChartProps) {
+export function TemperatureProfileChart({ points, comparePoints, marker, className }: ITemperatureProfileChartProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
 
@@ -58,19 +67,33 @@ export function TemperatureProfileChart({ points, className }: ITemperatureProfi
   // container can grow but not shrink back (a ResizeObserver feedback loop).
   return (
     <div ref={ref} className={`relative overflow-hidden ${className ?? ""}`}>
-      {ready ? <Plot points={points} w={w} h={h} /> : null}
+      {ready ? <Plot points={points} comparePoints={comparePoints} marker={marker} w={w} h={h} /> : null}
     </div>
   );
 }
 
-function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }) {
+function Plot({
+  points,
+  comparePoints,
+  marker,
+  w,
+  h,
+}: {
+  points: ProfilePoint[];
+  comparePoints?: ProfilePoint[];
+  marker?: { t: number; temp: number; label: string };
+  w: number;
+  h: number;
+}) {
   const compact = w < COMPACT_BELOW;
   const pad = compact ? PAD_COMPACT : PAD_FULL;
   const plotW = w - pad.left - pad.right;
   const plotH = h - pad.top - pad.bottom;
 
-  const maxTime = Math.max(...points.map((p) => p.t));
-  const maxTemp = Math.max(...points.map((p) => p.temp));
+  // Scale the axes to fit both curves when a compare overlay is present.
+  const allPoints = comparePoints && comparePoints.length >= 2 ? [...points, ...comparePoints] : points;
+  const maxTime = Math.max(...allPoints.map((p) => p.t));
+  const maxTemp = Math.max(...allPoints.map((p) => p.temp));
 
   const yStep = niceStep(maxTemp, 5);
   const yMax = Math.ceil(maxTemp / yStep) * yStep;
@@ -82,6 +105,10 @@ function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }
 
   const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.t).toFixed(1)},${sy(p.temp).toFixed(1)}`).join(" ");
   const areaPath = `${linePath} L${sx(maxTime).toFixed(1)},${sy(0).toFixed(1)} L${sx(0).toFixed(1)},${sy(0).toFixed(1)} Z`;
+  const comparePath =
+    comparePoints && comparePoints.length >= 2
+      ? comparePoints.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.t).toFixed(1)},${sy(p.temp).toFixed(1)}`).join(" ")
+      : null;
   const peak = points.reduce((a, b) => (b.temp > a.temp ? b : a));
 
   return (
@@ -127,6 +154,11 @@ function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }
       {/* Area under the curve */}
       <path d={areaPath} fill='url(#profile-area)' />
 
+      {/* Optional compare ("before") curve, dashed */}
+      {comparePath && (
+        <path d={comparePath} fill='none' stroke={COMPARE_COLOR} strokeWidth={compact ? 2 : 2.5} strokeDasharray='6 5' strokeLinejoin='round' strokeLinecap='round' />
+      )}
+
       {/* Setpoint curve */}
       <path d={linePath} fill='none' className='[stroke:var(--brand)]' strokeWidth={compact ? 2 : 3} strokeLinejoin='round' strokeLinecap='round' />
 
@@ -135,6 +167,18 @@ function Plot({ points, w, h }: { points: ProfilePoint[]; w: number; h: number }
       <text x={sx(peak.t)} y={sy(peak.temp) - 8} textAnchor='middle' className={peakLabelClass(compact)}>
         {`${Math.round(peak.temp)}°C`}
       </text>
+
+      {/* Fault marker (e.g. where a run failed) */}
+      {marker && (
+        <g>
+          <line x1={sx(marker.t)} y1={pad.top} x2={sx(marker.t)} y2={pad.top + plotH} stroke={MARKER_COLOR} strokeWidth={1.5} strokeDasharray='5 4' opacity={0.85} />
+          <circle cx={sx(marker.t)} cy={sy(marker.temp)} r={compact ? 4 : 5} fill={MARKER_COLOR} />
+          {/* Label at the foot of the line so it never collides with the peak label up top */}
+          <text x={sx(marker.t)} y={pad.top + plotH - 6} textAnchor='middle' fill={MARKER_COLOR} className={compact ? "text-sm font-semibold" : "text-base font-semibold"}>
+            {marker.label}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }
