@@ -3,13 +3,6 @@
 Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` no código
 (`grep -rn "TODO(backend)" src/`).
 
-## Relatórios (continuar)
-
-- [ ] **Paginação** nas tabelas (Execuções / Alterações / Erros), no mesmo estilo da paginação dos cards/gráficos.
-- [ ] **Execuções** — clicar no gráfico da linha abre a tela de detalhe da execução: **Report Detail Exec** (Figma).
-- [ ] **Alterações** — adicionar botão **Detalhe** que abre **Example Change Config** ou **Example Change Program** (Figma).
-- [ ] **Erros** — adicionar botão de detalhe que abre **Report Detail Error** (Figma).
-
 ## Próximas
 
 - [ ] **INICIAR** (card da tela inicial) — ligar o botão à execução de um programa.
@@ -33,3 +26,7 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 - [x] **Programas**: Ver Gráfico (modal), Editar, Deletar (confirmação + tombstones), Favoritar, busca, Organizar (ordenação), Filtrar por (favoritos/uso), paginação
 - [x] **Toasts** (criar/editar/deletar) e persistência local (localStorage)
 - [x] **Relatórios** — abas Execuções / Alterações / Erros com busca, filtro por aba e intervalo de datas (react-day-picker)
+- [x] **Relatórios — paginação** das tabelas (componente `Pagination` compartilhado; bloco fixo + scroll no 1024×600, responsivo em telas maiores)
+- [x] **Relatórios — detalhe de Execução** (overlay): gráfico Programado × Real com marcador da falha, detalhes, comparativo do perfil e timeline de eventos
+- [x] **Relatórios — detalhe de Erro** (overlay): snapshot multi-sinal interativo (liga/desliga séries + crosshair/tooltip), programa/ID/usuário, detalhes e eventos
+- [x] **Relatórios — detalhe de Alteração** (modal): config (bullets) ou programa (gráfico antes/depois sensível à ação Criado/Editado/Removido + diff de pontos)
