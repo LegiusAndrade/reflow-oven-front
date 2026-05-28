@@ -6,14 +6,15 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 ## Próximas
 
 - [ ] **INICIAR** (card da tela inicial) — ligar o botão à execução de um programa.
-- [ ] **Alterar Tema** (sidebar) — toggle claro/escuro (hoje é placeholder).
-- [ ] **Configuração** — tela real (hoje stub / ComingSoon).
 - [ ] **Informação** — tela real (hoje stub / ComingSoon).
+- [ ] **Diagnóstico** — ligar os autotestes/leituras ao backend (hoje mock).
 
 ## Integração com o backend
 
 - [ ] Disparar as **toasts** na resposta da API (sucesso/erro), não logo após a escrita local.
-- [ ] Substituir a persistência em **localStorage** (`src/lib/programStore.ts`) pela API/RS422.
+- [ ] Substituir a persistência em **localStorage** (`programStore`, `settingsStore`, `usersStore`, `sessionStore`) pela API/RS422.
+- [ ] **Autenticação real** (hoje mock: usuário existente + senha "1234") + recuperação de senha por e-mail.
+- [ ] Persistir o **tema** escolhido (hoje só na sessão).
 
 ## Feito
 
@@ -30,3 +31,7 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 - [x] **Relatórios — detalhe de Execução** (overlay): gráfico Programado × Real com marcador da falha, detalhes, comparativo do perfil e timeline de eventos
 - [x] **Relatórios — detalhe de Erro** (overlay): snapshot multi-sinal interativo (liga/desliga séries + crosshair/tooltip), programa/ID/usuário, detalhes e eventos
 - [x] **Relatórios — detalhe de Alteração** (modal): config (bullets) ou programa (gráfico antes/depois sensível à ação Criado/Editado/Removido + diff de pontos)
+- [x] **Configuração** — 5 abas: Geral (PID/forno/processo/tensão + mín/máx), Usuários (CRUD + validação de usuário/e-mail + sub-telas), Rede (teste de ping + IP Fixo desabilitando campos), Notificações (Tipo selecionável), Diagnóstico (leituras ao vivo + autotestes); persistência local
+- [x] **Login + permissões** — tela de senha (erro inline, recuperação por e-mail), sessão lembrada, papéis Admin (tudo) / Regular (Início + Programas) com guarda de rota e logout
+- [x] **Alterar Tema** — toggle claro/escuro na TopBar
+- [x] **TopBar** — usuário logado + papel + cronômetro de sessão ao vivo
