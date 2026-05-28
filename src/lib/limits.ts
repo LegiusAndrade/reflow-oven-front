@@ -46,5 +46,24 @@ export const CONFIG_VOLTAGE_MAX = 300;
 /** Network text fields (IP / mask / gateway / DNS) — max characters. */
 export const NETWORK_FIELD_MAX_LENGTH = 15;
 
-/** User name — max characters. */
+/** User name — min/max characters. */
+export const USER_NAME_MIN_LENGTH = 3;
 export const USER_NAME_MAX_LENGTH = 40;
+
+// --- Calibração (secret technician menu) -----------------------------------------------
+
+/** Thermocouple temperature offset (°C). */
+export const CALIB_THERMO_OFFSET_MIN = -20;
+export const CALIB_THERMO_OFFSET_MAX = 20;
+
+/** Current-sensor zero offset (A). */
+export const CALIB_CURRENT_OFFSET_MIN = -5;
+export const CALIB_CURRENT_OFFSET_MAX = 5;
+
+/** Sensor gain (%). */
+export const CALIB_GAIN_MIN = 50;
+export const CALIB_GAIN_MAX = 150;
+
+/** Fan PWM duty (%). */
+export const CALIB_PWM_MIN = 0;
+export const CALIB_PWM_MAX = 100;

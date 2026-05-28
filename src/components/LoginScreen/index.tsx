@@ -32,7 +32,7 @@ export function LoginScreen() {
       setError(result.error ?? "Falha no login.");
       return;
     }
-    router.replace("/");
+    router.replace(result.redirect ?? "/");
   };
 
   const recover = (e: React.FormEvent) => {

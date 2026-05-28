@@ -49,20 +49,35 @@ export function AppShell({ children }: IAppShellProps) {
     };
   }, [drawerOpen]);
 
-  // Auth guard: /login is always reachable (logged-in users skip it); every other route requires
-  // a session and a role allowed on it. Deferred until hydrated (so the persisted session loads).
+  // Auth guard (deferred until hydrated so the persisted session loads): /login is always
+  // reachable; a calibration session is isolated to /calibracao; otherwise the route needs a
+  // session and an allowed role. Normal users can't reach the secret /calibracao.
   const isLogin = pathname === "/login";
+  const isCalib = pathname === "/calibracao";
   useEffect(() => {
     if (!hydrated) return;
     if (isLogin) {
-      if (session) router.replace("/");
+      if (session) router.replace(session.calibration ? "/calibracao" : "/");
       return;
     }
-    if (!session) router.replace("/login");
-    else if (!canAccess(session.role, pathname)) router.replace("/");
-  }, [hydrated, isLogin, session, pathname, router]);
+    if (!session) {
+      router.replace("/login");
+      return;
+    }
+    if (session.calibration) {
+      if (!isCalib) router.replace("/calibracao");
+      return;
+    }
+    if (isCalib) {
+      router.replace("/");
+      return;
+    }
+    if (!canAccess(session.role, pathname)) router.replace("/");
+  }, [hydrated, isLogin, isCalib, session, pathname, router]);
 
-  const blocked = !hydrated || (isLogin ? Boolean(session) : !session || !canAccess(session.role, pathname));
+  const blocked =
+    !hydrated ||
+    (isLogin ? Boolean(session) : !session ? true : session.calibration ? !isCalib : isCalib || !canAccess(session.role, pathname));
   if (blocked) {
     return (
       <div className='text-fg grid h-screen place-items-center'>
