@@ -42,7 +42,7 @@ export function RedeTab() {
     <div className='flex h-full min-h-0 flex-col gap-5'>
       <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1'>
         <div className='flex flex-wrap gap-3'>
-          <TextLine label='Endereço IP' value={net.ip} onChange={(ip) => setNet({ ip })} maxLength={NETWORK_FIELD_MAX_LENGTH} placeholder='192.168.0.1' className='flex-1' disabled={net.staticIp} />
+          <TextLine label='Endereço IP' value={net.ip} onChange={(ip) => setNet({ ip })} maxLength={NETWORK_FIELD_MAX_LENGTH} placeholder='192.168.0.1' className='flex-1' disabled={!net.staticIp} />
           <TextLine
             label='Máscara Sub-Rede'
             value={net.mask}
@@ -50,7 +50,7 @@ export function RedeTab() {
             maxLength={NETWORK_FIELD_MAX_LENGTH}
             placeholder='255.255.255.0'
             className='flex-1'
-            disabled={net.staticIp}
+            disabled={!net.staticIp}
           />
           <TextLine
             label='Gateway Padrão'
@@ -59,7 +59,7 @@ export function RedeTab() {
             maxLength={NETWORK_FIELD_MAX_LENGTH}
             placeholder='192.168.0.1'
             className='flex-1'
-            disabled={net.staticIp}
+            disabled={!net.staticIp}
           />
         </div>
         <div className='flex flex-wrap gap-3'>
@@ -70,7 +70,7 @@ export function RedeTab() {
             maxLength={NETWORK_FIELD_MAX_LENGTH}
             placeholder='8.8.8.8'
             className='flex-1'
-            disabled={net.staticIp}
+            disabled={!net.staticIp}
           />
           <TextLine
             label='Servidor DNS Secundário'
@@ -79,7 +79,7 @@ export function RedeTab() {
             maxLength={NETWORK_FIELD_MAX_LENGTH}
             placeholder='8.8.4.4'
             className='flex-1'
-            disabled={net.staticIp}
+            disabled={!net.staticIp}
           />
         </div>
         <div className='flex items-center gap-3'>
