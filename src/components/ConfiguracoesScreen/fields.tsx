@@ -60,9 +60,10 @@ interface ITextLineProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  onPaste?: React.ClipboardEventHandler<HTMLInputElement>;
 }
 
-export function TextLine({ label, value, onChange, maxLength, placeholder, className, disabled }: ITextLineProps) {
+export function TextLine({ label, value, onChange, maxLength, placeholder, className, disabled, onPaste }: ITextLineProps) {
   return (
     <label className={clsx("flex min-w-[10rem] flex-col gap-1", className, disabled && "opacity-50")}>
       <span className='text-sm opacity-70'>{label}</span>
@@ -71,6 +72,7 @@ export function TextLine({ label, value, onChange, maxLength, placeholder, class
         maxLength={maxLength}
         placeholder={placeholder}
         disabled={disabled}
+        onPaste={onPaste}
         onChange={(e) => onChange(e.target.value)}
         className={clsx(INPUT_CLS, "tabular-nums placeholder:opacity-40", disabled && "cursor-not-allowed")}
       />

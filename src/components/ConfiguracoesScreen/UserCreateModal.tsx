@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
-import { USER_NAME_MAX_LENGTH } from "@/lib/limits";
+import { USER_NAME_MAX_LENGTH, USER_NAME_MIN_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 import { isValidEmail, isValidUsername, type UserStatus, type UserType, upsertUser, usernameExists } from "@/lib/users";
 import { Segmented, TextLine } from "./fields";
@@ -18,19 +18,22 @@ const TYPE_OPTIONS: { value: UserType; label: string; icon: string }[] = [
   { value: "Regular", label: "Regular", icon: "person" },
 ];
 
+// Anything not allowed in a username (everything except letters, digits, . _ -) is stripped on input.
+const DISALLOWED = /[^\p{L}\p{N}._-]/gu;
+
 const pad = (n: number) => String(n).padStart(2, "0");
 function nowStamp(): string {
   const d = new Date();
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(2)} - ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-/** Create a new user (username + e-mail validated). Fields reset each time the modal opens. */
+/** Create a new user. The username strips special characters as you type and blocks paste; the
+ *  Criar button stays disabled until the username (≥ min length, unique) and e-mail are valid. */
 export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<UserStatus>("Ativo");
   const [type, setType] = useState<UserType>("Regular");
-  const [error, setError] = useState("");
   const [wasOpen, setWasOpen] = useState(open);
 
   if (open !== wasOpen) {
@@ -40,20 +43,16 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
       setEmail("");
       setStatus("Ativo");
       setType("Regular");
-      setError("");
     }
   }
 
-  const handleCreate = () => {
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-    if (!trimmedName) return setError("Informe o usuário.");
-    if (!isValidUsername(trimmedName)) return setError("Usuário não pode conter espaços ou caracteres especiais.");
-    if (usernameExists(trimmedName)) return setError("Esse usuário já existe.");
-    if (!trimmedEmail) return setError("Informe o e-mail.");
-    if (!isValidEmail(trimmedEmail)) return setError("E-mail inválido.");
+  const trimmedName = name.trim();
+  const nameTaken = trimmedName.length > 0 && usernameExists(trimmedName);
+  const canSubmit = isValidUsername(trimmedName) && trimmedName.length >= USER_NAME_MIN_LENGTH && !nameTaken && isValidEmail(email.trim());
 
-    upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: trimmedEmail, status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
+  const handleCreate = () => {
+    if (!canSubmit) return;
+    upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
     // TODO(backend): create via the API and show the result.
     showToast("Usuário criado");
     onClose();
@@ -69,27 +68,17 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
               <TextLine
                 label='Usuário'
                 value={name}
-                onChange={(v) => {
-                  setName(v);
-                  setError("");
-                }}
+                onChange={(v) => setName(v.replace(DISALLOWED, ""))}
+                onPaste={(e) => e.preventDefault()}
                 maxLength={USER_NAME_MAX_LENGTH}
                 placeholder='ex.: joao.silva'
                 className='max-w-sm'
               />
-              <span className='text-xs opacity-50'>Sem espaços ou caracteres especiais (letras, números, . _ -).</span>
+              <span className='text-xs opacity-50'>Mínimo {USER_NAME_MIN_LENGTH} caracteres, sem espaços ou caracteres especiais (colar desativado).</span>
+              {nameTaken && <span className='text-xs text-red-400'>Esse usuário já existe.</span>}
             </div>
 
-            <TextLine
-              label='E-mail'
-              value={email}
-              onChange={(v) => {
-                setEmail(v);
-                setError("");
-              }}
-              placeholder='usuario@dominio.com'
-              className='max-w-sm'
-            />
+            <TextLine label='E-mail' value={email} onChange={setEmail} placeholder='usuario@dominio.com' className='max-w-sm' />
 
             <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
               <span className='opacity-60'>Status:</span>
@@ -99,8 +88,6 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
               <span className='opacity-60'>Tipo:</span>
               <Segmented options={TYPE_OPTIONS} value={type} onChange={setType} label='Tipo' />
             </div>
-
-            {error && <p className='text-sm text-red-400'>{error}</p>}
           </div>
         </section>
 
@@ -108,7 +95,12 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
           <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
             Cancelar
           </button>
-          <button type='button' onClick={handleCreate} className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'>
+          <button
+            type='button'
+            onClick={handleCreate}
+            disabled={!canSubmit}
+            className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'
+          >
             <IconGeneral icon='person_add' fill={0} className='[--icon-size:1.25rem]' />
             Criar
           </button>
