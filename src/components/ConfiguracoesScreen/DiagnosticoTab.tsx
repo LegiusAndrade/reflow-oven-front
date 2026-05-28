@@ -5,6 +5,7 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { MOCK_READINGS } from "@/lib/sensors";
+import { SystemLogModal } from "./SystemLogModal";
 
 type TestState = "idle" | "running" | "ok" | "fail";
 
@@ -21,6 +22,7 @@ const TESTS = [
 export function DiagnosticoTab() {
   const r = useLiveReadings(MOCK_READINGS);
   const [tests, setTests] = useState<Record<string, TestState>>({});
+  const [logOpen, setLogOpen] = useState(false);
 
   const runTest = (id: string) => {
     setTests((t) => ({ ...t, [id]: "running" }));
@@ -41,7 +43,17 @@ export function DiagnosticoTab() {
   return (
     <div className='flex h-full min-h-0 flex-col gap-5 overflow-y-auto pr-1'>
       <section>
-        <h3 className='mb-2 font-semibold'>Leituras ao vivo</h3>
+        <div className='mb-2 flex items-center justify-between gap-3'>
+          <h3 className='font-semibold'>Leituras ao vivo</h3>
+          <button
+            type='button'
+            onClick={() => setLogOpen(true)}
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold'
+          >
+            <IconGeneral icon='receipt_long' fill={0} className='[--icon-size:1.25rem]' />
+            Log do Sistema
+          </button>
+        </div>
         <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
           {sensors.map((s) => (
             <div key={s.label} className='flex items-center gap-3 rounded-xl border border-white/10 p-3'>
@@ -91,6 +103,8 @@ export function DiagnosticoTab() {
           ))}
         </ul>
       </section>
+
+      <SystemLogModal open={logOpen} onClose={() => setLogOpen(false)} />
     </div>
   );
 }
