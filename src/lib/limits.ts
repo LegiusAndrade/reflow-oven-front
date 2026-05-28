@@ -20,3 +20,31 @@ export const POINT_TEMP_MAX = 500;
 /** Per-point duration (seconds). */
 export const POINT_DURATION_MIN = 0;
 export const POINT_DURATION_MAX = 3600;
+
+// --- Configurações ---------------------------------------------------------------------
+
+/** PID gains (P, I, D) — allow fractional values. */
+export const PID_MIN = 0;
+export const PID_MAX = 1000;
+
+/** Oven maximum temperature (°C). */
+export const CONFIG_TEMP_MIN = 0;
+export const CONFIG_TEMP_MAX = 500;
+
+/** Fan speed (RPM). */
+export const CONFIG_FAN_RPM_MIN = 0;
+export const CONFIG_FAN_RPM_MAX = 10000;
+
+/** Process — max time beyond the program (seconds). */
+export const CONFIG_EXTRA_TIME_MIN = 0;
+export const CONFIG_EXTRA_TIME_MAX = 3600;
+
+/** Supply-voltage thresholds (V). */
+export const CONFIG_VOLTAGE_MIN = 0;
+export const CONFIG_VOLTAGE_MAX = 300;
+
+/** Network text fields (IP / mask / gateway / DNS) — max characters. */
+export const NETWORK_FIELD_MAX_LENGTH = 15;
+
+/** User name — max characters. */
+export const USER_NAME_MAX_LENGTH = 40;

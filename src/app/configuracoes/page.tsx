@@ -1,10 +1,10 @@
 import { AppShell } from "@/components/AppShell";
-import { ComingSoon } from "@/components/ComingSoon";
+import { ConfiguracoesScreen } from "@/components/ConfiguracoesScreen";
 
 export default function ConfiguracoesPage() {
   return (
     <AppShell>
-      <ComingSoon title='Configuração' />
+      <ConfiguracoesScreen />
     </AppShell>
   );
 }
