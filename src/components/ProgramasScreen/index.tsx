@@ -8,6 +8,8 @@ import { ProgramListCard } from "@/components/ProgramListCard";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { useAllPrograms } from "@/hooks/useAllPrograms";
 import { useFavoriteIds } from "@/hooks/useFavoriteIds";
+import { useSession } from "@/hooks/useSession";
+import { canManagePrograms } from "@/lib/auth";
 import type { Program } from "@/lib/programs";
 
 const CARD_MIN_W = 320;
@@ -64,6 +66,7 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
 
   const allPrograms = useAllPrograms(programs);
   const favoriteIds = useFavoriteIds();
+  const canManage = canManagePrograms(useSession()?.role ?? "Regular");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -174,10 +177,14 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
       <footer className='grid grid-cols-[1fr_auto_1fr] items-center gap-4'>
         <span className='text-sm opacity-70'>{`${sorted.length} programa${sorted.length === 1 ? "" : "s"}`}</span>
         <Pagination pages={pages} active={activePage} onChange={setPage} />
-        <Link href='/programas/novo' className='btn-action flex cursor-pointer items-center gap-2 justify-self-end rounded-xl px-4 py-2.5 font-semibold'>
-          <IconGeneral icon='add' fill={0} className='[--icon-size:1.25rem]' />
-          Novo Programa
-        </Link>
+        {canManage ? (
+          <Link href='/programas/novo' className='btn-action flex cursor-pointer items-center gap-2 justify-self-end rounded-xl px-4 py-2.5 font-semibold'>
+            <IconGeneral icon='add' fill={0} className='[--icon-size:1.25rem]' />
+            Novo Programa
+          </Link>
+        ) : (
+          <span />
+        )}
       </footer>
     </section>
   );

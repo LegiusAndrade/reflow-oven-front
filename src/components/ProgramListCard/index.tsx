@@ -8,6 +8,8 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import { useFavoriteIds } from "@/hooks/useFavoriteIds";
+import { useSession } from "@/hooks/useSession";
+import { canManagePrograms } from "@/lib/auth";
 import type { Program } from "@/lib/programs";
 import { deleteProgram, toggleFavorite } from "@/lib/programStore";
 import { showToast } from "@/lib/toast";
@@ -23,6 +25,7 @@ export function ProgramListCard({ program }: { program: Program }) {
   const router = useRouter();
   const [chartOpen, setChartOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const canManage = canManagePrograms(useSession()?.role ?? "Regular");
   const isFavorite = useFavoriteIds().includes(program.id);
   const peak = Math.max(...program.profile.map((p) => p.temp));
   const total = program.profile.at(-1)?.t ?? 0;
@@ -56,10 +59,14 @@ export function ProgramListCard({ program }: { program: Program }) {
 
       <div className='mt-auto flex items-center gap-1 text-[var(--brand)]'>
         <CardAction icon='monitoring' label='Ver Gráfico' onClick={() => setChartOpen(true)} />
-        <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
-        <CardAction icon='edit' label='Editar' onClick={() => router.push(`/programas/${encodeURIComponent(program.id)}/editar`)} />
-        <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
-        <CardAction icon='delete' label='Deletar' onClick={() => setConfirmDeleteOpen(true)} />
+        {canManage && (
+          <>
+            <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
+            <CardAction icon='edit' label='Editar' onClick={() => router.push(`/programas/${encodeURIComponent(program.id)}/editar`)} />
+            <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
+            <CardAction icon='delete' label='Deletar' onClick={() => setConfirmDeleteOpen(true)} />
+          </>
+        )}
       </div>
 
       <Modal open={chartOpen} title={program.name} onClose={() => setChartOpen(false)}>
