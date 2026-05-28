@@ -1,12 +1,17 @@
 "use client";
 
 import { clsx } from "clsx";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import BottomBar from "@/components/BottomBar";
+import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Sidebar } from "@/components/Sidebar";
 import { Toaster } from "@/components/Toaster";
 import TopBar from "@/components/TopBar";
+import { useHydrated } from "@/hooks/useHydrated";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
+import { useSession } from "@/hooks/useSession";
+import { canAccess } from "@/lib/auth";
 import { MOCK_READINGS } from "@/lib/sensors";
 
 export interface IAppShellProps {
@@ -20,10 +25,14 @@ export interface IAppShellProps {
  * Sidebar as a slide-out drawer (Esc/focus/inert handled here). Screens provide their
  * main content as `children`.
  */
-export function AppShell({ children, status = "Aguardando Iniciar Processo..." }: IAppShellProps) {
+export function AppShell({ children }: IAppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const liveReadings = useLiveReadings(MOCK_READINGS);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const hydrated = useHydrated();
+  const session = useSession();
 
   // While open: close on Esc, move focus into the drawer, and restore focus on close.
   useEffect(() => {
@@ -40,50 +49,76 @@ export function AppShell({ children, status = "Aguardando Iniciar Processo..." }
     };
   }, [drawerOpen]);
 
+  // Auth guard: /login is always reachable (logged-in users skip it); every other route requires
+  // a session and a role allowed on it. Deferred until hydrated (so the persisted session loads).
+  const isLogin = pathname === "/login";
+  useEffect(() => {
+    if (!hydrated) return;
+    if (isLogin) {
+      if (session) router.replace("/");
+      return;
+    }
+    if (!session) router.replace("/login");
+    else if (!canAccess(session.role, pathname)) router.replace("/");
+  }, [hydrated, isLogin, session, pathname, router]);
+
+  const blocked = !hydrated || (isLogin ? Boolean(session) : !session || !canAccess(session.role, pathname));
+  if (blocked) {
+    return (
+      <div className='text-fg grid h-screen place-items-center'>
+        <IconGeneral icon='progress_activity' fill={0} className='animate-spin opacity-60 [--icon-size:2.5rem]' />
+      </div>
+    );
+  }
+
   return (
     <div className='text-fg flex h-screen flex-col overflow-hidden'>
-      <TopBar status={status} statusNotification={{ amount: 3, status: "ACTIVE" }} connectedServer={true} signalWifi={{ signal: "OFF" }} />
+      <TopBar statusNotification={{ amount: 3, status: "ACTIVE" }} connectedServer={true} signalWifi={{ signal: "OFF" }} user={session} />
 
       {/* Content region between the bars. On xl+ the sidebar is docked (always open); below
           xl it bounds the slide-out drawer. */}
       <div className='relative flex min-h-0 flex-1'>
-        {/* Docked sidebar (xl and up) */}
-        {/* Docked sidebar (dock breakpoint): full height, flush against the top/bottom bars */}
-        <aside className='hidden h-full shrink-0 dock:block'>
-          <Sidebar />
-        </aside>
+        {/* Docked sidebar (dock breakpoint): full height, flush against the top/bottom bars.
+            Only when logged in — the login screen has no nav. */}
+        {session && (
+          <aside className='hidden h-full shrink-0 dock:block'>
+            <Sidebar />
+          </aside>
+        )}
 
         <main className='h-full flex-1 overflow-hidden p-[clamp(0.75rem,2vw,2rem)]'>{children}</main>
 
-        {/* Backdrop (drawer mode, below xl) */}
-        <div
-          aria-hidden='true'
-          onClick={() => setDrawerOpen(false)}
-          className={clsx(
-            "absolute inset-0 z-40 bg-black/50 transition-opacity duration-300 dock:hidden",
-            drawerOpen ? "opacity-100" : "pointer-events-none opacity-0"
-          )}
-        />
-
-        {/* Slide-out navigation drawer (below xl) */}
-        <div
-          ref={drawerRef}
-          role='dialog'
-          aria-modal='true'
-          aria-label='Menu de navegação'
-          inert={!drawerOpen}
-          className={clsx(
-            "absolute inset-y-0 left-0 z-50 w-fit transition-transform duration-300 dock:hidden",
-            drawerOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <Sidebar className='rounded-xl' />
-        </div>
+        {/* Drawer + backdrop (below the dock breakpoint), only when logged in */}
+        {session && (
+          <>
+            <div
+              aria-hidden='true'
+              onClick={() => setDrawerOpen(false)}
+              className={clsx(
+                "absolute inset-0 z-40 bg-black/50 transition-opacity duration-300 dock:hidden",
+                drawerOpen ? "opacity-100" : "pointer-events-none opacity-0"
+              )}
+            />
+            <div
+              ref={drawerRef}
+              role='dialog'
+              aria-modal='true'
+              aria-label='Menu de navegação'
+              inert={!drawerOpen}
+              className={clsx(
+                "absolute inset-y-0 left-0 z-50 w-fit transition-transform duration-300 dock:hidden",
+                drawerOpen ? "translate-x-0" : "-translate-x-full"
+              )}
+            >
+              <Sidebar className='rounded-xl' />
+            </div>
+          </>
+        )}
 
         <Toaster />
       </div>
 
-      <BottomBar readings={liveReadings} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} />
+      <BottomBar readings={liveReadings} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} showMenu={Boolean(session)} />
     </div>
   );
 }

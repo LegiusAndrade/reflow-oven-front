@@ -8,6 +8,8 @@ export interface IBottomBarProps {
   menuOpen?: boolean;
   /** Toggles the navigation drawer. */
   onMenuClick?: () => void;
+  /** Hide the hamburger when there's no navigation to reach (e.g. logged out). */
+  showMenu?: boolean;
 }
 
 function Reading({ icon, value }: { icon: string; value: string }) {
@@ -27,15 +29,17 @@ function Divider() {
  * Persistent bottom bar shown on every screen: a hamburger menu on the left and
  * the live sensor strip on the right (board/oven temps, fan RPMs, voltage @ current).
  */
-export default function BottomBar({ readings, menuOpen = false, onMenuClick }: IBottomBarProps) {
+export default function BottomBar({ readings, menuOpen = false, onMenuClick, showMenu = true }: IBottomBarProps) {
   const { boardTempC, boardFanRpm, ovenTempC, ovenFanRpm, voltageV, currentA } = readings;
 
   return (
     <div className='bottom-bar flex select-none items-center gap-4 rounded-t-xl px-6 py-3'>
-      {/* Hidden when the sidebar is docked (large + tall screens); shown otherwise */}
-      <span className='dock:hidden'>
-        <MenuToggle open={menuOpen} onClick={onMenuClick} />
-      </span>
+      {/* Hidden when the sidebar is docked (large + tall screens) or there's no nav (logged out) */}
+      {showMenu && (
+        <span className='dock:hidden'>
+          <MenuToggle open={menuOpen} onClick={onMenuClick} />
+        </span>
+      )}
 
       <div className='ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-base tabular-nums sm:text-lg'>
         <Reading icon='developer_board' value={`${boardTempC} ºC`} />
