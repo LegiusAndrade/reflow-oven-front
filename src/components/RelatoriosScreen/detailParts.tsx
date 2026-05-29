@@ -40,7 +40,7 @@ export function DetailShell({ title, onClose, children }: { title: string; onClo
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </button>
       </header>
-      <div className='min-h-0 flex-1 overflow-y-auto pr-1'>{children}</div>
+      <div className='min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]'>{children}</div>
     </div>
   );
 }

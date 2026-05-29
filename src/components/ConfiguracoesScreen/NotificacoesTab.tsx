@@ -1,5 +1,6 @@
 "use client";
 
+import { TableScrollBox } from "@/components/TableScrollBox";
 import { showToast } from "@/lib/toast";
 import type { BuzzerSound, NotificationKind, NotificationProcess } from "@/lib/settings";
 import { FormFooter, Segmented, Toggle, useSettingsDraft } from "./fields";
@@ -24,39 +25,52 @@ export function NotificacoesTab() {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
-      <div className='min-h-0 flex-1 overflow-auto rounded-xl border border-white/10'>
-        <table className='w-full border-collapse text-left'>
-          <thead className='sticky top-0 z-10 text-sm'>
-            <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
-              <th className='w-12'>#</th>
-              <th>Alerta</th>
-              <th>Processo</th>
-              <th>Buzzer</th>
-              <th>Som do Buzzer</th>
-              <th>Tipo de Notificação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {draft.notifications.map((n, i) => (
-              <tr key={n.id} className='border-t border-white/10 [&>td]:px-4 [&>td]:py-3'>
-                <td className='tabular-nums opacity-70'>{i + 1}</td>
-                <td className='font-medium'>{n.alert}</td>
-                <td>
-                  <Segmented options={PROCESS_OPTIONS} value={n.process} onChange={(process) => patch(n.id, { process })} label={`Processo — ${n.alert}`} />
-                </td>
-                <td>
-                  <Toggle checked={n.buzzer} onChange={(buzzer) => patch(n.id, { buzzer })} label={`Buzzer — ${n.alert}`} />
-                </td>
-                <td>
-                  <Segmented options={SOUND_OPTIONS} value={n.sound} onChange={(sound) => patch(n.id, { sound })} label={`Som — ${n.alert}`} disabled={!n.buzzer} />
-                </td>
-                <td>
-                  <KindSelect value={n.kind} onChange={(kind) => patch(n.id, { kind })} />
-                </td>
+      <div className='min-h-0 flex-1'>
+        <TableScrollBox>
+          <table className='w-full border-collapse text-left'>
+            <thead className='sticky top-0 z-10 text-sm'>
+              <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
+                <th className='w-12'>#</th>
+                <th>Alerta</th>
+                <th>Processo</th>
+                <th>Buzzer</th>
+                <th>Som do Buzzer</th>
+                <th>Tipo de Notificação</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {draft.notifications.map((n, i) => (
+                <tr key={n.id} className='border-t border-white/10 [&>td]:px-4 [&>td]:py-3'>
+                  <td className='tabular-nums opacity-70'>{i + 1}</td>
+                  <td className='font-medium'>{n.alert}</td>
+                  <td>
+                    <Segmented
+                      options={PROCESS_OPTIONS}
+                      value={n.process}
+                      onChange={(process) => patch(n.id, { process })}
+                      label={`Processo — ${n.alert}`}
+                    />
+                  </td>
+                  <td>
+                    <Toggle checked={n.buzzer} onChange={(buzzer) => patch(n.id, { buzzer })} label={`Buzzer — ${n.alert}`} />
+                  </td>
+                  <td>
+                    <Segmented
+                      options={SOUND_OPTIONS}
+                      value={n.sound}
+                      onChange={(sound) => patch(n.id, { sound })}
+                      label={`Som — ${n.alert}`}
+                      disabled={!n.buzzer}
+                    />
+                  </td>
+                  <td>
+                    <KindSelect value={n.kind} onChange={(kind) => patch(n.id, { kind })} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScrollBox>
       </div>
 
       <FormFooter

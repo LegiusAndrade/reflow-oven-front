@@ -7,6 +7,7 @@ import { DatePicker } from "@/components/DatePicker";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
+import { TableScrollBox } from "@/components/TableScrollBox";
 import type { ChangeLogEntry, ErrorLogEntry, ExecutionReport } from "@/lib/reports";
 import { ActionBadge, SeverityBadge, StatusBadge } from "./badges";
 import { ChangeDetail } from "./ChangeDetail";
@@ -125,7 +126,8 @@ export function RelatoriosScreen({
     (c) => inRange(c.at, startDate, endDate) && (filter === "all" || c.action === filter) && (!q || c.target.toLowerCase().includes(q))
   );
   const visibleErrors = errors.filter(
-    (x) => inRange(x.at, startDate, endDate) && (filter === "all" || x.severity === filter) && (!q || `${x.code} ${x.message}`.toLowerCase().includes(q))
+    (x) =>
+      inRange(x.at, startDate, endDate) && (filter === "all" || x.severity === filter) && (!q || `${x.code} ${x.message}`.toLowerCase().includes(q))
   );
 
   const count = tab === "execucoes" ? visibleExecutions.length : tab === "alteracoes" ? visibleChanges.length : visibleErrors.length;
@@ -149,7 +151,11 @@ export function RelatoriosScreen({
     <section className='card relative flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
       <header className='flex items-center justify-between gap-4 border-b border-white/10 pb-3'>
         <h1 className='text-2xl font-semibold'>Relatórios</h1>
-        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'>
+        <Link
+          href='/'
+          aria-label='Fechar'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'
+        >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
       </header>
@@ -231,7 +237,11 @@ export function RelatoriosScreen({
         )}
         {tab === "alteracoes" && <ChangesTable changes={visibleChanges.slice(start, start + perPage)} startIndex={start} onOpen={openChange} />}
         {tab === "erros" && (
-          <ErrorsTable errors={visibleErrors.slice(start, start + perPage)} startIndex={start} onOpen={(err) => setDetail({ kind: "error", data: err })} />
+          <ErrorsTable
+            errors={visibleErrors.slice(start, start + perPage)}
+            startIndex={start}
+            onOpen={(err) => setDetail({ kind: "error", data: err })}
+          />
         )}
       </div>
 
@@ -262,9 +272,9 @@ export function RelatoriosScreen({
 /** Bordered wrapper shared by the report tables; fills the measured table area. */
 function TableShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className='h-full overflow-y-auto rounded-xl border border-white/10'>
+    <TableScrollBox>
       <table className='w-full border-collapse text-left'>{children}</table>
-    </div>
+    </TableScrollBox>
   );
 }
 

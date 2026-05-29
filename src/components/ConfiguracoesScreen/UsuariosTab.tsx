@@ -6,6 +6,7 @@ import { DatePicker } from "@/components/DatePicker";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
+import { TableScrollBox } from "@/components/TableScrollBox";
 import { useStore } from "@/hooks/useStore";
 import { showToast } from "@/lib/toast";
 import { removeUser, type User, usersStore } from "@/lib/users";
@@ -162,7 +163,7 @@ export function UsuariosTab() {
 
       {/* Table */}
       <div ref={tableAreaRef} className='min-h-0 flex-1'>
-        <div className='h-full overflow-auto rounded-xl border border-white/10'>
+        <TableScrollBox>
           <table className='w-full border-collapse text-left'>
             <thead className='sticky top-0 z-10 text-sm'>
               <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
@@ -202,7 +203,7 @@ export function UsuariosTab() {
               )}
             </tbody>
           </table>
-        </div>
+        </TableScrollBox>
       </div>
 
       {/* Footer: count + pagination */}

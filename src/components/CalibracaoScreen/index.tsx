@@ -44,7 +44,7 @@ export function CalibracaoScreen() {
         </button>
       </header>
 
-      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1'>
+      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto [scrollbar-gutter:stable]'>
         <p className='text-sm opacity-70'>Menu reservado de calibração dos sensores e atuadores. Ajuste com cuidado.</p>
 
         <FieldGroup title='Termopar (Tipo-K)'>
