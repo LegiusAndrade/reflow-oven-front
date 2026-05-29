@@ -6,9 +6,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { useStore } from "@/hooks/useStore";
-import { cleanupStore, type CleanupId, performCleanup } from "@/lib/maintenance";
-import { MOCK_CHANGES, MOCK_ERRORS, MOCK_EXECUTIONS } from "@/lib/reports";
-import { MOCK_LOGS } from "@/lib/logs";
+import { cleanupStore, type CleanupId, formatBytes, performCleanup, recordCount, recordSizeBytes } from "@/lib/maintenance";
 import { showToast } from "@/lib/toast";
 import { usersStore } from "@/lib/users";
 
@@ -36,21 +34,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
     }
   }
 
-  const inactiveCount = users.filter((u) => u.status === "Inativo").length;
-  const countOf = (id: CleanupId): number => {
-    switch (id) {
-      case "execucoes":
-        return cleared.execucoes ? 0 : MOCK_EXECUTIONS.length;
-      case "alteracoes":
-        return cleared.alteracoes ? 0 : MOCK_CHANGES.length;
-      case "falhas":
-        return cleared.falhas ? 0 : MOCK_ERRORS.length;
-      case "logs":
-        return cleared.logs ? 0 : MOCK_LOGS.length;
-      case "inativos":
-        return inactiveCount;
-    }
-  };
+  const countOf = (id: CleanupId): number => recordCount(id, cleared, users);
 
   const toggle = (id: CleanupId) =>
     setSelected((prev) => {
@@ -66,12 +50,12 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
 
   const chosen = [...selected].filter((id) => countOf(id) > 0);
   const totalRecords = chosen.reduce((sum, id) => sum + countOf(id), 0);
+  const totalBytes = chosen.reduce((sum, id) => sum + recordSizeBytes(id, countOf(id)), 0);
 
   const runCleanup = () => {
     performCleanup(chosen);
-    const labels = chosen.map((id) => CATEGORIES.find((c) => c.id === id)!.label.toLowerCase());
     // TODO(backend): show this on the API success response.
-    showToast(`Limpeza concluída — ${totalRecords} ${totalRecords === 1 ? "registro removido" : "registros removidos"} (${labels.join(", ")})`);
+    showToast(`Limpeza concluída — ${totalRecords} ${totalRecords === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
     setConfirming(false);
     onClose();
   };
@@ -95,6 +79,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
           <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto [scrollbar-gutter:stable]'>
             {CATEGORIES.map((c) => {
               const count = countOf(c.id);
+              const size = recordSizeBytes(c.id, count);
               const empty = count === 0;
               const checked = selected.has(c.id);
               return (
@@ -118,8 +103,8 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
                       <p className='font-medium'>{c.label}</p>
                       <p className='truncate text-sm opacity-60'>{c.hint}</p>
                     </div>
-                    <span className='shrink-0 rounded-md bg-white/10 px-2 py-0.5 text-sm font-semibold tabular-nums'>
-                      {empty ? "vazio" : count}
+                    <span className='shrink-0 rounded-md bg-white/10 px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
+                      {empty ? "vazio" : `${count} · ${formatBytes(size)}`}
                     </span>
                   </label>
                 </li>
@@ -138,7 +123,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
               className='btn-press flex cursor-pointer items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-40'
             >
               <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
-              Limpar{chosen.length ? ` (${totalRecords})` : ""}
+              Limpar{chosen.length ? ` (${formatBytes(totalBytes)})` : ""}
             </button>
           </div>
         </div>
@@ -149,7 +134,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
         tone='danger'
         icon='delete_forever'
         title='Confirmar limpeza?'
-        description={`${totalRecords} ${totalRecords === 1 ? "registro será removido" : "registros serão removidos"} em ${chosen.length} ${chosen.length === 1 ? "categoria" : "categorias"}. Esta ação não pode ser desfeita.`}
+        description={`${totalRecords} ${totalRecords === 1 ? "registro" : "registros"} (${formatBytes(totalBytes)}) em ${chosen.length} ${chosen.length === 1 ? "categoria" : "categorias"} ${totalRecords === 1 ? "será removido" : "serão removidos"}. Esta ação não pode ser desfeita.`}
         confirmLabel='Limpar'
         cancelLabel='Voltar'
         onConfirm={runCleanup}

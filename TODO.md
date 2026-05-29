@@ -5,10 +5,8 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ## Próximas
 
-- [ ] **INICIAR** (card da tela inicial) — ligar o botão à execução de um programa.
-- [ ] **Diagnóstico — limpeza do banco** — modal com checkboxes do que limpar (logs de usuários [criados/deletados/alterados], de programas [criado/alterado/...], falhas, usuários inativos).
-- [ ] **Diagnóstico — reset de fábrica** — botão que zera tudo deixando 1 programa e 1 usuário admin.
 - [ ] **Diagnóstico** — ligar os autotestes/leituras ao backend (hoje mock).
+- [ ] **Execução** — persistir o relatório da run ao concluir e refletir em Relatórios/Estatísticas (hoje a run é simulada, sem persistência).
 
 ## Integração com o backend
 
@@ -38,3 +36,6 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 - [x] **TopBar** — usuário logado + papel + cronômetro de sessão ao vivo
 - [x] **Informação** — versões/armazenamento/IP em card "Sistema" + um card por placa (Potência/Controle: versão, S/N, horímetro) + logo PandeWilly e QR do repositório
 - [x] **Diagnóstico — estatísticas & rankings** — visão geral (programas, execuções, falhas, usuários ativos/inativos, admins), falhas por tipo (barras por severidade) e rankings Top-N editáveis de usuários (logins) e programas (uso)
+- [x] **Diagnóstico — sub-abas** — Estatísticas / Sensores (leituras + autotestes) / Manutenção
+- [x] **Diagnóstico — Manutenção** — info de sistema (tamanho do banco, espaço livre no HD, SO, versão do Linux), Limpeza do banco (modal com quantidade + tamanho por categoria, respeitando flags em Relatórios/Logs/Estatísticas) e Reset de fábrica (type-to-confirm, deixa 1 admin + 1 programa)
+- [x] **INICIAR** — botão da tela inicial abre a execução ao vivo (setpoint × curva medida progressiva + marcador, fase, tempo, progresso, leituras; parar/concluir; simulação real-time mock)

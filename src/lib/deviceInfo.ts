@@ -14,6 +14,8 @@ export type DeviceInfo = {
   backendVersion: string;
   /** Board IP address. */
   boardIp: string;
+  /** Host operating system (the single-board computer running this UI). */
+  os: { name: string; kernel: string };
   power: BoardInfo;
   control: BoardInfo;
 };
@@ -26,6 +28,7 @@ export const DEVICE_INFO: DeviceInfo = {
   htmlVersion: "0.1.0",
   backendVersion: "2.0.1",
   boardIp: "192.168.0.50",
+  os: { name: "Armbian 23.11 (Debian Bookworm)", kernel: "Linux 6.1.63-current" },
   power: { version: "Rev. C", serial: "PWR-2024-0042", hours: 842 },
   control: { version: "Rev. B", serial: "CTRL-2024-0001", hours: 1287 },
 };

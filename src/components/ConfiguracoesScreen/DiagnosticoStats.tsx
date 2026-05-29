@@ -117,8 +117,6 @@ export function DiagnosticoStats() {
 
   return (
     <section className='flex flex-col gap-4'>
-      <h3 className='font-semibold'>Estatísticas</h3>
-
       {/* Overview counts */}
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
         <StatCard icon='article' label='Programas cadastrados' value={ps.total} />

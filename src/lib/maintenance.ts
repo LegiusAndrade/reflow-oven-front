@@ -10,8 +10,10 @@
 
 import { sessionStore } from "./auth";
 import { createJsonStore } from "./localStore";
+import { MOCK_LOGS } from "./logs";
 import type { Program } from "./programs";
 import { resetPrograms } from "./programStore";
+import { MOCK_CHANGES, MOCK_ERRORS, MOCK_EXECUTIONS } from "./reports";
 import { DEFAULT_SETTINGS, settingsStore } from "./settings";
 import { type User, usersStore } from "./users";
 
@@ -29,6 +31,56 @@ export const LOG_CLEANUP_IDS: CleanupId[] = ["execucoes", "alteracoes", "falhas"
 /** Whether a log/record category is currently flagged as cleared (reactive via `cleanupStore`). */
 export function isCleared(state: CleanupState, id: CleanupId): boolean {
   return Boolean(state[id]);
+}
+
+// --- Sizes (mock) ----------------------------------------------------------------------
+
+/** Approximate stored size of one record per category, in bytes (mock estimate). */
+export const BYTES_PER_RECORD: Record<CleanupId, number> = {
+  execucoes: 8_400,
+  alteracoes: 3_600,
+  falhas: 12_800,
+  logs: 240,
+  inativos: 1_100,
+};
+
+/** Baseline DB size (schema, settings, programs, active users) before clearable records. */
+const DB_BASE_BYTES = 384 * 1024;
+
+const ALL_CLEANUP_IDS: CleanupId[] = ["execucoes", "alteracoes", "falhas", "logs", "inativos"];
+
+/** How many records a category currently holds (a cleared log category reports 0). */
+export function recordCount(id: CleanupId, state: CleanupState, users: User[]): number {
+  switch (id) {
+    case "execucoes":
+      return state.execucoes ? 0 : MOCK_EXECUTIONS.length;
+    case "alteracoes":
+      return state.alteracoes ? 0 : MOCK_CHANGES.length;
+    case "falhas":
+      return state.falhas ? 0 : MOCK_ERRORS.length;
+    case "logs":
+      return state.logs ? 0 : MOCK_LOGS.length;
+    case "inativos":
+      return users.filter((u) => u.status === "Inativo").length;
+  }
+}
+
+/** Estimated stored size of a category, in bytes (mock). */
+export function recordSizeBytes(id: CleanupId, count: number): number {
+  return count * BYTES_PER_RECORD[id];
+}
+
+/** Total database size in bytes: a fixed baseline plus the live record sizes (mock). */
+export function databaseSizeBytes(state: CleanupState, users: User[]): number {
+  return DB_BASE_BYTES + ALL_CLEANUP_IDS.reduce((sum, id) => sum + recordSizeBytes(id, recordCount(id, state, users)), 0);
+}
+
+/** Human-readable byte size, e.g. "1.4 MB" / "240 KB" / "12 B". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
 }
 
 /** Run a cleanup over the selected categories: remove inactive users for real, flag the rest. */
