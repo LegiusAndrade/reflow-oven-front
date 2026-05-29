@@ -1,4 +1,4 @@
-import type { Program } from "./programs";
+import { MOCK_PROGRAMS, type Program } from "./programs";
 
 /** localStorage key for user-created programs (bump the suffix if the shape changes). */
 const STORAGE_KEY = "reflow:programs:v1";
@@ -144,6 +144,22 @@ function persist(programs: Program[]): void {
 export function upsertStoredProgram(program: Program): void {
   const others = loadStoredPrograms().filter((p) => p.id !== program.id);
   persist([program, ...others]);
+}
+
+/**
+ * Replace the entire program set (factory reset): keep only the given programs as stored,
+ * tombstone every seed program so none reappear, and drop all favorites. TODO(backend).
+ */
+export function resetPrograms(programs: Program[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
+    window.localStorage.setItem(HIDDEN_KEY, JSON.stringify(MOCK_PROGRAMS.map((p) => p.id)));
+    window.localStorage.setItem(FAVORITES_KEY, JSON.stringify([]));
+    window.dispatchEvent(new Event(PROGRAMS_CHANGED_EVENT));
+  } catch {
+    // Best-effort — ignore quota/serialization failures.
+  }
 }
 
 /** Delete a program: drop any stored copy and tombstone the id so seed programs stay gone. */

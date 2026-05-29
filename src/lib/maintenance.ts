@@ -8,8 +8,12 @@
  * board/server instead of flagging them client-side.
  */
 
+import { sessionStore } from "./auth";
 import { createJsonStore } from "./localStore";
-import { usersStore } from "./users";
+import type { Program } from "./programs";
+import { resetPrograms } from "./programStore";
+import { DEFAULT_SETTINGS, settingsStore } from "./settings";
+import { type User, usersStore } from "./users";
 
 /** Clearable record categories. "inativos" is a real user removal; the rest are log/record flags. */
 export type CleanupId = "execucoes" | "alteracoes" | "falhas" | "logs" | "inativos";
@@ -40,4 +44,50 @@ export function performCleanup(ids: CleanupId[]): void {
       return next;
     });
   }
+}
+
+// --- Factory reset ---------------------------------------------------------------------
+
+/** The single Admin account left after a factory reset (logs in with the mock password). */
+const FACTORY_ADMIN: User = {
+  id: "user-admin",
+  name: "Admin",
+  email: "admin@reflow.local",
+  type: "Admin",
+  status: "Ativo",
+  createdAt: "01/01/25 - 00:00:00",
+  lastLogin: "—",
+  events: [],
+};
+
+/** The single default program left after a factory reset. */
+const FACTORY_PROGRAM: Program = {
+  id: "factory-default",
+  name: "Perfil Padrão",
+  runCount: 0,
+  lastUsed: "Nunca",
+  profile: [
+    { t: 0, temp: 25 },
+    { t: 90, temp: 150 },
+    { t: 180, temp: 180 },
+    { t: 210, temp: 217 },
+    { t: 240, temp: 245 },
+    { t: 270, temp: 210 },
+    { t: 330, temp: 120 },
+    { t: 390, temp: 45 },
+  ],
+};
+
+/**
+ * Wipe the device to a clean factory state: one Admin user, one default program, default
+ * settings, empty history/logs, and no session (the caller should redirect to /login).
+ * TODO(backend): perform the reset on the board/server.
+ */
+export function factoryReset(): void {
+  usersStore.set([FACTORY_ADMIN]);
+  resetPrograms([FACTORY_PROGRAM]);
+  settingsStore.set(DEFAULT_SETTINGS);
+  // A factory unit has no history — flag every log/record category as cleared.
+  cleanupStore.set({ execucoes: true, alteracoes: true, falhas: true, logs: true });
+  sessionStore.set(null);
 }

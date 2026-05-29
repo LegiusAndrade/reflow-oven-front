@@ -7,6 +7,7 @@ import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { MOCK_READINGS } from "@/lib/sensors";
 import { DbCleanupModal } from "./DbCleanupModal";
 import { DiagnosticoStats } from "./DiagnosticoStats";
+import { FactoryResetModal } from "./FactoryResetModal";
 import { SystemLogModal } from "./SystemLogModal";
 
 type TestState = "idle" | "running" | "ok" | "fail";
@@ -26,6 +27,7 @@ export function DiagnosticoTab() {
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [logOpen, setLogOpen] = useState(false);
   const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
 
   const runTest = (id: string) => {
     setTests((t) => ({ ...t, [id]: "running" }));
@@ -120,11 +122,20 @@ export function DiagnosticoTab() {
             <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
             Limpeza do banco
           </button>
+          <button
+            type='button'
+            onClick={() => setResetOpen(true)}
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-400 hover:bg-red-500/10'
+          >
+            <IconGeneral icon='restart_alt' fill={0} className='[--icon-size:1.25rem]' />
+            Reset de fábrica
+          </button>
         </div>
       </section>
 
       <SystemLogModal open={logOpen} onClose={() => setLogOpen(false)} />
       <DbCleanupModal open={cleanupOpen} onClose={() => setCleanupOpen(false)} />
+      <FactoryResetModal open={resetOpen} onClose={() => setResetOpen(false)} />
     </div>
   );
 }
