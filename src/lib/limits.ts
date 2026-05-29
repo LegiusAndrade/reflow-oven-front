@@ -50,6 +50,13 @@ export const NETWORK_FIELD_MAX_LENGTH = 15;
 export const USER_NAME_MIN_LENGTH = 3;
 export const USER_NAME_MAX_LENGTH = 40;
 
+// --- Diagnóstico (statistics rankings) -------------------------------------------------
+
+/** How many entries the "top users / top programs" rankings can show (operator-adjustable). */
+export const DIAG_RANK_MIN = 3;
+export const DIAG_RANK_MAX = 10;
+export const DIAG_RANK_DEFAULT = 5;
+
 // --- Calibração (secret technician menu) -----------------------------------------------
 
 /** Thermocouple temperature offset (°C). */

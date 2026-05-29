@@ -326,7 +326,11 @@ export type ErrorLogEntry = {
   snapshot: FailureSnapshot;
 };
 
-const FAULTS: { severity: ErrorSeverity; code: string; message: string }[] = [
+/** The fault types the power board can raise (severity + code + message). Shared by the Erros
+ *  report and the Diagnóstico statistics (fault counts per type). */
+export type FaultType = { severity: ErrorSeverity; code: string; message: string };
+
+export const FAULT_CATALOG: FaultType[] = [
   { severity: "Crítico", code: "E-101", message: "Sobretemperatura na grelha (termopar tipo-K)" },
   { severity: "Crítico", code: "E-102", message: "Falha de leitura do termopar tipo-K" },
   { severity: "Crítico", code: "E-110", message: "Sobrecorrente detectada (sensor Hall)" },
@@ -389,7 +393,7 @@ function genSnapshot(seed: number, durationSec = 60): FailureSnapshot {
 
 /** Deterministic mock fault log (list + detail). */
 export const MOCK_ERRORS: ErrorLogEntry[] = Array.from({ length: 12 }, (_, i) => {
-  const fault = FAULTS[i % FAULTS.length];
+  const fault = FAULT_CATALOG[i % FAULT_CATALOG.length];
   const day = String((i % 28) + 1).padStart(2, "0");
   const hour = String((6 + (i % 16)) % 24).padStart(2, "0");
   const min = (i * 17) % 60;

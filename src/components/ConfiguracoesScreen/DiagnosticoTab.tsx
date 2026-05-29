@@ -5,6 +5,7 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { MOCK_READINGS } from "@/lib/sensors";
+import { DiagnosticoStats } from "./DiagnosticoStats";
 import { SystemLogModal } from "./SystemLogModal";
 
 type TestState = "idle" | "running" | "ok" | "fail";
@@ -41,7 +42,9 @@ export function DiagnosticoTab() {
   ];
 
   return (
-    <div className='flex h-full min-h-0 flex-col gap-5 overflow-y-auto pr-1'>
+    <div className='flex h-full min-h-0 flex-col gap-5 overflow-y-auto [scrollbar-gutter:stable]'>
+      <DiagnosticoStats />
+
       <section>
         <div className='mb-2 flex items-center justify-between gap-3'>
           <h3 className='font-semibold'>Leituras ao vivo</h3>
