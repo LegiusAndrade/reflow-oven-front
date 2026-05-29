@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramCard } from "@/components/ProgramCard";
+import { RunModal } from "@/components/RunModal";
 import { useAllPrograms } from "@/hooks/useAllPrograms";
 import type { Program } from "@/lib/programs";
 
@@ -23,6 +24,7 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
   const [page, setPage] = useState(0);
+  const [runProgram, setRunProgram] = useState<Program | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -53,7 +55,7 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: "1fr", gap: `${GAP}px` }}
       >
         {shown.map((program) => (
-          <ProgramCard key={program.id} program={program} />
+          <ProgramCard key={program.id} program={program} onStart={() => setRunProgram(program)} />
         ))}
       </div>
 
@@ -63,6 +65,8 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
           <PageArrow direction='next' onClick={() => setPage(activePage + 1)} disabled={activePage === pages - 1} className='right-1' />
         </>
       )}
+
+      {runProgram && <RunModal program={runProgram} onClose={() => setRunProgram(null)} />}
     </div>
   );
 }
