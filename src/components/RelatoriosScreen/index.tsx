@@ -8,6 +8,8 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { TableScrollBox } from "@/components/TableScrollBox";
+import { useStore } from "@/hooks/useStore";
+import { cleanupStore } from "@/lib/maintenance";
 import type { ChangeLogEntry, ErrorLogEntry, ExecutionReport } from "@/lib/reports";
 import { ActionBadge, SeverityBadge, StatusBadge } from "./badges";
 import { ChangeDetail } from "./ChangeDetail";
@@ -117,15 +119,22 @@ export function RelatoriosScreen({
     return () => ro.disconnect();
   }, []);
 
+  const cleared = useStore(cleanupStore);
   const q = query.trim().toLowerCase();
 
-  const visibleExecutions = executions.filter(
+  // A maintenance cleanup (Diagnóstico) can clear a record category — honor it here so the
+  // cleared tab renders empty. TODO(backend): the real records are deleted server-side.
+  const allExecutions = cleared.execucoes ? [] : executions;
+  const allChanges = cleared.alteracoes ? [] : changes;
+  const allErrors = cleared.falhas ? [] : errors;
+
+  const visibleExecutions = allExecutions.filter(
     (e) => inRange(e.startedAt, startDate, endDate) && (filter === "all" || e.status === filter) && (!q || e.programName.toLowerCase().includes(q))
   );
-  const visibleChanges = changes.filter(
+  const visibleChanges = allChanges.filter(
     (c) => inRange(c.at, startDate, endDate) && (filter === "all" || c.action === filter) && (!q || c.target.toLowerCase().includes(q))
   );
-  const visibleErrors = errors.filter(
+  const visibleErrors = allErrors.filter(
     (x) =>
       inRange(x.at, startDate, endDate) && (filter === "all" || x.severity === filter) && (!q || `${x.code} ${x.message}`.toLowerCase().includes(q))
   );

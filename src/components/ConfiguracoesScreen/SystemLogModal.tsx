@@ -4,7 +4,10 @@ import { clsx } from "clsx";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
+import { TableScrollBox } from "@/components/TableScrollBox";
+import { useStore } from "@/hooks/useStore";
 import { type LogLevel, MOCK_LOGS } from "@/lib/logs";
+import { cleanupStore } from "@/lib/maintenance";
 import { Segmented } from "./fields";
 
 const LEVEL_STYLE: Record<LogLevel, { icon: string; cls: string }> = {
@@ -24,13 +27,16 @@ const FILTER_OPTIONS: { value: Filter; label: string; icon: string }[] = [
 /** Scrollable system log (mock), filterable by level. */
 export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const logs = filter === "all" ? MOCK_LOGS : MOCK_LOGS.filter((l) => l.level === filter);
+  const cleared = useStore(cleanupStore);
+  // A maintenance cleanup can clear the system log; honor it here. TODO(backend).
+  const base = cleared.logs ? [] : MOCK_LOGS;
+  const logs = filter === "all" ? base : base.filter((l) => l.level === filter);
 
   return (
     <Modal open={open} title='Log do Sistema' onClose={onClose} panelClassName='h-[85vh] w-[90vw] max-w-3xl'>
       <div className='flex h-full flex-col gap-3'>
         <Segmented options={FILTER_OPTIONS} value={filter} onChange={setFilter} label='Filtrar por nível' />
-        <div className='min-h-0 flex-1 overflow-y-auto rounded-xl border border-white/10'>
+        <TableScrollBox className='min-h-0 flex-1'>
           <ul className='divide-y divide-white/5 text-sm'>
             {logs.map((l, i) => {
               const style = LEVEL_STYLE[l.level];
@@ -47,7 +53,7 @@ export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () =
             })}
             {logs.length === 0 && <li className='px-3 py-6 text-center opacity-60'>Nenhum registro.</li>}
           </ul>
-        </div>
+        </TableScrollBox>
       </div>
     </Modal>
   );

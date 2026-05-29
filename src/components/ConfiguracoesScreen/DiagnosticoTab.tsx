@@ -5,6 +5,7 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { MOCK_READINGS } from "@/lib/sensors";
+import { DbCleanupModal } from "./DbCleanupModal";
 import { DiagnosticoStats } from "./DiagnosticoStats";
 import { SystemLogModal } from "./SystemLogModal";
 
@@ -24,6 +25,7 @@ export function DiagnosticoTab() {
   const r = useLiveReadings(MOCK_READINGS);
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [logOpen, setLogOpen] = useState(false);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
 
   const runTest = (id: string) => {
     setTests((t) => ({ ...t, [id]: "running" }));
@@ -107,7 +109,22 @@ export function DiagnosticoTab() {
         </ul>
       </section>
 
+      <section>
+        <h3 className='mb-2 font-semibold'>Manutenção</h3>
+        <div className='flex flex-wrap gap-3'>
+          <button
+            type='button'
+            onClick={() => setCleanupOpen(true)}
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 font-semibold'
+          >
+            <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
+            Limpeza do banco
+          </button>
+        </div>
+      </section>
+
       <SystemLogModal open={logOpen} onClose={() => setLogOpen(false)} />
+      <DbCleanupModal open={cleanupOpen} onClose={() => setCleanupOpen(false)} />
     </div>
   );
 }
