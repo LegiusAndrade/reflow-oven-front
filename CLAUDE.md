@@ -50,6 +50,12 @@ Anything the user can type or grow **must have an explicit limit** — a max len
 
 Keep every cap in **`src/lib/limits.ts`** as a named constant (C-style `#define`, e.g. `PROGRAM_NAME_MAX_LENGTH`, `PROFILE_MAX_POINTS`, `POINT_TEMP_MAX`). Import the constant at the call site — never hard-code a magic number — so a limit can be tuned in one place.
 
+### Git / commits
+
+- **Commit messages are ALWAYS written in English** — subject *and* body — even though the app's UI text (and this conversation) are in Portuguese (pt-BR). Use conventional-commit prefixes (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`). Example: `feat: add system log modal to the Diagnostico tab`.
+- Do **not** add a `Co-Authored-By` (or any authorship) trailer — commits are authored by the repo owner.
+- Never `git commit` or `git push` without the user's explicit request. Active branch is **`develop`**.
+
 ## Reference
 
 `docs/` holds the project design (`Esboço projeto.drawio`) and setup guides in `docs/MD_files/` (ESLint, Prettier, EditorConfig, VS Code).
