@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
+import { RUN_MEASURED_MAX_POINTS } from "@/lib/limits";
 import type { ProfilePoint, Program } from "@/lib/programs";
 import { mmss, phaseAt, type RunPhase, tempAt, totalTime } from "@/lib/run";
 import { showToast } from "@/lib/toast";
@@ -43,6 +44,8 @@ const STATUS_META: Record<RunStatus, { label: string; icon: string; cls: string 
 export function RunModal({ program, onClose }: { program: Program; onClose: () => void }) {
   const profile = program.profile;
   const total = totalTime(profile);
+  // A program with no duration (or fewer than two points) can't run meaningfully.
+  const invalid = total <= 0 || profile.length < 2;
 
   const [status, setStatus] = useState<RunStatus>("running");
   const [elapsed, setElapsed] = useState(0);
@@ -51,7 +54,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   const startRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (status !== "running") return;
+    if (status !== "running" || invalid) return;
     if (startRef.current === null) startRef.current = Date.now();
     const start = startRef.current;
     const id = window.setInterval(() => {
@@ -61,7 +64,11 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
       // Measured tracks the setpoint with a little thermal wobble; lands exactly on it at the end.
       const meas = done ? target : target + (Math.sin(e / 6) + Math.sin(e / 1.7) * 0.4) * 2.2;
       setElapsed(e);
-      setMeasured((m) => [...m, { t: e, temp: Math.max(0, meas) }]);
+      setMeasured((m) => {
+        const next = [...m, { t: e, temp: Math.max(0, meas) }];
+        // Decimate (keeping the latest point) so a long run can't grow the trace unbounded.
+        return next.length > RUN_MEASURED_MAX_POINTS ? next.filter((_, i) => i % 2 === 0 || i === next.length - 1) : next;
+      });
       if (done) {
         setStatus("done");
         // TODO(backend): the board reports completion; persist the run report then.
@@ -69,7 +76,32 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
       }
     }, TICK_MS);
     return () => window.clearInterval(id);
-  }, [status, total, profile, program.name]);
+  }, [status, total, profile, program.name, invalid]);
+
+  if (invalid) {
+    return (
+      <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
+        <div className='card flex w-[min(92vw,28rem)] flex-col gap-4 rounded-2xl border border-white/10 p-6'>
+          <div className='flex items-center gap-3'>
+            <IconGeneral icon='warning' fill={1} className='shrink-0 text-amber-400 [--icon-size:1.75rem]' />
+            <h1 className='text-xl font-semibold'>Programa sem duração</h1>
+          </div>
+          <p className='opacity-80'>
+            O programa <span className='font-semibold'>{program.name}</span> não tem uma duração válida para executar. Edite o perfil e defina ao menos um estágio
+            com tempo maior que zero.
+          </p>
+          <button
+            type='button'
+            onClick={onClose}
+            className='btn-action flex cursor-pointer items-center gap-2 self-end rounded-xl px-5 py-2.5 font-semibold'
+          >
+            <IconGeneral icon='check' fill={0} className='[--icon-size:1.25rem]' />
+            Fechar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const target = tempAt(profile, elapsed);
   const current = measured[measured.length - 1]?.temp ?? profile[0]?.temp ?? 25;

@@ -7,6 +7,7 @@ import { useAllPrograms } from "@/hooks/useAllPrograms";
 import { useStore } from "@/hooks/useStore";
 import { faultStats, programStats, topProgramsByRuns, topUsersByLogins, userStats } from "@/lib/diagnostics";
 import { DIAG_RANK_DEFAULT, DIAG_RANK_MAX, DIAG_RANK_MIN } from "@/lib/limits";
+import { cleanupStore } from "@/lib/maintenance";
 import { MOCK_PROGRAMS } from "@/lib/programs";
 import type { ErrorSeverity } from "@/lib/reports";
 import { usersStore } from "@/lib/users";
@@ -104,9 +105,11 @@ export function DiagnosticoStats() {
   const [userN, setUserN] = useState(DIAG_RANK_DEFAULT);
   const [progN, setProgN] = useState(DIAG_RANK_DEFAULT);
 
+  const cleared = useStore(cleanupStore);
   const us = useMemo(() => userStats(users), [users]);
   const ps = useMemo(() => programStats(programs), [programs]);
-  const faults = useMemo(() => faultStats(), []);
+  // The fault log can be wiped by a maintenance cleanup; mirror it here so the same screen agrees.
+  const faults = useMemo(() => (cleared.falhas ? [] : faultStats()), [cleared.falhas]);
   const totalFaults = useMemo(() => faults.reduce((sum, f) => sum + f.count, 0), [faults]);
   const topUsers = useMemo(() => topUsersByLogins(users, userN), [users, userN]);
   const topProgs = useMemo(() => topProgramsByRuns(programs, progN), [programs, progN]);
@@ -132,6 +135,7 @@ export function DiagnosticoStats() {
           <IconGeneral icon='report' fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
           <h4 className='font-semibold'>Falhas por tipo</h4>
         </header>
+        {faults.length === 0 && <p className='py-2 text-sm opacity-60'>Nenhuma falha registrada.</p>}
         <ul className='flex flex-col gap-2.5'>
           {faults.map((f) => (
             <li key={f.code} className='flex items-center gap-3'>

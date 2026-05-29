@@ -57,6 +57,12 @@ export const DIAG_RANK_MIN = 3;
 export const DIAG_RANK_MAX = 10;
 export const DIAG_RANK_DEFAULT = 5;
 
+// --- Execução (live run) ---------------------------------------------------------------
+
+/** Max samples kept in the live measured trace; it is decimated past this so a long run
+ *  can't grow the array (and the re-rendered chart path) without bound. */
+export const RUN_MEASURED_MAX_POINTS = 600;
+
 // --- Calibração (secret technician menu) -----------------------------------------------
 
 /** Thermocouple temperature offset (°C). */

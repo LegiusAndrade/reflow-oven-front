@@ -13,11 +13,6 @@ export function totalTime(profile: ProfilePoint[]): number {
   return profile.length ? profile[profile.length - 1].t : 0;
 }
 
-/** Peak setpoint temperature (°C). */
-export function peakTemp(profile: ProfilePoint[]): number {
-  return profile.reduce((max, p) => Math.max(max, p.temp), 0);
-}
-
 /** Linear-interpolate the setpoint temperature at time `t` (clamped to the profile ends). */
 export function tempAt(profile: ProfilePoint[], t: number): number {
   if (!profile.length) return 0;
@@ -37,6 +32,7 @@ export function tempAt(profile: ProfilePoint[], t: number): number {
 
 /** Classify the moment in the run from the local slope and proximity to the peak. */
 export function phaseAt(profile: ProfilePoint[], t: number): RunPhase {
+  if (!profile.length) return "Patamar";
   const peakAt = profile.reduce((best, p) => (p.temp > best.temp ? p : best), profile[0]).t;
   if (Math.abs(t - peakAt) <= 8) return "Pico";
   const slope = tempAt(profile, t + 2) - tempAt(profile, t);
