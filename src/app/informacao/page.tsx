@@ -1,10 +1,10 @@
 import { AppShell } from "@/components/AppShell";
-import { ComingSoon } from "@/components/ComingSoon";
+import { InformacaoScreen } from "@/components/InformacaoScreen";
 
 export default function InformacaoPage() {
   return (
     <AppShell>
-      <ComingSoon title='Informação' />
+      <InformacaoScreen />
     </AppShell>
   );
 }
