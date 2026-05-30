@@ -13,7 +13,7 @@ export function ExecutionDetail({ exec, onClose }: { exec: ExecutionReport; onCl
       <div className='flex flex-col gap-6'>
         {/* Profile chart: programmed (dashed) vs real (solid), with the fault flagged */}
         <div>
-          <div className='h-[clamp(170px,30vh,300px)] rounded-xl border border-white/10 p-2'>
+          <div className='h-[clamp(170px,30vh,300px)] rounded-xl border border-[var(--border)] p-2'>
             <TemperatureProfileChart
               points={exec.realProfile}
               comparePoints={exec.profile}
@@ -57,7 +57,7 @@ export function ExecutionDetail({ exec, onClose }: { exec: ExecutionReport; onCl
         {/* Programmed vs measured */}
         <section>
           <SectionTitle>Comparativo do Perfil</SectionTitle>
-          <div className='overflow-x-auto rounded-xl border border-white/10'>
+          <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
             <table className='w-full border-collapse text-left'>
               <thead className='text-sm'>
                 <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold'>
@@ -71,7 +71,7 @@ export function ExecutionDetail({ exec, onClose }: { exec: ExecutionReport; onCl
               </thead>
               <tbody>
                 {exec.comparison.map((row, i) => (
-                  <tr key={i} className='border-t border-white/10 [&>td]:px-4 [&>td]:py-2.5'>
+                  <tr key={i} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
                     <td className='tabular-nums opacity-70'>{i + 1}</td>
                     <td className='tabular-nums'>{row.tempProg}°C</td>
                     <td className='tabular-nums'>{row.tempReal}°C</td>

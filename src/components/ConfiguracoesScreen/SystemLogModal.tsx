@@ -12,8 +12,8 @@ import { Segmented } from "./fields";
 
 const LEVEL_STYLE: Record<LogLevel, { icon: string; cls: string }> = {
   INFO: { icon: "info", cls: "text-[var(--brand)]" },
-  Aviso: { icon: "warning", cls: "text-amber-400" },
-  Erro: { icon: "error", cls: "text-red-400" },
+  Aviso: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
+  Erro: { icon: "error", cls: "text-red-700 dark:text-red-400" },
 };
 
 type Filter = "all" | LogLevel;
@@ -37,7 +37,7 @@ export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () =
       <div className='flex h-full flex-col gap-3'>
         <Segmented options={FILTER_OPTIONS} value={filter} onChange={setFilter} label='Filtrar por nível' />
         <TableScrollBox className='min-h-0 flex-1'>
-          <ul className='divide-y divide-white/5 text-sm'>
+          <ul className='divide-y divide-[var(--border)] text-sm'>
             {logs.map((l, i) => {
               const style = LEVEL_STYLE[l.level];
               return (

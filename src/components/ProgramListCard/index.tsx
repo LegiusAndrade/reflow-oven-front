@@ -32,7 +32,7 @@ export function ProgramListCard({ program }: { program: Program }) {
 
   return (
     <article className='card flex h-full flex-col gap-3 rounded-xl p-4'>
-      <header className='flex items-start justify-between gap-2 border-b border-white/10 pb-2'>
+      <header className='flex items-start justify-between gap-2 border-b border-[var(--border)] pb-2'>
         <h3 className='truncate text-lg font-semibold'>{program.name}</h3>
         <button
           type='button'
@@ -111,7 +111,7 @@ function CardAction({ icon, label, onClick }: { icon: string; label: string; onC
     <button
       type='button'
       onClick={onClick}
-      className='btn-press flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm hover:bg-white/5'
+      className='btn-press flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm hover:bg-[var(--hover)]'
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
       <span className='whitespace-nowrap'>{label}</span>

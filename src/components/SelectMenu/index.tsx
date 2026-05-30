@@ -55,7 +55,7 @@ export function SelectMenu<T extends string>({ icon, options, value, onChange, c
         onClick={() => setOpen((o) => !o)}
         aria-haspopup='listbox'
         aria-expanded={open}
-        className='btn-press flex w-full items-center justify-between gap-2 rounded-xl border border-white/15 px-4 py-2.5'
+        className='btn-press flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5'
       >
         <span className='flex min-w-0 items-center gap-2'>
           <IconGeneral icon={icon} fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
@@ -65,7 +65,7 @@ export function SelectMenu<T extends string>({ icon, options, value, onChange, c
       </button>
 
       {open && (
-        <ul role='listbox' className='card absolute right-0 z-30 mt-2 max-h-72 w-full min-w-max overflow-auto rounded-xl border border-white/10 py-1'>
+        <ul role='listbox' className='card absolute right-0 z-30 mt-2 max-h-72 w-full min-w-max overflow-auto rounded-xl border border-[var(--border)] py-1'>
           {options.map((option) => {
             const isSelected = option.value === value;
             return (
@@ -78,7 +78,7 @@ export function SelectMenu<T extends string>({ icon, options, value, onChange, c
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className={clsx("flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left hover:bg-white/10", isSelected && "text-[var(--brand)]")}
+                  className={clsx("flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left hover:bg-[var(--hover)]", isSelected && "text-[var(--brand)]")}
                 >
                   {option.icon && <IconGeneral icon={option.icon} fill={isSelected ? 1 : 0} className='shrink-0 [--icon-size:1.25rem]' />}
                   <span className='flex-1 whitespace-nowrap'>{option.label}</span>

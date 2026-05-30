@@ -138,16 +138,16 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
     router.push("/programas");
   };
 
-  const numberInputClass = "w-20 rounded-lg border border-white/15 bg-transparent px-2 py-1 tabular-nums outline-none focus:border-[var(--brand)]";
+  const numberInputClass = "w-20 rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 tabular-nums outline-none focus:border-[var(--brand)]";
 
   return (
     <section className='card flex h-full flex-col gap-4 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-white/10 pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
         <h1 className='text-2xl font-semibold'>{title}</h1>
         <Link
           href='/programas'
           aria-label='Fechar'
-          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
         >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
@@ -175,7 +175,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
             {/* Inner scroll: only the points list scrolls. On the 1024×600 device it's capped
                 at 16rem; on taller screens the cap grows to the space down to the footer, so the
                 list extends as points are added (then scrolls). */}
-            <div className='max-h-[16rem] overflow-y-auto rounded-xl border border-white/10 [@media(min-height:44rem)]:max-h-none [@media(min-height:44rem)]:min-h-0'>
+            <div className='max-h-[16rem] overflow-y-auto rounded-xl border border-[var(--border)] [@media(min-height:44rem)]:max-h-none [@media(min-height:44rem)]:min-h-0'>
               <table className='w-full border-collapse text-left'>
                 <thead className='sticky top-0 z-10 text-sm'>
                   <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-3 [&>th]:py-2.5 [&>th]:font-semibold'>
@@ -190,7 +190,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                   {segments.map((s, i) => {
                     const held = s.ramp === "Fixo";
                     return (
-                      <tr key={s.id} className='border-t border-white/10 [&>td]:px-3 [&>td]:py-2'>
+                      <tr key={s.id} className='border-t border-[var(--border)] [&>td]:px-3 [&>td]:py-2'>
                         <td className='tabular-nums opacity-70'>{i + 1}</td>
                         <td>
                           <input
@@ -222,7 +222,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                             aria-label={`Rampa do ponto ${i + 1}`}
                             value={s.ramp}
                             onChange={(e) => update(s.id, { ramp: e.target.value as Ramp })}
-                            className='rounded-lg border border-white/15 bg-[var(--bg-2)] px-2 py-1 outline-none focus:border-[var(--brand)]'
+                            className='rounded-lg border border-[var(--border)] bg-[var(--bg-2)] px-2 py-1 outline-none focus:border-[var(--brand)]'
                           >
                             <option value='Linear'>Linear</option>
                             <option value='Fixo'>Fixo</option>
@@ -235,7 +235,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                             type='button'
                             onClick={() => remove(s.id)}
                             aria-label={`Remover ponto ${i + 1}`}
-                            className='btn-press grid size-8 cursor-pointer place-items-center rounded-lg text-red-400 hover:bg-white/10'
+                            className='btn-press grid size-8 cursor-pointer place-items-center rounded-lg text-red-700 dark:text-red-400 hover:bg-[var(--hover)]'
                           >
                             <IconGeneral icon='remove' fill={0} className='[--icon-size:1.25rem]' />
                           </button>
@@ -268,7 +268,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                 type='button'
                 onClick={() => setConfirmClearOpen(true)}
                 disabled={segments.length === 0}
-                className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
+                className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-700 dark:text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
               >
                 <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
                 Limpar Pontos
@@ -277,15 +277,15 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
           </div>
 
           {/* Live preview — fixed height (the chart doesn't change with the point count) */}
-          <div className='sticky top-0 min-h-[18rem] self-start rounded-xl border border-white/10 p-3 lg:h-[clamp(18rem,40vh,30rem)]'>
+          <div className='sticky top-0 min-h-[18rem] self-start rounded-xl border border-[var(--border)] p-3 lg:h-[clamp(18rem,40vh,30rem)]'>
             <TemperatureProfileChart points={profile} className='h-full w-full' />
           </div>
         </div>
       </div>
 
       {/* Footer (fixed) */}
-      <footer className='flex items-center justify-end gap-3 border-t border-white/10 pt-3'>
-        <Link href='/programas' className='btn-press rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
+      <footer className='flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
+        <Link href='/programas' className='btn-press rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
           Cancelar
         </Link>
         <button

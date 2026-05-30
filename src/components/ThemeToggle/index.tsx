@@ -19,7 +19,7 @@ export function ThemeToggle() {
       type='button'
       onClick={toggle}
       aria-label='Alterar tema'
-      className='btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-white/10'
+      className='btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-[var(--hover)]'
     >
       <IconGeneral icon={dark ? "dark_mode" : "light_mode"} fill={0} className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]' />
     </button>

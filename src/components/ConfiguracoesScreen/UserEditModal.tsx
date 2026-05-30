@@ -74,12 +74,12 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
                 <span className='opacity-60'>Tipo:</span>
                 <Segmented options={TYPE_OPTIONS} value={type} onChange={setType} label='Tipo' />
               </div>
-              {error && <p className='text-sm text-red-400'>{error}</p>}
+              {error && <p className='text-sm text-red-700 dark:text-red-400'>{error}</p>}
             </div>
           </section>
 
-          <footer className='flex items-center justify-end gap-3 border-t border-white/10 pt-3'>
-            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
+          <footer className='flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
+            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
               Cancelar
             </button>
             <button type='button' onClick={handleSave} className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'>

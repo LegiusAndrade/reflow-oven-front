@@ -39,7 +39,7 @@ export function Pagination({ pages, active, onChange }: { pages: number; active:
             aria-current={item === active ? "page" : undefined}
             className={clsx(
               "btn-press grid size-9 cursor-pointer place-items-center rounded-lg tabular-nums",
-              item === active ? "btn-link-active" : "hover:bg-white/10"
+              item === active ? "btn-link-active" : "hover:bg-[var(--hover)]"
             )}
           >
             {item + 1}
@@ -58,7 +58,7 @@ function PagerArrow({ icon, label, onClick, disabled }: { icon: string; label: s
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className='btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent'
+      className='btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent'
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
     </button>

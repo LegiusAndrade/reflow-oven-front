@@ -30,7 +30,7 @@ export function DiagnosticoTab() {
             aria-current={sub === t.id ? "page" : undefined}
             className={clsx(
               "btn-press flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-              sub === t.id ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "border border-white/10 hover:bg-white/10"
+              sub === t.id ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "border border-[var(--border)] hover:bg-[var(--hover)]"
             )}
           >
             <IconGeneral icon={t.icon} fill={sub === t.id ? 1 : 0} className='[--icon-size:1.125rem]' />

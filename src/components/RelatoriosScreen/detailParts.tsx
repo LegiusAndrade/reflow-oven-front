@@ -29,13 +29,13 @@ export function DetailShell({ title, onClose, children }: { title: string; onClo
 
   return (
     <div ref={ref} className='flex h-full min-h-0 flex-col gap-5'>
-      <header className='flex items-center justify-between gap-4 border-b border-white/10 pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
         <h1 className='truncate text-2xl font-semibold'>{title}</h1>
         <button
           type='button'
           onClick={onClose}
           aria-label='Voltar'
-          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
         >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </button>
@@ -62,8 +62,8 @@ export function Field({ label, children }: { label: string; children: React.Reac
 
 const EVENT_STYLE: Record<LogEventKind, { icon: string; cls: string }> = {
   info: { icon: "info", cls: "text-[var(--brand)]" },
-  alerta: { icon: "warning", cls: "text-amber-400" },
-  falha: { icon: "error", cls: "text-red-400" },
+  alerta: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
+  falha: { icon: "error", cls: "text-red-700 dark:text-red-400" },
 };
 
 /** Timeline of run/fault events; shows the empty state when there are none. */
@@ -77,7 +77,7 @@ export function EventList({ events }: { events: LogEvent[] }) {
           <li key={i} className='flex items-start gap-2'>
             <IconGeneral icon={style.icon} fill={1} className={clsx("mt-0.5 shrink-0 [--icon-size:1.25rem]", style.cls)} />
             <span className='shrink-0 tabular-nums opacity-70'>{e.at}</span>
-            <span className={clsx(e.kind === "falha" && "text-red-400")}>{e.message}</span>
+            <span className={clsx(e.kind === "falha" && "text-red-700 dark:text-red-400")}>{e.message}</span>
           </li>
         );
       })}

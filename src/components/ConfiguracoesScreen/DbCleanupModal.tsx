@@ -70,7 +70,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
             type='button'
             onClick={toggleAll}
             disabled={selectable.length === 0}
-            className='btn-press flex w-fit shrink-0 cursor-pointer items-center gap-2 self-end rounded-lg border border-white/15 px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40'
+            className='btn-press flex w-fit shrink-0 cursor-pointer items-center gap-2 self-end rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40'
           >
             <IconGeneral icon={allSelected ? "deselect" : "select_all"} fill={0} className='[--icon-size:1.125rem]' />
             {allSelected ? "Limpar seleção" : "Selecionar tudo"}
@@ -87,7 +87,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
                   <label
                     className={clsx(
                       "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors",
-                      empty ? "cursor-not-allowed border-white/10 opacity-50" : "cursor-pointer border-white/15 hover:bg-white/5",
+                      empty ? "cursor-not-allowed border-[var(--border)] opacity-50" : "cursor-pointer border-[var(--border)] hover:bg-[var(--hover)]",
                       checked && "border-[var(--brand)] bg-[var(--brand)]/10"
                     )}
                   >
@@ -103,7 +103,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
                       <p className='font-medium'>{c.label}</p>
                       <p className='truncate text-sm opacity-60'>{c.hint}</p>
                     </div>
-                    <span className='shrink-0 rounded-md bg-white/10 px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
+                    <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
                       {empty ? "vazio" : `${count} · ${formatBytes(size)}`}
                     </span>
                   </label>
@@ -112,8 +112,8 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
             })}
           </ul>
 
-          <div className='flex shrink-0 items-center justify-end gap-3 border-t border-white/10 pt-4'>
-            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
+          <div className='flex shrink-0 items-center justify-end gap-3 border-t border-[var(--border)] pt-4'>
+            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
               Cancelar
             </button>
             <button

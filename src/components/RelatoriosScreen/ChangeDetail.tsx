@@ -38,7 +38,7 @@ export function ChangeDetail({ change, open, onClose }: { change: ChangeLogEntry
             {(detail.afterProfile || detail.beforeProfile) && (
               <section>
                 <p className='mb-2 font-medium'>{`• ${chartCaption}`}</p>
-                <div className='h-[clamp(170px,28vh,260px)] rounded-xl border border-white/10 p-2'>
+                <div className='h-[clamp(170px,28vh,260px)] rounded-xl border border-[var(--border)] p-2'>
                   <TemperatureProfileChart
                     points={(detail.afterProfile ?? detail.beforeProfile)!}
                     comparePoints={hasCompare ? detail.beforeProfile : undefined}
@@ -93,7 +93,7 @@ const TH_CLS = "[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-se
 /** Plain point table (added points). */
 function PointTable({ rows }: { rows: ChangePointRow[] }) {
   return (
-    <div className='overflow-x-auto rounded-xl border border-white/10'>
+    <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
       <table className='w-full border-collapse text-left'>
         <thead className='text-sm'>
           <tr className={TH_CLS}>
@@ -105,7 +105,7 @@ function PointTable({ rows }: { rows: ChangePointRow[] }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.index} className='border-t border-white/10 [&>td]:px-4 [&>td]:py-2.5'>
+            <tr key={r.index} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
               <td className='tabular-nums opacity-70'>{r.index}</td>
               <td className='tabular-nums'>{r.temp}</td>
               <td className='tabular-nums'>{r.timeSec}</td>
@@ -121,7 +121,7 @@ function PointTable({ rows }: { rows: ChangePointRow[] }) {
 /** Before/after diff: a red "− index" row (old) followed by a green "+ index" row (new). */
 function DiffTable({ changed }: { changed: { before: ChangePointRow; after: ChangePointRow }[] }) {
   return (
-    <div className='overflow-x-auto rounded-xl border border-white/10'>
+    <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
       <table className='w-full border-collapse text-left'>
         <thead className='text-sm'>
           <tr className={TH_CLS}>
@@ -147,7 +147,7 @@ function DiffTable({ changed }: { changed: { before: ChangePointRow; after: Chan
 function DiffRow({ sign, row }: { sign: "+" | "-"; row: ChangePointRow }) {
   const removed = sign === "-";
   return (
-    <tr className={clsx("border-t border-white/10 [&>td]:px-4 [&>td]:py-2.5", removed ? "bg-red-500/15 text-red-300" : "bg-emerald-500/15 text-emerald-300")}>
+    <tr className={clsx("border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5", removed ? "bg-red-500/15 text-red-700 dark:text-red-300" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300")}>
       <td className='font-semibold tabular-nums'>{`${sign} ${row.index}`}</td>
       <td className='tabular-nums'>{row.temp}</td>
       <td className='tabular-nums'>{row.timeSec}</td>

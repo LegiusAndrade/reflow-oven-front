@@ -87,7 +87,7 @@ export function RedeTab() {
           <span>IP Fixo</span>
         </div>
 
-        <section className='flex flex-col gap-2 border-t border-white/10 pt-4'>
+        <section className='flex flex-col gap-2 border-t border-[var(--border)] pt-4'>
           <h3 className='font-semibold'>Teste de Ping</h3>
           <div className='flex flex-wrap items-end gap-3'>
             <TextLine

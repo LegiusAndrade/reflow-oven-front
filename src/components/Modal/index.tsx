@@ -53,15 +53,15 @@ export function Modal({ open, title, onClose, children, panelClassName }: IModal
         aria-modal='true'
         aria-label={title}
         className={clsx(
-          "card relative z-10 flex flex-col rounded-2xl border border-white/10 transition-all duration-200",
+          "card relative z-10 flex flex-col rounded-2xl border border-[var(--border)] transition-all duration-200",
           open ? "scale-100 opacity-100" : "scale-95 opacity-0",
           panelClassName ?? "h-[85vh] w-[90vw] max-w-5xl"
         )}
       >
         {title !== undefined && (
-          <header className='flex items-center justify-between gap-4 border-b border-white/10 p-4'>
+          <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] p-4'>
             <h2 className='truncate text-xl font-semibold'>{title}</h2>
-            <button type='button' onClick={onClose} aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'>
+            <button type='button' onClick={onClose} aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'>
               <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
             </button>
           </header>

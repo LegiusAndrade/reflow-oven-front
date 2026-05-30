@@ -40,7 +40,7 @@ export function NotificacoesTab() {
             </thead>
             <tbody>
               {draft.notifications.map((n, i) => (
-                <tr key={n.id} className='border-t border-white/10 [&>td]:px-4 [&>td]:py-3'>
+                <tr key={n.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
                   <td className='tabular-nums opacity-70'>{i + 1}</td>
                   <td className='font-medium'>{n.alert}</td>
                   <td>

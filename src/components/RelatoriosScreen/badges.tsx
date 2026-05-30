@@ -8,7 +8,7 @@ import type { ChangeAction, ErrorSeverity, ExecutionStatus } from "@/lib/reports
 export function StatusBadge({ status }: { status: ExecutionStatus }) {
   const ok = status === "Concluído";
   return (
-    <span className={clsx("inline-flex items-center gap-1.5 font-medium", ok ? "text-emerald-400" : "text-red-400")}>
+    <span className={clsx("inline-flex items-center gap-1.5 font-medium", ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400")}>
       <IconGeneral icon={ok ? "check_circle" : "cancel"} fill={1} className='[--icon-size:1.25rem]' />
       {status}
     </span>
@@ -16,9 +16,9 @@ export function StatusBadge({ status }: { status: ExecutionStatus }) {
 }
 
 const ACTION_STYLE: Record<ChangeAction, { icon: string; cls: string }> = {
-  Criado: { icon: "add_circle", cls: "text-emerald-400" },
+  Criado: { icon: "add_circle", cls: "text-emerald-700 dark:text-emerald-400" },
   Editado: { icon: "edit", cls: "text-[var(--brand)]" },
-  Removido: { icon: "delete", cls: "text-red-400" },
+  Removido: { icon: "delete", cls: "text-red-700 dark:text-red-400" },
 };
 
 /** Change-action pill (Criado / Editado / Removido). */
@@ -33,8 +33,8 @@ export function ActionBadge({ action }: { action: ChangeAction }) {
 }
 
 const SEVERITY_STYLE: Record<ErrorSeverity, { icon: string; cls: string }> = {
-  Crítico: { icon: "error", cls: "text-red-400" },
-  Alerta: { icon: "warning", cls: "text-amber-400" },
+  Crítico: { icon: "error", cls: "text-red-700 dark:text-red-400" },
+  Alerta: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
   Aviso: { icon: "info", cls: "text-[var(--brand)]" },
 };
 

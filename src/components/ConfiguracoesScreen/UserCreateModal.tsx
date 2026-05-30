@@ -75,7 +75,7 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
                 className='max-w-sm'
               />
               <span className='text-xs opacity-50'>Mínimo {USER_NAME_MIN_LENGTH} caracteres, sem espaços ou caracteres especiais (colar desativado).</span>
-              {nameTaken && <span className='text-xs text-red-400'>Esse usuário já existe.</span>}
+              {nameTaken && <span className='text-xs text-red-700 dark:text-red-400'>Esse usuário já existe.</span>}
             </div>
 
             <TextLine label='E-mail' value={email} onChange={setEmail} placeholder='usuario@dominio.com' className='max-w-sm' />
@@ -91,8 +91,8 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
           </div>
         </section>
 
-        <footer className='flex items-center justify-end gap-3 border-t border-white/10 pt-3'>
-          <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
+        <footer className='flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
+          <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
             Cancelar
           </button>
           <button

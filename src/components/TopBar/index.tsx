@@ -20,7 +20,7 @@ export default function TopBar({ signalWifi, connectedServer, statusNotification
         {user && (
           <>
             <span className='truncate font-medium sm:text-xl'>{user.name}</span>
-            <span className='shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-xs'>{user.role}</span>
+            <span className='shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-xs'>{user.role}</span>
             <SessionTimer since={user.loginAt} />
           </>
         )}

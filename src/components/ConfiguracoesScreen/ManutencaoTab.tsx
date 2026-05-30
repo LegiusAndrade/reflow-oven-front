@@ -35,8 +35,8 @@ export function ManutencaoTab() {
   return (
     <div className='flex flex-col gap-5'>
       {/* Storage + system info */}
-      <section className='flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4'>
-        <header className='flex items-center gap-2 border-b border-white/10 pb-2'>
+      <section className='flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] p-4'>
+        <header className='flex items-center gap-2 border-b border-[var(--border)] pb-2'>
           <IconGeneral icon='dns' fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
           <h3 className='font-semibold'>Sistema</h3>
         </header>
@@ -55,7 +55,7 @@ export function ManutencaoTab() {
           <button
             type='button'
             onClick={() => setCleanupOpen(true)}
-            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 font-semibold'
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 font-semibold'
           >
             <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
             Limpeza do banco
@@ -63,7 +63,7 @@ export function ManutencaoTab() {
           <button
             type='button'
             onClick={() => setResetOpen(true)}
-            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-400 hover:bg-red-500/10'
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-700 dark:text-red-400 hover:bg-red-500/10'
           >
             <IconGeneral icon='restart_alt' fill={0} className='[--icon-size:1.25rem]' />
             Reset de fábrica

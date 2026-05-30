@@ -6,7 +6,7 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useStore } from "@/hooks/useStore";
 import { type Settings, settingsStore } from "@/lib/settings";
 
-const INPUT_CLS = "w-full rounded-xl border border-white/15 bg-transparent px-3 py-2.5 outline-none transition-colors focus:border-[var(--brand)]";
+const INPUT_CLS = "w-full rounded-xl border border-[var(--border)] bg-transparent px-3 py-2.5 outline-none transition-colors focus:border-[var(--brand)]";
 
 /** A titled group of fields (e.g. "PID", "Forno"). */
 export function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
@@ -93,7 +93,7 @@ export function Toggle({ checked, onChange, label, disabled }: { checked: boolea
       className={clsx(
         "btn-press relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40",
         disabled ? "cursor-not-allowed" : "cursor-pointer",
-        checked ? "bg-[var(--brand)]" : "bg-white/20"
+        checked ? "bg-[var(--brand)]" : "bg-black/15 dark:bg-white/20"
       )}
     >
       <span className={clsx("inline-block size-5 rounded-full bg-white shadow transition-transform", checked ? "translate-x-[22px]" : "translate-x-0.5")} />
@@ -123,7 +123,7 @@ export function Segmented<T extends string>({
   disabled?: boolean;
 }) {
   return (
-    <div role='radiogroup' aria-label={label} className={clsx("inline-flex w-fit rounded-xl border border-white/15 p-0.5", disabled && "opacity-40")}>
+    <div role='radiogroup' aria-label={label} className={clsx("inline-flex w-fit rounded-xl border border-[var(--border)] p-0.5", disabled && "opacity-40")}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -137,7 +137,7 @@ export function Segmented<T extends string>({
             className={clsx(
               "btn-press flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               disabled ? "cursor-not-allowed" : "cursor-pointer",
-              active ? "btn-link-active" : "hover:bg-white/10"
+              active ? "btn-link-active" : "hover:bg-[var(--hover)]"
             )}
           >
             {o.icon && <IconGeneral icon={o.icon} fill={active ? 1 : 0} className='[--icon-size:1.125rem]' />}
@@ -152,12 +152,12 @@ export function Segmented<T extends string>({
 /** Cancelar / SALVAR footer pinned to the bottom of a form tab. */
 export function FormFooter({ onCancel, onSave, dirty }: { onCancel: () => void; onSave: () => void; dirty: boolean }) {
   return (
-    <footer className='mt-auto flex items-center justify-end gap-3 border-t border-white/10 pt-3'>
+    <footer className='mt-auto flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
       <button
         type='button'
         onClick={onCancel}
         disabled={!dirty}
-        className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40'
+        className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40'
       >
         Cancelar
       </button>

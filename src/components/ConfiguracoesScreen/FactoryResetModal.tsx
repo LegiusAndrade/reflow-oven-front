@@ -42,9 +42,9 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
     <Modal open={open} title='Reset de fábrica' onClose={onClose} panelClassName='w-[min(92vw,32rem)]'>
       <div className='flex flex-col gap-4'>
         <div className='flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3'>
-          <IconGeneral icon='warning' fill={1} className='shrink-0 text-red-400 [--icon-size:1.5rem]' />
+          <IconGeneral icon='warning' fill={1} className='shrink-0 text-red-700 dark:text-red-400 [--icon-size:1.5rem]' />
           <div className='text-sm'>
-            <p className='font-semibold text-red-300'>Esta ação é irreversível.</p>
+            <p className='font-semibold text-red-700 dark:text-red-300'>Esta ação é irreversível.</p>
             <p className='opacity-80'>O sistema voltará ao estado de fábrica:</p>
           </div>
         </div>
@@ -68,12 +68,12 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
             placeholder={CONFIRM_WORD}
             autoComplete='off'
             spellCheck={false}
-            className='rounded-xl border border-white/15 bg-black/20 px-4 py-2.5 tracking-wide outline-none placeholder:opacity-40 focus:border-[var(--brand)]'
+            className='rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] px-4 py-2.5 tracking-wide outline-none placeholder:opacity-40 focus:border-[var(--brand)]'
           />
         </label>
 
-        <div className='flex items-center justify-end gap-3 border-t border-white/10 pt-4'>
-          <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
+        <div className='flex items-center justify-end gap-3 border-t border-[var(--border)] pt-4'>
+          <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
             Cancelar
           </button>
           <button

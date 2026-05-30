@@ -25,7 +25,7 @@ export function TextField({ id, label, value, onChange, type = "text", maxLength
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
         placeholder=' '
-        className='peer w-full rounded-xl border border-white/15 bg-transparent px-3 pb-2 pt-4 outline-none transition-colors focus:border-[var(--brand)]'
+        className='peer w-full rounded-xl border border-[var(--border)] bg-transparent px-3 pb-2 pt-4 outline-none transition-colors focus:border-[var(--brand)]'
       />
       <label
         htmlFor={id}

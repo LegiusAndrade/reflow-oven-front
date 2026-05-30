@@ -11,7 +11,7 @@ import { USER_NAME_MAX_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 
 const FIELD =
-  "text-fg w-full rounded-xl border border-white/20 bg-black/20 py-3 pr-3 pl-11 outline-none transition-colors placeholder:opacity-50 focus:border-[var(--brand)] focus:bg-black/30";
+  "text-fg w-full rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] py-3 pr-3 pl-11 outline-none transition-colors placeholder:opacity-50 focus:border-[var(--brand)] focus:bg-[var(--surface-2)]";
 
 /** Login / password screen (Figma "Login User"). Mock auth: an existing user + password "1234".
  *  Rendered inside the AppShell (TopBar + BottomBar stay; no sidebar while logged out). */
@@ -52,7 +52,7 @@ export function LoginScreen() {
     <>
       <div className='h-full overflow-y-auto'>
         <div className='grid min-h-full place-items-center p-2'>
-          <form onSubmit={submit} className='card flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 p-6'>
+          <form onSubmit={submit} className='card flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-[var(--border)] p-6'>
             <Image src='/Logo.svg' alt='Logo' width={80} height={80} priority className='size-20' />
 
             <div className='flex w-full flex-col gap-3'>
@@ -88,7 +88,7 @@ export function LoginScreen() {
                   type='button'
                   onClick={() => setShow((s) => !s)}
                   aria-label={show ? "Ocultar senha" : "Mostrar senha"}
-                  className='btn-press absolute top-1/2 right-2 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg hover:bg-white/10'
+                  className='btn-press absolute top-1/2 right-2 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg hover:bg-[var(--hover)]'
                 >
                   <IconGeneral icon={show ? "visibility_off" : "visibility"} fill={0} className='opacity-70 [--icon-size:1.25rem]' />
                 </button>
@@ -96,7 +96,7 @@ export function LoginScreen() {
 
               {/* Error sits on the same row as the link, so showing it never resizes the card */}
               <div className='flex items-center justify-between gap-3'>
-                <span className='truncate text-sm text-red-400'>{error}</span>
+                <span className='truncate text-sm text-red-700 dark:text-red-400'>{error}</span>
                 <button type='button' onClick={() => setRecoverOpen(true)} className='shrink-0 cursor-pointer text-sm text-[var(--brand)] hover:underline'>
                   Esqueceu a senha?
                 </button>
@@ -132,9 +132,9 @@ export function LoginScreen() {
               className={FIELD}
             />
           </div>
-          {recoverError && <p className='text-sm text-red-400'>{recoverError}</p>}
+          {recoverError && <p className='text-sm text-red-700 dark:text-red-400'>{recoverError}</p>}
           <div className='flex justify-end gap-3'>
-            <button type='button' onClick={() => setRecoverOpen(false)} className='btn-press cursor-pointer rounded-xl border border-white/15 px-5 py-2.5 font-semibold'>
+            <button type='button' onClick={() => setRecoverOpen(false)} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
               Cancelar
             </button>
             <button type='submit' className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'>

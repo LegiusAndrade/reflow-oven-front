@@ -48,7 +48,7 @@ export function DiagnosticoSensores() {
           <button
             type='button'
             onClick={() => setLogOpen(true)}
-            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold'
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold'
           >
             <IconGeneral icon='receipt_long' fill={0} className='[--icon-size:1.25rem]' />
             Log do Sistema
@@ -56,7 +56,7 @@ export function DiagnosticoSensores() {
         </div>
         <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
           {sensors.map((s) => (
-            <div key={s.label} className='flex items-center gap-3 rounded-xl border border-white/10 p-3'>
+            <div key={s.label} className='flex items-center gap-3 rounded-xl border border-[var(--border)] p-3'>
               <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.75rem]' />
               <div className='min-w-0'>
                 <p className='truncate text-sm opacity-70'>{s.label}</p>
@@ -64,7 +64,7 @@ export function DiagnosticoSensores() {
                   {s.value} <span className='text-sm font-normal opacity-60'>{s.unit}</span>
                 </p>
               </div>
-              <span className='ml-auto inline-flex shrink-0 items-center gap-1 text-sm text-emerald-400'>
+              <span className='ml-auto inline-flex shrink-0 items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400'>
                 <span className='size-2 rounded-full bg-emerald-400' aria-hidden='true' />
                 OK
               </span>
@@ -79,7 +79,7 @@ export function DiagnosticoSensores() {
           <button
             type='button'
             onClick={runAll}
-            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold'
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold'
           >
             <IconGeneral icon='play_circle' fill={0} className='[--icon-size:1.25rem]' />
             Executar todos
@@ -87,7 +87,7 @@ export function DiagnosticoSensores() {
         </div>
         <ul className='flex flex-col gap-2'>
           {TESTS.map((t) => (
-            <li key={t.id} className='flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5'>
+            <li key={t.id} className='flex items-center gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5'>
               <IconGeneral icon={t.icon} fill={0} className='shrink-0 opacity-80 [--icon-size:1.5rem]' />
               <span className='flex-1'>{t.label}</span>
               <TestStatus state={tests[t.id] ?? "idle"} />
@@ -95,7 +95,7 @@ export function DiagnosticoSensores() {
                 type='button'
                 onClick={() => runTest(t.id)}
                 disabled={tests[t.id] === "running"}
-                className='btn-press cursor-pointer rounded-lg border border-white/15 px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50'
+                className='btn-press cursor-pointer rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50'
               >
                 Testar
               </button>
@@ -115,7 +115,7 @@ function TestStatus({ state }: { state: TestState }) {
     return <IconGeneral icon='progress_activity' fill={0} className='animate-spin text-[var(--brand)] [--icon-size:1.25rem]' />;
   const ok = state === "ok";
   return (
-    <span className={clsx("inline-flex items-center gap-1 text-sm font-medium", ok ? "text-emerald-400" : "text-red-400")}>
+    <span className={clsx("inline-flex items-center gap-1 text-sm font-medium", ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400")}>
       <IconGeneral icon={ok ? "check_circle" : "cancel"} fill={1} className='[--icon-size:1.25rem]' />
       {ok ? "OK" : "Falha"}
     </span>

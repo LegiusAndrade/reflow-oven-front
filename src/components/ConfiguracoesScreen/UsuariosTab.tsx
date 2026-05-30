@@ -137,7 +137,7 @@ export function UsuariosTab() {
             setPage(0);
           }}
         />
-        <label className='flex flex-1 items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5'>
+        <label className='flex flex-1 items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5'>
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
           <input
             value={query}
@@ -177,7 +177,7 @@ export function UsuariosTab() {
             </thead>
             <tbody>
               {shown.map((u, i) => (
-                <tr key={u.id} className='border-t border-white/10 [&>td]:px-4 [&>td]:py-3'>
+                <tr key={u.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
                   <td className='tabular-nums opacity-70'>{start + i + 1}</td>
                   <td className='font-medium'>{u.name}</td>
                   <td className='opacity-80'>{u.type}</td>
@@ -250,7 +250,7 @@ function RowAction({ icon, label, onClick, danger }: { icon: string; label: stri
       type='button'
       onClick={onClick}
       aria-label={label}
-      className={`btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-white/10 ${danger ? "text-red-400" : ""}`}
+      className={`btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-[var(--hover)] ${danger ? "text-red-700 dark:text-red-400" : ""}`}
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.375rem]' />
     </button>

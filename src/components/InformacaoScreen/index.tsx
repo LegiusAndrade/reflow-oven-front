@@ -21,8 +21,8 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
 /** A titled info block (border + subtle fill + icon header) — the shared card chrome. */
 function InfoCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
   return (
-    <div className='flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4'>
-      <header className='flex items-center gap-2 border-b border-white/10 pb-2'>
+    <div className='flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] p-4'>
+      <header className='flex items-center gap-2 border-b border-[var(--border)] pb-2'>
         <IconGeneral icon={icon} fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
         <h2 className='font-semibold'>{title}</h2>
       </header>
@@ -51,9 +51,9 @@ export function InformacaoScreen() {
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-white/10 pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
         <h1 className='text-2xl font-semibold'>Informação</h1>
-        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'>
+        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'>
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
       </header>
