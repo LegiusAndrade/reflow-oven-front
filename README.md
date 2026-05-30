@@ -41,22 +41,32 @@ permitindo configurar perfis, executar o processo e monitorar os sensores em tem
 | UI           | **React 19** + **TypeScript**                                              |
 | Estilo       | **Tailwind CSS v4** (tokens semânticos em `globals.css`), `clsx`            |
 | Fontes       | **Nunito** (`next/font`) + **Material Symbols Rounded** (webfont)           |
-| Persistência | `localStorage` (estágio _mock_ — backend via API/RS422 ainda por integrar) |
+| Dados        | **API REST + SignalR** do backend .NET ([`../reflow-oven-backend`](../reflow-oven-backend)) |
 
 ## 🔌 Pré-requisitos
 
 - **Node.js 20.9+** (o ambiente de desenvolvimento usa a v24).
 - **Yarn Classic (v1)** — este projeto usa `yarn.lock`; use `yarn`/`yarn add`, não `npm`.
+- O **backend** rodando (veja `../reflow-oven-backend`): `dotnet run` + PostgreSQL.
 
 ## 🚀 Como rodar
 
 ```bash
-yarn install     # instala as dependências
-yarn dev         # servidor de desenvolvimento (Turbopack) em http://localhost:3000
+cp .env.example .env.local   # define NEXT_PUBLIC_API_URL (padrão http://localhost:5248)
+yarn install                 # instala as dependências
+yarn dev                     # servidor de desenvolvimento (Turbopack) em http://localhost:3000
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000). Na tela de login, a senha _mock_ de
-todos os usuários é `1234` (ver `src/lib/auth.ts`).
+Acesse [http://localhost:3000](http://localhost:3000). Faça login com um usuário do seed do backend
+(ex.: `lucas.silva`, Admin) e senha `reflow1234`, ou o técnico `calibracao` / `calibra`.
+
+## 🔗 Integração com o backend
+
+O frontend consome o backend .NET; não há mais persistência _mock_ em `localStorage`.
+
+- `src/lib/api.ts` — cliente REST tipado (JWT no `localStorage`, base `NEXT_PUBLIC_API_URL`).
+- `src/lib/realtime.ts` — SignalR: `/hubs/telemetry` (execução ao vivo) e `/hubs/diagnostics` (leituras 1 Hz).
+- Auth real (`src/lib/auth.ts`), stores _backed-by-API_ (`apiStore.ts`, `programStore`, `usersStore`, `settingsStore`) e `reportsClient.ts` para os Relatórios.
 
 ## 📜 Scripts
 

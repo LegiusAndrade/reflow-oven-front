@@ -5,18 +5,13 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ## Próximas
 
-- [ ] **Diagnóstico** — ligar os autotestes/leituras ao backend (hoje mock).
-- [ ] **Execução** — persistir o relatório da run ao concluir e refletir em Relatórios/Estatísticas (hoje a run é simulada, sem persistência).
-
-## Integração com o backend
-
-- [ ] Disparar as **toasts** na resposta da API (sucesso/erro), não logo após a escrita local.
-- [ ] Substituir a persistência em **localStorage** (`programStore`, `settingsStore`, `usersStore`, `sessionStore`) pela API/RS422.
-- [ ] **Autenticação real** (hoje mock: usuário existente + senha "1234") + recuperação de senha por e-mail.
+- [ ] **Cadastro de usuário** — adicionar campo de senha no formulário (hoje novos usuários recebem a senha padrão `reflow1234`).
+- [ ] **Alterações (auditoria)** — diff detalhado de programa no overlay (o backend grava um diff simplificado; o overlay mostra listas adicionado/removido).
 - [ ] Persistir o **tema** escolhido (hoje só na sessão).
 
 ## Feito
 
+- [x] **Integração com o backend (.NET)** — substituída a persistência mock em `localStorage` pela **API REST + SignalR**: autenticação real (JWT) + recuperação de senha, Programas/Usuários/Configurações/Calibração via API, **execução ao vivo** (start/stop + telemetria SignalR), leituras ao vivo (BottomBar/Sensores), Relatórios/Diagnóstico/Manutenção lendo dados reais; toasts na resposta da API (`src/lib/api.ts`, `realtime.ts`, `apiStore.ts`, `reportsClient.ts`)
 - [x] Upgrade Next 16 / React 19.2 / TS 6 / Tailwind 4 (ESLint fixo em 9.x, flat config) + merge na `develop`
 - [x] Tela de monitoramento: TopBar + galeria paginada + BottomBar + Sidebar (drawer + docagem responsiva ≥1280×600)
 - [x] Gráfico do perfil de temperatura (SVG próprio, responsivo, auto-compacto)

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Touchscreen frontend for a **reflow oven** used to solder SMD components onto PCBs. Built with **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4**. It runs on a Raspberry Pi / Orange Pi and communicates over **RS422** with an STM32-based power board.
+Touchscreen frontend for a **reflow oven** used to solder SMD components onto PCBs. Built with **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4**. It runs on a Raspberry Pi / Orange Pi. Data and live telemetry come from the **.NET backend** (`../reflow-oven-backend`) over **REST + SignalR**; that backend is what talks to the STM32 power board over **RS422**.
 
 The UI is responsible for:
 - Creating/editing temperature profiles (temperature × time)
@@ -12,6 +12,17 @@ The UI is responsible for:
 - Fault/alert display; closed-loop PID control is planned.
 
 Active development happens on the **`develop`** branch (ahead of `master`). Shared UI components live under `src/components/` (`TopBar`, `Sidebar`, `LinkButton`, and `Icon/*`); the screens (e.g. the Initial/monitoring page) are built from these. UI text and metadata are in **Portuguese (pt-BR)**.
+
+## Backend integration
+
+The UI talks to the .NET backend (`../reflow-oven-backend`) — the former `localStorage` mock is gone.
+
+- **`src/lib/api.ts`** — typed REST client. Base URL from `NEXT_PUBLIC_API_URL` (default `http://localhost:5248`); stores the JWT in `localStorage`; throws `ApiError` carrying the backend's pt-BR ProblemDetails message. Covers every endpoint.
+- **`src/lib/realtime.ts`** — SignalR clients for `/hubs/telemetry` (live run trace) and `/hubs/diagnostics` (1 Hz sensor readings); the token is sent via `accessTokenFactory`.
+- **Auth** (`src/lib/auth.ts`) — real `login`/`logout`/`refreshSession` (JWT). `AppShell` re-validates the token on load and still guards routes by role (`canAccess`).
+- **Stores** — `programStore`, `usersStore` and `settingsStore` (via `apiStore.ts`'s `createApiStore`) are API-backed but keep the `useStore`/snapshot surface, so screens are largely unchanged; `reportsClient.ts` feeds the Relatórios tables/overlays. Mutations call the API and surface errors as toasts.
+- **Run** — `RunModal` starts/stops a run via REST and streams its trace over SignalR; `useLiveReadings` feeds the BottomBar from the diagnostics hub.
+- Set `NEXT_PUBLIC_API_URL` in `.env.local` (see `.env.example`). **The backend must be running** (`dotnet run` + PostgreSQL) for the app to work; seeded dev login `lucas.silva` / `reflow1234`.
 
 ## Commands
 
