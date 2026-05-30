@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TableScrollBox } from "@/components/TableScrollBox";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { SYSTEM_LOG_PAGE_SIZE } from "@/lib/limits";
 import { type LogEntry, type LogLevel } from "@/lib/logs";
+import { showToast } from "@/lib/toast";
 import { Segmented } from "./fields";
 
 const LEVEL_STYLE: Record<LogLevel, { icon: string; cls: string }> = {
@@ -38,12 +40,12 @@ export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () =
   useEffect(() => {
     if (!open) return;
     api
-      .systemLog({ pageSize: 200 })
+      .systemLog({ pageSize: SYSTEM_LOG_PAGE_SIZE })
       .then((res) => {
         const items = (res as { items: { at: string; level: LogLevel; message: string }[] }).items;
         setBase(items.map((l) => ({ at: fmtLog(l.at), level: l.level, message: l.message })));
       })
-      .catch(() => {});
+      .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar o log do sistema"));
   }, [open]);
 
   const logs = filter === "all" ? base : base.filter((l) => l.level === filter);

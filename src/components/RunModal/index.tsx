@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { type Axis, MultiAxisChart, type Series } from "@/components/MultiAxisChart";
@@ -15,6 +15,11 @@ import { settingsStore } from "@/lib/settings";
 import { showToast } from "@/lib/toast";
 
 const SIG = Object.fromEntries(RUN_SIGNALS.map((s) => [s.id, s])) as Record<RunSignalId, (typeof RUN_SIGNALS)[number]>;
+
+/** Dedupe concurrent start requests: React StrictMode (dev) double-invokes the effect and a
+ *  remount would otherwise fire a second api.startRun for the same run. Cleared once the start
+ *  settles, so a later, deliberate re-open starts fresh. */
+const inflightStart = new Map<string, ReturnType<typeof api.startRun>>();
 
 type RunStatus = "running" | "done" | "aborted";
 type Sample = { t: number; alvo: number; oven: number; board: number; current: number; voltage: number; ovenFan: number; boardFan: number };
@@ -39,18 +44,32 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   ]);
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const stopTelemetry = useRef<(() => void) | null>(null);
+  const terminated = useRef(false);
 
   // Start the run on the backend and stream its live trace over SignalR.
   useEffect(() => {
     if (invalid) return;
-    let stop: (() => void) | undefined;
     let cancelled = false;
-    api
-      .startRun(program.id)
+    // Dedupe the start so a StrictMode/dev double-invoke (or a remount) can't start two runs.
+    let start = inflightStart.get(program.id);
+    if (!start) {
+      start = api.startRun(program.id);
+      inflightStart.set(program.id, start);
+      void start.catch(() => {}).finally(() => inflightStart.delete(program.id));
+    }
+    start
       .then((run) => {
-        if (cancelled) return;
-        stop = connectRunTelemetry(run.runId, {
+        if (cancelled || stopTelemetry.current) return;
+        terminated.current = false;
+        const finish = () => {
+          terminated.current = true;
+          stopTelemetry.current?.();
+          stopTelemetry.current = null;
+        };
+        stopTelemetry.current = connectRunTelemetry(run.runId, {
           onTrace: (s) => {
+            if (terminated.current) return; // ignore late samples after a terminal state
             setElapsed(s.t);
             const sample: Sample = {
               t: s.t,
@@ -67,8 +86,14 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
               return next.length > RUN_MEASURED_MAX_POINTS ? next.filter((_, i) => i % 2 === 0 || i === next.length - 1) : next;
             });
           },
-          onStatus: (st) => setStatus(st),
-          onCompleted: () => showToast(`Execução de "${program.name}" concluída`),
+          onStatus: (st) => {
+            setStatus(st);
+            if (st === "done" || st === "aborted") finish(); // stop streaming once the run ends
+          },
+          onCompleted: () => {
+            showToast(`Execução de "${program.name}" concluída`);
+            finish();
+          },
         });
       })
       .catch((e) => {
@@ -78,7 +103,8 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
       });
     return () => {
       cancelled = true;
-      stop?.();
+      stopTelemetry.current?.();
+      stopTelemetry.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [program.id, invalid]);
@@ -282,9 +308,20 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
         cancelLabel='Continuar'
         onConfirm={() => {
           setConfirmAbort(false);
-          setStatus("aborted");
-          void api.stopRun().catch(() => {});
-          showToast("Execução interrompida");
+          // Don't optimistically claim the run stopped: confirm the backend halted it first, since
+          // a swallowed failure here would show "interrompido" while the oven keeps heating.
+          api
+            .stopRun()
+            .then(() => {
+              terminated.current = true;
+              stopTelemetry.current?.();
+              stopTelemetry.current = null;
+              setStatus("aborted");
+              showToast("Execução interrompida");
+            })
+            .catch((e) => {
+              showToast(e instanceof ApiError ? e.message : "Falha ao interromper a execução");
+            });
         }}
         onCancel={() => setConfirmAbort(false)}
       />

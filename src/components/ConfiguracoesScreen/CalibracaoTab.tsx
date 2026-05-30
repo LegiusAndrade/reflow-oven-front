@@ -36,7 +36,7 @@ export function CalibracaoTab() {
         setCal(loaded);
         setBase(loaded);
       })
-      .catch(() => {});
+      .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar a calibração"));
   }, []);
 
   return (

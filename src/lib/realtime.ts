@@ -15,11 +15,17 @@ const build = (path: string): signalR.HubConnection =>
 /** Subscribe to the 1 Hz sensor stream (Diagnóstico / BottomBar). Returns a stop function. */
 export function connectDiagnostics(onReading: (_r: SensorReadingsDto) => void): () => void {
   const conn = build("/hubs/diagnostics");
-  conn.on("ReadingTick", onReading);
-  conn.start().catch(() => {
+  const onTick = (r: SensorReadingsDto) => onReading(r);
+  conn.on("ReadingTick", onTick);
+  const started = conn.start().catch(() => {
     /* offline: callers keep their last value */
   });
-  return () => void conn.stop();
+  return () => {
+    // Deregister the handler (auto-reconnect would otherwise re-fire it on a stale closure) and
+    // wait for the start to settle before stopping, so a stop during connection still tears down.
+    conn.off("ReadingTick", onTick);
+    void started.finally(() => conn.stop());
+  };
 }
 
 export interface RunTelemetryHandlers {
@@ -32,17 +38,29 @@ export interface RunTelemetryHandlers {
 /** Join a run's group and receive its live trace. Returns a stop function. */
 export function connectRunTelemetry(runId: string, handlers: RunTelemetryHandlers): () => void {
   const conn = build("/hubs/telemetry");
-  if (handlers.onTrace) conn.on("TraceSample", (_runId: string, sample: TraceSampleDto) => handlers.onTrace?.(sample));
-  if (handlers.onPhase) conn.on("RunPhaseChanged", (_runId: string, phase: RunPhase) => handlers.onPhase?.(phase));
-  if (handlers.onStatus) conn.on("RunStatusChanged", (_runId: string, status: RunStatusKind) => handlers.onStatus?.(status));
-  if (handlers.onCompleted) conn.on("RunCompleted", (_runId: string, executionId: string) => handlers.onCompleted?.(executionId));
+  const onTrace = (_runId: string, sample: TraceSampleDto) => handlers.onTrace?.(sample);
+  const onPhase = (_runId: string, phase: RunPhase) => handlers.onPhase?.(phase);
+  const onStatus = (_runId: string, status: RunStatusKind) => handlers.onStatus?.(status);
+  const onCompleted = (_runId: string, executionId: string) => handlers.onCompleted?.(executionId);
+  if (handlers.onTrace) conn.on("TraceSample", onTrace);
+  if (handlers.onPhase) conn.on("RunPhaseChanged", onPhase);
+  if (handlers.onStatus) conn.on("RunStatusChanged", onStatus);
+  if (handlers.onCompleted) conn.on("RunCompleted", onCompleted);
 
-  conn
+  const started = conn
     .start()
     .then(() => conn.invoke("SubscribeRun", runId))
     .catch(() => {
       /* offline */
     });
 
-  return () => void conn.stop();
+  return () => {
+    // Deregister handlers (auto-reconnect would re-fire them on stale closures) and wait for the
+    // start to settle before stopping, so a stop issued during connection still tears down.
+    conn.off("TraceSample", onTrace);
+    conn.off("RunPhaseChanged", onPhase);
+    conn.off("RunStatusChanged", onStatus);
+    conn.off("RunCompleted", onCompleted);
+    void started.finally(() => conn.stop());
+  };
 }

@@ -4,6 +4,7 @@
  * Lets screens keep using `useStore(store)` / `store.set(...)` while the data lives on the server.
  */
 import type { JsonStore } from "./localStore";
+import { showToast } from "./toast";
 
 export interface ApiStoreOptions<T> {
   fallback: T;
@@ -30,7 +31,8 @@ export function createApiStore<T>(opts: ApiStoreOptions<T>): JsonStore<T> {
         notify();
       })
       .catch(() => {
-        loaded = true; // avoid a refetch loop while the backend is unreachable
+        // Leave `loaded` false so a later subscribe retries once the backend is reachable;
+        // the `loading` guard already prevents a refetch loop while a request is in flight.
       })
       .finally(() => {
         loading = false;
@@ -38,9 +40,17 @@ export function createApiStore<T>(opts: ApiStoreOptions<T>): JsonStore<T> {
   };
 
   const write = (next: T) => {
+    const prev = value;
     value = next;
     notify();
-    if (opts.save) void opts.save(next).catch(() => {});
+    if (opts.save)
+      void opts.save(next).catch(() => {
+        // The optimistic update didn't persist — roll it back and tell the user, instead of
+        // leaving the UI showing settings the server never accepted (data-loss on reload).
+        value = prev;
+        notify();
+        showToast("Falha ao salvar. As alterações foram revertidas.");
+      });
   };
 
   return {

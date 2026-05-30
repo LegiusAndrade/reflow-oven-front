@@ -4,8 +4,9 @@ import { clsx } from "clsx";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { MOCK_READINGS } from "@/lib/sensors";
+import { showToast } from "@/lib/toast";
 import { SystemLogModal } from "./SystemLogModal";
 
 type TestState = "idle" | "running" | "ok" | "fail";
@@ -30,7 +31,10 @@ export function DiagnosticoSensores() {
     api
       .selfTest(id)
       .then((res) => setTests((t) => ({ ...t, [id]: (res as { state?: string }).state === "ok" ? "ok" : "fail" })))
-      .catch(() => setTests((t) => ({ ...t, [id]: "fail" })));
+      .catch((e) => {
+        setTests((t) => ({ ...t, [id]: "fail" }));
+        showToast(e instanceof ApiError ? e.message : "Falha ao executar o teste");
+      });
   };
   const runAll = () => TESTS.forEach((t) => runTest(t.id));
 

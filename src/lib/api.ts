@@ -4,6 +4,8 @@
  * TODO(backend): this replaces the localStorage mock stores screen by screen.
  */
 
+import { API_TIMEOUT_MS } from "./limits";
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5248";
 
 const TOKEN_KEY = "reflow:token:v1";
@@ -40,17 +42,44 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const token = getToken();
   if (token && opts.auth !== false) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method: opts.method ?? "GET",
-    headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-    signal: opts.signal,
-  });
+  // Bound every request: abort if the server doesn't answer in time, and turn a refused/dropped
+  // connection or a timeout into a clear ApiError (status 0) instead of a raw "Failed to fetch".
+  const controller = new AbortController();
+  const onExternalAbort = () => controller.abort();
+  if (opts.signal) {
+    if (opts.signal.aborted) controller.abort();
+    else opts.signal.addEventListener("abort", onExternalAbort, { once: true });
+  }
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: opts.method ?? "GET",
+      headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      signal: controller.signal,
+    });
+  } catch {
+    if (opts.signal?.aborted) throw new ApiError(0, "Requisição cancelada.");
+    if (controller.signal.aborted) throw new ApiError(0, "O servidor demorou a responder. Tente novamente.");
+    throw new ApiError(0, "Não foi possível conectar ao servidor. Verifique a rede e se o servidor está ligado.");
+  } finally {
+    clearTimeout(timeout);
+    if (opts.signal) opts.signal.removeEventListener("abort", onExternalAbort);
+  }
 
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
-  const data: unknown = text ? JSON.parse(text) : undefined;
+  let data: unknown;
+  try {
+    data = text ? JSON.parse(text) : undefined;
+  } catch {
+    // Keep the contract that every failure is an ApiError (a misconfigured server can answer
+    // 200 with a non-JSON body, e.g. an HTML error page); never let a raw SyntaxError escape.
+    throw new ApiError(res.status, res.ok ? "Resposta inválida do servidor." : `Erro ${res.status}`);
+  }
 
   if (!res.ok) {
     const problem = data as { detail?: string; title?: string } | undefined;
@@ -202,12 +231,12 @@ export const api = {
 
   // users
   listUsers: () => request<UserDto[]>("/api/users"),
-  getUser: (id: string) => request<UserDto>(`/api/users/${id}`),
+  getUser: (id: string) => request<UserDto>(`/api/users/${encodeURIComponent(id)}`),
   createUser: (body: { name: string; email: string; password: string; type: Role; status: "Ativo" | "Inativo" }) =>
     request<UserDto>("/api/users", { method: "POST", body }),
   updateUser: (id: string, body: { email: string; type: Role; status: "Ativo" | "Inativo"; password?: string }) =>
-    request<UserDto>(`/api/users/${id}`, { method: "PUT", body }),
-  deleteUser: (id: string) => request<void>(`/api/users/${id}`, { method: "DELETE" }),
+    request<UserDto>(`/api/users/${encodeURIComponent(id)}`, { method: "PUT", body }),
+  deleteUser: (id: string) => request<void>(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
   // settings
   getSettings: () => request<unknown>("/api/settings"),
@@ -220,11 +249,11 @@ export const api = {
 
   // reports (read-only)
   executions: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/executions${qs(q)}`),
-  execution: (id: string) => request<unknown>(`/api/executions/${id}`),
+  execution: (id: string) => request<unknown>(`/api/executions/${encodeURIComponent(id)}`),
   errors: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/errors${qs(q)}`),
-  error: (id: string) => request<unknown>(`/api/errors/${id}`),
+  error: (id: string) => request<unknown>(`/api/errors/${encodeURIComponent(id)}`),
   changes: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/changes${qs(q)}`),
-  change: (id: string) => request<unknown>(`/api/changes/${id}`),
+  change: (id: string) => request<unknown>(`/api/changes/${encodeURIComponent(id)}`),
   systemLog: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/system-log${qs(q)}`),
   faultTypes: () => request<unknown[]>("/api/fault-types"),
 

@@ -4,6 +4,7 @@
  * overlay opens. Timestamps are formatted to the "dd/mm/aa - HH:MM:SS" the UI expects.
  */
 import { api } from "./api";
+import { REPORT_PAGE_SIZE } from "./limits";
 import type { ChangeAction, ChangeDetail, ChangeLogEntry, ChangePointRow, ErrorLogEntry, ErrorSeverity, ExecutionReport, ExecutionStatus, LogEvent, LogEventKind } from "./reports";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -50,7 +51,7 @@ const mapEvent = (e: LogEventDto): LogEvent => ({ at: fmtTime(e.at), kind: e.kin
 
 // --- Executions -------------------------------------------------------------------------
 export async function fetchExecutions(): Promise<ExecutionReport[]> {
-  const res = (await api.executions({ pageSize: 200 })) as Paged<ExecSummaryDto>;
+  const res = (await api.executions({ pageSize: REPORT_PAGE_SIZE })) as Paged<ExecSummaryDto>;
   return res.items.map((e) => execFromSummary(e));
 }
 
@@ -89,7 +90,7 @@ export async function fetchExecutionDetail(id: string): Promise<ExecutionReport>
 
 // --- Changes ----------------------------------------------------------------------------
 export async function fetchChanges(): Promise<ChangeLogEntry[]> {
-  const res = (await api.changes({ pageSize: 200 })) as Paged<ChangeSummaryDto>;
+  const res = (await api.changes({ pageSize: REPORT_PAGE_SIZE })) as Paged<ChangeSummaryDto>;
   return res.items.map(changeFromSummary);
 }
 
@@ -118,7 +119,7 @@ export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
 
 // --- Errors -----------------------------------------------------------------------------
 export async function fetchErrors(): Promise<ErrorLogEntry[]> {
-  const res = (await api.errors({ pageSize: 200 })) as Paged<ErrSummaryDto>;
+  const res = (await api.errors({ pageSize: REPORT_PAGE_SIZE })) as Paged<ErrSummaryDto>;
   return res.items.map(errorFromSummary);
 }
 

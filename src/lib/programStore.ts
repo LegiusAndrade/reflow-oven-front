@@ -4,6 +4,7 @@
  * the API and refresh the cache. Snapshots keep a stable reference until the data actually changes.
  */
 import { api, type ProgramDto, type SaveProgramRequest } from "./api";
+import { PROGRAM_LIST_PAGE_SIZE } from "./limits";
 import type { Program } from "./programs";
 
 const EMPTY_PROGRAMS: Program[] = [];
@@ -42,7 +43,7 @@ export const toProgram = (dto: ProgramDto): Program => ({
 export async function reloadPrograms(): Promise<void> {
   loading = true;
   try {
-    const res = await api.listPrograms({ filter: "all", sort: "default", page: 1, pageSize: 100 });
+    const res = await api.listPrograms({ filter: "all", sort: "default", page: 1, pageSize: PROGRAM_LIST_PAGE_SIZE });
     programs = res.items.map(toProgram);
     favoriteIds = res.items.filter((p) => p.favorite).map((p) => p.id);
     loaded = true;
@@ -55,7 +56,7 @@ export async function reloadPrograms(): Promise<void> {
 const ensureLoaded = (): void => {
   if (typeof window === "undefined" || loaded || loading) return;
   void reloadPrograms().catch(() => {
-    loaded = true; // avoid a refetch loop while the backend is unreachable
+    // Leave `loaded` false so a later subscribe retries; `loading` guards against a refetch loop.
   });
 };
 
@@ -82,7 +83,9 @@ export async function deleteProgram(id: string): Promise<void> {
 
 /** Create (no id) or update (existing id) a program from the editor, then refresh the cache. */
 export async function saveProgram(req: SaveProgramRequest, id?: string): Promise<void> {
-  if (id && programs.some((p) => p.id === id)) await api.updateProgram(id, req);
+  // Trust the id (an existing program) rather than the cache: opening the editor directly by URL
+  // never populates the cache, so a cache check would wrongly create a duplicate instead of updating.
+  if (id) await api.updateProgram(id, req);
   else await api.createProgram(req);
   await reloadPrograms();
 }

@@ -22,6 +22,7 @@ const CONSEQUENCES = [
 export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [text, setText] = useState("");
+  const [pending, setPending] = useState(false);
   // Clear the field each time the modal opens (adjust-during-render, no effect).
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
@@ -31,7 +32,9 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
 
   const ready = text.trim().toUpperCase() === CONFIRM_WORD;
   const confirm = async () => {
-    if (!ready) return;
+    // Guard against a double-click: a factory reset is destructive and must fire exactly once.
+    if (!ready || pending) return;
+    setPending(true);
     try {
       await factoryReset();
       showToast("Reset de fábrica concluído. Faça login novamente.");
@@ -39,6 +42,7 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
       router.replace("/login");
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : "Falha no reset de fábrica");
+      setPending(false);
     }
   };
 
@@ -83,7 +87,7 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
           <button
             type='button'
             onClick={confirm}
-            disabled={!ready}
+            disabled={!ready || pending}
             className='btn-press flex cursor-pointer items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-40'
           >
             <IconGeneral icon='restart_alt' fill={0} className='[--icon-size:1.25rem]' />

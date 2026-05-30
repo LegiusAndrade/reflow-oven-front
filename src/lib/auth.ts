@@ -1,5 +1,6 @@
 import { api, ApiError, getToken, setToken, type Role } from "./api";
 import { createJsonStore } from "./localStore";
+import { showToast } from "./toast";
 
 export type { Role }; // "Admin" | "Regular"
 
@@ -36,8 +37,12 @@ export async function refreshSession(): Promise<void> {
   }
   try {
     sessionStore.set(await api.me());
-  } catch {
-    logout();
+  } catch (e) {
+    // Only a real auth rejection should drop the session. A transient network/5xx error
+    // (e.g. the device booted before the backend) must keep the cached session, otherwise we
+    // bounce the user to /login on every hiccup.
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) logout();
+    else if (e instanceof ApiError && e.status === 0) showToast("Não foi possível conectar ao servidor.");
   }
 }
 

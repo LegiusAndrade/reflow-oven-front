@@ -46,9 +46,33 @@ export const CONFIG_VOLTAGE_MAX = 300;
 /** Network text fields (IP / mask / gateway / DNS) — max characters. */
 export const NETWORK_FIELD_MAX_LENGTH = 15;
 
-/** User name — min/max characters. */
+/** User name — min/max characters. Allowed charset (letters, digits and the dot) lives in
+ *  `sanitizeUsername`/`isValidUsername` in lib/users.ts. */
 export const USER_NAME_MIN_LENGTH = 3;
 export const USER_NAME_MAX_LENGTH = 40;
+
+/** Password — min/max characters. The max is BCrypt's 72-byte limit; we deliberately do NOT
+ *  restrict which characters are allowed (restricting symbols weakens passwords, annoys users and
+ *  breaks password managers). */
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 72;
+
+/** E-mail address — maximum characters (RFC 5321 limit). */
+export const EMAIL_MAX_LENGTH = 254;
+
+// --- API paging (list fetch sizes) ----------------------------------------------------
+/** Programs — page size when loading the full catalog into the client cache. */
+export const PROGRAM_LIST_PAGE_SIZE = 100;
+/** Reports — page size when fetching execution/change/error lists for the tables. */
+export const REPORT_PAGE_SIZE = 200;
+/** System log — page size when fetching entries for the modal. */
+export const SYSTEM_LOG_PAGE_SIZE = 200;
+
+// --- Conexão (timeouts em ms) ---------------------------------------------------------
+/** Tempo máximo de uma requisição REST antes de abortar e reportar "servidor não respondeu". */
+export const API_TIMEOUT_MS = 12000;
+/** Tempo que o app espera no carregamento (validação de sessão) antes de mostrar erro de conexão. */
+export const APP_BOOT_TIMEOUT_MS = 12000;
 
 // --- Diagnóstico (statistics rankings) -------------------------------------------------
 

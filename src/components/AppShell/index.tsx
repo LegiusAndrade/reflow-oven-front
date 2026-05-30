@@ -8,10 +8,12 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Sidebar } from "@/components/Sidebar";
 import { Toaster } from "@/components/Toaster";
 import TopBar from "@/components/TopBar";
+import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { useSession } from "@/hooks/useSession";
 import { canAccess, refreshSession } from "@/lib/auth";
+import { APP_BOOT_TIMEOUT_MS } from "@/lib/limits";
 import { MOCK_READINGS } from "@/lib/sensors";
 
 export interface IAppShellProps {
@@ -71,7 +73,39 @@ export function AppShell({ children }: IAppShellProps) {
   }, [hydrated, isLogin, session, pathname, router]);
 
   const blocked = !hydrated || (isLogin ? Boolean(session) : !session ? true : !canAccess(session.role, pathname));
+
+  // Don't spin forever: if the boot stays blocked (e.g. the backend is unreachable while we
+  // validate the session), surface a connection error with a retry once the timeout elapses.
+  const [bootTimedOut, setBootTimedOut] = useState(false);
+  useEffect(() => {
+    if (!blocked) {
+      setBootTimedOut(false);
+      return;
+    }
+    const id = window.setTimeout(() => setBootTimedOut(true), APP_BOOT_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [blocked]);
+
   if (blocked) {
+    if (bootTimedOut) {
+      return (
+        <div className='text-fg grid h-screen place-items-center p-6'>
+          <div className='card flex w-[min(92vw,28rem)] flex-col items-center gap-4 rounded-2xl border border-[var(--border)] p-6 text-center'>
+            <IconGeneral icon='cloud_off' fill={1} className='shrink-0 text-red-700 dark:text-red-400 [--icon-size:2.5rem]' />
+            <h1 className='text-xl font-semibold'>Não foi possível conectar ao servidor</h1>
+            <p className='opacity-70'>Verifique se o servidor está ligado e a rede conectada, depois tente novamente.</p>
+            <button
+              type='button'
+              onClick={() => window.location.reload()}
+              className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'
+            >
+              <IconGeneral icon='refresh' fill={0} className='[--icon-size:1.25rem]' />
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className='text-fg grid h-screen place-items-center'>
         <IconGeneral icon='progress_activity' fill={0} className='animate-spin opacity-60 [--icon-size:2.5rem]' />
@@ -127,6 +161,8 @@ export function AppShell({ children }: IAppShellProps) {
       </div>
 
       <BottomBar readings={liveReadings} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} showMenu={Boolean(session)} />
+
+      <VirtualKeyboard />
     </div>
   );
 }

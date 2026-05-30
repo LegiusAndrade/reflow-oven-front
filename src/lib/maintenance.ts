@@ -106,7 +106,9 @@ export async function performCleanup(ids: CleanupId[]): Promise<void> {
  */
 export async function factoryReset(): Promise<void> {
   await api.factoryReset("RESETAR");
-  cleanupStore.set({ execucoes: true, alteracoes: true, falhas: true, logs: true });
+  // Clear auth first: the server is already wiped, so a failure in the local cleanup below must
+  // not leave a live token behind (mirrors logout(), which clears the token before other state).
   setToken(null);
   sessionStore.set(null);
+  cleanupStore.set({ execucoes: true, alteracoes: true, falhas: true, logs: true });
 }

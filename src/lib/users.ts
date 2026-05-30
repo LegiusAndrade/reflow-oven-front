@@ -1,4 +1,5 @@
 import { api, type UserDto } from "./api";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./limits";
 import type { JsonStore } from "./localStore";
 
 export type UserType = "Admin" | "Regular";
@@ -19,9 +20,6 @@ export type User = {
   lastLogin: string;
   events: UserEvent[];
 };
-
-/** Password assigned to users created from the (still password-less) form. TODO(backend): collect it. */
-const DEFAULT_NEW_PASSWORD = "reflow1234";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -67,7 +65,7 @@ async function reloadUsers(): Promise<void> {
 const ensureLoaded = () => {
   if (typeof window === "undefined" || loaded || loading) return;
   void reloadUsers().catch(() => {
-    loaded = true;
+    // Leave `loaded` false so a later subscribe retries once the backend is reachable.
   });
 };
 
@@ -89,8 +87,19 @@ export const usersStore: JsonStore<User[]> = {
   },
 };
 
+/** Strip everything not allowed in a username (keep letters, digits and the dot). The single
+ *  source of truth for the username charset, shared by the create form and the login screen. */
+export function sanitizeUsername(value: string): string {
+  return value.replace(/[^\p{L}\p{N}.]/gu, "");
+}
+
 export function isValidUsername(name: string): boolean {
   return /^[\p{L}\p{N}.]+$/u.test(name.trim());
+}
+
+/** A password is valid when it meets the length policy; any characters are allowed. */
+export function isValidPassword(password: string): boolean {
+  return password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH;
 }
 
 export function isValidEmail(email: string): boolean {
@@ -113,10 +122,13 @@ export async function upsertUser(user: User & { password?: string }): Promise<vo
       ...(user.password ? { password: user.password } : {}),
     });
   } else {
+    // The create form always collects a password; never fall back to a shared default — a known
+    // password on any account is a foot-gun (and would also break programmatic creates silently).
+    if (!user.password) throw new Error("Senha obrigatória para criar um usuário.");
     await api.createUser({
       name: user.name,
       email: user.email,
-      password: user.password ?? DEFAULT_NEW_PASSWORD,
+      password: user.password,
       type: user.type,
       status: user.status,
     });

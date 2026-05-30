@@ -9,7 +9,9 @@ import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { TableScrollBox } from "@/components/TableScrollBox";
 import type { ChangeLogEntry, ErrorLogEntry, ExecutionReport } from "@/lib/reports";
+import { ApiError } from "@/lib/api";
 import { fetchChangeDetail, fetchChanges, fetchErrorDetail, fetchErrors, fetchExecutionDetail, fetchExecutions } from "@/lib/reportsClient";
+import { showToast } from "@/lib/toast";
 import { ActionBadge, SeverityBadge, StatusBadge } from "./badges";
 import { ChangeDetail } from "./ChangeDetail";
 import { ErrorDetail } from "./ErrorDetail";
@@ -84,9 +86,9 @@ export function RelatoriosScreen() {
   const [errors, setErrors] = useState<ErrorLogEntry[]>([]);
 
   useEffect(() => {
-    fetchExecutions().then(setExecutions).catch(() => {});
-    fetchChanges().then(setChanges).catch(() => {});
-    fetchErrors().then(setErrors).catch(() => {});
+    Promise.all([fetchExecutions().then(setExecutions), fetchChanges().then(setChanges), fetchErrors().then(setErrors)]).catch((e) =>
+      showToast(e instanceof ApiError ? e.message : "Falha ao carregar os relatórios")
+    );
   }, []);
 
   const [tab, setTab] = useState<Tab>("execucoes");
