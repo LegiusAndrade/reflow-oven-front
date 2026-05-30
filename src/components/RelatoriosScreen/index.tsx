@@ -8,9 +8,8 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { TableScrollBox } from "@/components/TableScrollBox";
-import { useStore } from "@/hooks/useStore";
-import { cleanupStore } from "@/lib/maintenance";
 import type { ChangeLogEntry, ErrorLogEntry, ExecutionReport } from "@/lib/reports";
+import { fetchChangeDetail, fetchChanges, fetchErrorDetail, fetchErrors, fetchExecutionDetail, fetchExecutions } from "@/lib/reportsClient";
 import { ActionBadge, SeverityBadge, StatusBadge } from "./badges";
 import { ChangeDetail } from "./ChangeDetail";
 import { ErrorDetail } from "./ErrorDetail";
@@ -79,15 +78,17 @@ const TODAY_ISO = (() => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 })();
 
-export function RelatoriosScreen({
-  executions,
-  changes,
-  errors,
-}: {
-  executions: ExecutionReport[];
-  changes: ChangeLogEntry[];
-  errors: ErrorLogEntry[];
-}) {
+export function RelatoriosScreen() {
+  const [executions, setExecutions] = useState<ExecutionReport[]>([]);
+  const [changes, setChanges] = useState<ChangeLogEntry[]>([]);
+  const [errors, setErrors] = useState<ErrorLogEntry[]>([]);
+
+  useEffect(() => {
+    fetchExecutions().then(setExecutions).catch(() => {});
+    fetchChanges().then(setChanges).catch(() => {});
+    fetchErrors().then(setErrors).catch(() => {});
+  }, []);
+
   const [tab, setTab] = useState<Tab>("execucoes");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -102,9 +103,19 @@ export function RelatoriosScreen({
   const [change, setChange] = useState<ChangeLogEntry | null>(null);
   const [changeOpen, setChangeOpen] = useState(false);
   const openChange = (c: ChangeLogEntry) => {
-    setChange(c);
-    setChangeOpen(true);
+    fetchChangeDetail(c.id)
+      .then((full) => setChange(full))
+      .catch(() => setChange(c))
+      .finally(() => setChangeOpen(true));
   };
+  const openExec = (exec: ExecutionReport) =>
+    void fetchExecutionDetail(exec.id)
+      .then((full) => setDetail({ kind: "exec", data: full }))
+      .catch(() => setDetail({ kind: "exec", data: exec }));
+  const openError = (err: ErrorLogEntry) =>
+    void fetchErrorDetail(err.id)
+      .then((full) => setDetail({ kind: "error", data: full }))
+      .catch(() => setDetail({ kind: "error", data: err }));
 
   // Measure the table area so we can paginate by the number of rows that fit (no scrollbar),
   // mirroring how the program gallery/cards fill their space.
@@ -119,22 +130,15 @@ export function RelatoriosScreen({
     return () => ro.disconnect();
   }, []);
 
-  const cleared = useStore(cleanupStore);
   const q = query.trim().toLowerCase();
 
-  // A maintenance cleanup (Diagnóstico) can clear a record category — honor it here so the
-  // cleared tab renders empty. TODO(backend): the real records are deleted server-side.
-  const allExecutions = cleared.execucoes ? [] : executions;
-  const allChanges = cleared.alteracoes ? [] : changes;
-  const allErrors = cleared.falhas ? [] : errors;
-
-  const visibleExecutions = allExecutions.filter(
+  const visibleExecutions = executions.filter(
     (e) => inRange(e.startedAt, startDate, endDate) && (filter === "all" || e.status === filter) && (!q || e.programName.toLowerCase().includes(q))
   );
-  const visibleChanges = allChanges.filter(
+  const visibleChanges = changes.filter(
     (c) => inRange(c.at, startDate, endDate) && (filter === "all" || c.action === filter) && (!q || c.target.toLowerCase().includes(q))
   );
-  const visibleErrors = allErrors.filter(
+  const visibleErrors = errors.filter(
     (x) =>
       inRange(x.at, startDate, endDate) && (filter === "all" || x.severity === filter) && (!q || `${x.code} ${x.message}`.toLowerCase().includes(q))
   );
@@ -238,19 +242,11 @@ export function RelatoriosScreen({
       {/* Content: one page of rows, sized to the measured area so it paginates instead of scrolling */}
       <div ref={tableAreaRef} className='min-h-0 flex-1'>
         {tab === "execucoes" && (
-          <ExecutionsTable
-            executions={visibleExecutions.slice(start, start + perPage)}
-            startIndex={start}
-            onOpen={(exec) => setDetail({ kind: "exec", data: exec })}
-          />
+          <ExecutionsTable executions={visibleExecutions.slice(start, start + perPage)} startIndex={start} onOpen={openExec} />
         )}
         {tab === "alteracoes" && <ChangesTable changes={visibleChanges.slice(start, start + perPage)} startIndex={start} onOpen={openChange} />}
         {tab === "erros" && (
-          <ErrorsTable
-            errors={visibleErrors.slice(start, start + perPage)}
-            startIndex={start}
-            onOpen={(err) => setDetail({ kind: "error", data: err })}
-          />
+          <ErrorsTable errors={visibleErrors.slice(start, start + perPage)} startIndex={start} onOpen={openError} />
         )}
       </div>
 

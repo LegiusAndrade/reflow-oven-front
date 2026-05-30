@@ -1,13 +1,12 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TableScrollBox } from "@/components/TableScrollBox";
-import { useStore } from "@/hooks/useStore";
-import { type LogLevel, MOCK_LOGS } from "@/lib/logs";
-import { cleanupStore } from "@/lib/maintenance";
+import { api } from "@/lib/api";
+import { type LogEntry, type LogLevel } from "@/lib/logs";
 import { Segmented } from "./fields";
 
 const LEVEL_STYLE: Record<LogLevel, { icon: string; cls: string }> = {
@@ -24,12 +23,29 @@ const FILTER_OPTIONS: { value: Filter; label: string; icon: string }[] = [
   { value: "Erro", label: "Erro", icon: "error" },
 ];
 
-/** Scrollable system log (mock), filterable by level. */
+const pad = (n: number) => String(n).padStart(2, "0");
+const fmtLog = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(2)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
+/** Scrollable system log from the API, filterable by level. */
 export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const cleared = useStore(cleanupStore);
-  // A maintenance cleanup can clear the system log; honor it here. TODO(backend).
-  const base = cleared.logs ? [] : MOCK_LOGS;
+  const [base, setBase] = useState<LogEntry[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    api
+      .systemLog({ pageSize: 200 })
+      .then((res) => {
+        const items = (res as { items: { at: string; level: LogLevel; message: string }[] }).items;
+        setBase(items.map((l) => ({ at: fmtLog(l.at), level: l.level, message: l.message })));
+      })
+      .catch(() => {});
+  }, [open]);
+
   const logs = filter === "all" ? base : base.filter((l) => l.level === filter);
 
   return (
