@@ -43,3 +43,6 @@ next-env.d.ts
 # Playwright visual-verification scratch scripts (local only, not part of the app)
 /shoot*.mjs
 /calscroll.mjs
+
+# Claude Code local state
+.claude/
