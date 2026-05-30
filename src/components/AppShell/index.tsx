@@ -125,7 +125,7 @@ export function AppShell({ children }: IAppShellProps) {
 
   return (
     <div className='text-fg flex h-screen flex-col overflow-hidden'>
-      <TopBar statusNotification={{ amount: unread, status: unread > 0 ? "ACTIVE" : "OFF" }} connectedServer={true} signalWifi={{ signal: "OFF" }} user={session} />
+      <TopBar statusNotification={{ amount: unread, status: unread > 0 ? "ACTIVE" : "NONE" }} connectedServer={true} signalWifi={{ signal: "OFF" }} user={session} />
 
       {/* Content region between the bars. On xl+ the sidebar is docked (always open); below
           xl it bounds the slide-out drawer. */}
