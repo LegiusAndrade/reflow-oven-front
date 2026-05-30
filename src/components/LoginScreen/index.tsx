@@ -8,8 +8,9 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
 import { login } from "@/lib/auth";
-import { USER_NAME_MAX_LENGTH } from "@/lib/limits";
+import { EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH, USER_NAME_MAX_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
+import { isValidEmail, sanitizeUsername } from "@/lib/users";
 
 const FIELD =
   "text-fg w-full rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] py-3 pr-3 pl-11 outline-none transition-colors placeholder:opacity-50 focus:border-[var(--brand)] focus:bg-[var(--surface-2)]";
@@ -45,6 +46,10 @@ export function LoginScreen() {
       setRecoverError("Informe o e-mail.");
       return;
     }
+    if (!isValidEmail(email.trim())) {
+      setRecoverError("E-mail inválido.");
+      return;
+    }
     try {
       await api.forgotPassword(email.trim());
     } catch {
@@ -69,7 +74,7 @@ export function LoginScreen() {
                 <input
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
+                    setName(sanitizeUsername(e.target.value));
                     setError("");
                   }}
                   placeholder='Usuário'
@@ -90,6 +95,7 @@ export function LoginScreen() {
                   }}
                   placeholder='Senha'
                   autoComplete='current-password'
+                  maxLength={PASSWORD_MAX_LENGTH}
                   className={clsx(FIELD, "pr-11")}
                 />
                 <button
@@ -137,6 +143,7 @@ export function LoginScreen() {
               }}
               placeholder='seu@email.com'
               autoComplete='email'
+              maxLength={EMAIL_MAX_LENGTH}
               className={FIELD}
             />
           </div>

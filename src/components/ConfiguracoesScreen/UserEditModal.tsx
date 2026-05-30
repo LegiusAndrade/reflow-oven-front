@@ -4,9 +4,10 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { ApiError } from "@/lib/api";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
-import { isValidEmail, type User, type UserStatus, type UserType, upsertUser } from "@/lib/users";
-import { Segmented, TextLine } from "./fields";
+import { isValidEmail, isValidPassword, type User, type UserStatus, type UserType, upsertUser } from "@/lib/users";
+import { PasswordLine, Segmented, TextLine } from "./fields";
 
 const STATUS_OPTIONS: { value: UserStatus; label: string; icon: string }[] = [
   { value: "Ativo", label: "Ativo", icon: "check_circle" },
@@ -23,6 +24,8 @@ const TYPE_OPTIONS: { value: UserType; label: string; icon: string }[] = [
 export function UserEditModal({ user, open, onClose }: { user: User | null; open: boolean; onClose: () => void }) {
   const [base, setBase] = useState(user);
   const [email, setEmail] = useState(user?.email ?? "");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<UserStatus>(user?.status ?? "Ativo");
   const [type, setType] = useState<UserType>(user?.type ?? "Regular");
   const [error, setError] = useState("");
@@ -30,6 +33,8 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
   if (user !== base) {
     setBase(user);
     setEmail(user?.email ?? "");
+    setPassword("");
+    setConfirm("");
     setStatus(user?.status ?? "Ativo");
     setType(user?.type ?? "Regular");
     setError("");
@@ -40,8 +45,13 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
     const trimmedEmail = email.trim();
     if (!trimmedEmail) return setError("Informe o e-mail.");
     if (!isValidEmail(trimmedEmail)) return setError("E-mail inválido.");
+    const changingPassword = password.length > 0 || confirm.length > 0;
+    if (changingPassword) {
+      if (!isValidPassword(password)) return setError(`A senha deve ter entre ${PASSWORD_MIN_LENGTH} e ${PASSWORD_MAX_LENGTH} caracteres.`);
+      if (password !== confirm) return setError("As senhas não coincidem.");
+    }
     try {
-      await upsertUser({ ...user, email: trimmedEmail, status, type });
+      await upsertUser({ ...user, email: trimmedEmail, status, type, ...(changingPassword ? { password } : {}) });
       showToast("Usuário atualizado");
       onClose();
     } catch (e) {
@@ -68,6 +78,28 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
                   setError("");
                 }}
                 placeholder='usuario@dominio.com'
+                className='max-w-sm'
+              />
+              <PasswordLine
+                label='Nova senha (opcional)'
+                value={password}
+                onChange={(v) => {
+                  setPassword(v);
+                  setError("");
+                }}
+                maxLength={PASSWORD_MAX_LENGTH}
+                placeholder='Deixe em branco para manter'
+                className='max-w-sm'
+              />
+              <PasswordLine
+                label='Confirmar nova senha'
+                value={confirm}
+                onChange={(v) => {
+                  setConfirm(v);
+                  setError("");
+                }}
+                maxLength={PASSWORD_MAX_LENGTH}
+                placeholder='Repita a nova senha'
                 className='max-w-sm'
               />
               <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>

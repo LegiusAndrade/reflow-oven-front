@@ -80,6 +80,45 @@ export function TextLine({ label, value, onChange, maxLength, placeholder, class
   );
 }
 
+interface IPasswordLineProps {
+  label: string;
+  value: string;
+  onChange: (_v: string) => void;
+  maxLength?: number;
+  placeholder?: string;
+  className?: string;
+  autoComplete?: string;
+}
+
+/** Masked password input with a show/hide toggle (matches the login field). */
+export function PasswordLine({ label, value, onChange, maxLength, placeholder, className, autoComplete = "new-password" }: IPasswordLineProps) {
+  const [show, setShow] = useState(false);
+  return (
+    <label className={clsx("flex min-w-[10rem] flex-col gap-1", className)}>
+      <span className='text-sm opacity-70'>{label}</span>
+      <div className='relative'>
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          maxLength={maxLength}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          onChange={(e) => onChange(e.target.value)}
+          className={clsx(INPUT_CLS, "pr-11")}
+        />
+        <button
+          type='button'
+          onClick={() => setShow((s) => !s)}
+          aria-label={show ? "Ocultar senha" : "Mostrar senha"}
+          className='btn-press absolute top-1/2 right-2 grid size-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg hover:bg-[var(--hover)]'
+        >
+          <IconGeneral icon={show ? "visibility_off" : "visibility"} fill={0} className='opacity-70 [--icon-size:1.25rem]' />
+        </button>
+      </div>
+    </label>
+  );
+}
+
 /** Accessible on/off switch. */
 export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (_v: boolean) => void; label: string; disabled?: boolean }) {
   return (

@@ -4,10 +4,10 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { ApiError } from "@/lib/api";
-import { USER_NAME_MAX_LENGTH, USER_NAME_MIN_LENGTH } from "@/lib/limits";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USER_NAME_MAX_LENGTH, USER_NAME_MIN_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
-import { isValidEmail, isValidUsername, type UserStatus, type UserType, upsertUser, usernameExists } from "@/lib/users";
-import { Segmented, TextLine } from "./fields";
+import { isValidEmail, isValidPassword, isValidUsername, sanitizeUsername, type UserStatus, type UserType, upsertUser, usernameExists } from "@/lib/users";
+import { PasswordLine, Segmented, TextLine } from "./fields";
 
 const STATUS_OPTIONS: { value: UserStatus; label: string; icon: string }[] = [
   { value: "Ativo", label: "Ativo", icon: "check_circle" },
@@ -18,9 +18,6 @@ const TYPE_OPTIONS: { value: UserType; label: string; icon: string }[] = [
   { value: "Admin", label: "Admin", icon: "shield_person" },
   { value: "Regular", label: "Regular", icon: "person" },
 ];
-
-// Anything not allowed in a username (everything except letters, digits and the dot) is stripped on input.
-const DISALLOWED = /[^\p{L}\p{N}.]/gu;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 function nowStamp(): string {
@@ -33,6 +30,8 @@ function nowStamp(): string {
 export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<UserStatus>("Ativo");
   const [type, setType] = useState<UserType>("Regular");
   const [wasOpen, setWasOpen] = useState(open);
@@ -42,6 +41,8 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
     if (open) {
       setName("");
       setEmail("");
+      setPassword("");
+      setConfirm("");
       setStatus("Ativo");
       setType("Regular");
     }
@@ -49,12 +50,19 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
 
   const trimmedName = name.trim();
   const nameTaken = trimmedName.length > 0 && usernameExists(trimmedName);
-  const canSubmit = isValidUsername(trimmedName) && trimmedName.length >= USER_NAME_MIN_LENGTH && !nameTaken && isValidEmail(email.trim());
+  const passwordsMatch = password === confirm;
+  const canSubmit =
+    isValidUsername(trimmedName) &&
+    trimmedName.length >= USER_NAME_MIN_LENGTH &&
+    !nameTaken &&
+    isValidEmail(email.trim()) &&
+    isValidPassword(password) &&
+    passwordsMatch;
 
   const handleCreate = async () => {
     if (!canSubmit) return;
     try {
-      await upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
+      await upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), password, status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
       showToast("Usuário criado");
       onClose();
     } catch (e) {
@@ -72,7 +80,7 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
               <TextLine
                 label='Usuário'
                 value={name}
-                onChange={(v) => setName(v.replace(DISALLOWED, ""))}
+                onChange={(v) => setName(sanitizeUsername(v))}
                 onPaste={(e) => e.preventDefault()}
                 maxLength={USER_NAME_MAX_LENGTH}
                 placeholder='ex.: joao.silva'
@@ -83,6 +91,25 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
             </div>
 
             <TextLine label='E-mail' value={email} onChange={setEmail} placeholder='usuario@dominio.com' className='max-w-sm' />
+
+            <div className='flex flex-col gap-1'>
+              <PasswordLine label='Senha' value={password} onChange={setPassword} maxLength={PASSWORD_MAX_LENGTH} placeholder='Mínimo 8 caracteres' className='max-w-sm' />
+              <span className='text-xs opacity-50'>
+                Entre {PASSWORD_MIN_LENGTH} e {PASSWORD_MAX_LENGTH} caracteres — qualquer caractere é permitido.
+              </span>
+            </div>
+
+            <div className='flex flex-col gap-1'>
+              <PasswordLine
+                label='Confirmar senha'
+                value={confirm}
+                onChange={setConfirm}
+                maxLength={PASSWORD_MAX_LENGTH}
+                placeholder='Repita a senha'
+                className='max-w-sm'
+              />
+              {confirm.length > 0 && !passwordsMatch && <span className='text-xs text-red-700 dark:text-red-400'>As senhas não coincidem.</span>}
+            </div>
 
             <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
               <span className='opacity-60'>Status:</span>
