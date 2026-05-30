@@ -1,43 +1,23 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { type Axis, MultiAxisChart, type Series } from "@/components/MultiAxisChart";
 import { useStore } from "@/hooks/useStore";
 import { RUN_MEASURED_MAX_POINTS } from "@/lib/limits";
+import { api, ApiError } from "@/lib/api";
 import type { Program } from "@/lib/programs";
-import { DEFAULT_RUN_SERIES, mmss, phaseAt, RUN_SIGNALS, type RunSignalId, tempAt, totalTime } from "@/lib/run";
+import { connectRunTelemetry } from "@/lib/realtime";
+import { DEFAULT_RUN_SERIES, mmss, phaseAt, RUN_SIGNALS, type RunSignalId, totalTime } from "@/lib/run";
 import { settingsStore } from "@/lib/settings";
 import { showToast } from "@/lib/toast";
 
-/** Simulation cadence and speed. RUN_SPEED 1 = real time (setpoint seconds = wall seconds). */
-const TICK_MS = 1000;
-const RUN_SPEED = 1;
 const SIG = Object.fromEntries(RUN_SIGNALS.map((s) => [s.id, s])) as Record<RunSignalId, (typeof RUN_SIGNALS)[number]>;
 
 type RunStatus = "running" | "done" | "aborted";
 type Sample = { t: number; alvo: number; oven: number; board: number; current: number; voltage: number; ovenFan: number; boardFan: number };
-
-/**
- * One mock sample of every plotted signal at time `e`. Actuator signals follow smooth trends so
- * each axis reads sensibly: current/voltage track the heating demand (setpoint slope + how hot
- * we hold), the heatsink climbs gently with the grill, its fan ramps as it warms. TODO(backend).
- */
-function sampleAt(profile: Program["profile"], e: number, done: boolean): Sample {
-  const alvo = tempAt(profile, e);
-  const oven = done ? alvo : alvo + Math.sin(e / 9) * 1.6;
-  const board = 28 + oven * 0.16;
-  const slope = tempAt(profile, e + 5) - tempAt(profile, Math.max(0, e - 1));
-  const demand = Math.max(0, slope) * 1.4 + (Math.max(0, alvo - 35) / 260) * 5;
-  const current = done ? 0 : Math.min(15, demand);
-  // Output voltage tracks the current draw, so they stay consistent (both ~0 while cooling).
-  const voltage = done ? 0 : Math.min(180, current * 13);
-  const ovenFan = done ? 3400 : alvo > 110 ? 2500 : 2200;
-  const boardFan = done ? 3800 : 2600 + Math.max(0, board - 45) * 22;
-  return { t: e, alvo, oven: Math.max(0, oven), board: Math.max(0, board), current, voltage, ovenFan, boardFan };
-}
 
 const STATUS_META: Record<RunStatus, { label: string; icon: string; cls: string }> = {
   running: { label: "Executando", icon: "play_circle", cls: "text-[var(--brand)]" },
@@ -54,31 +34,54 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   const settings = useStore(settingsStore);
   const [status, setStatus] = useState<RunStatus>("running");
   const [elapsed, setElapsed] = useState(0);
-  const [samples, setSamples] = useState<Sample[]>(() => [sampleAt(profile, 0, false)]);
+  const [samples, setSamples] = useState<Sample[]>(() => [
+    { t: 0, alvo: profile[0]?.temp ?? 25, oven: profile[0]?.temp ?? 25, board: 30, current: 0, voltage: 0, ovenFan: 0, boardFan: 0 },
+  ]);
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
-  const startRef = useRef<number | null>(null);
 
+  // Start the run on the backend and stream its live trace over SignalR.
   useEffect(() => {
-    if (status !== "running" || invalid) return;
-    if (startRef.current === null) startRef.current = Date.now();
-    const start = startRef.current;
-    const id = window.setInterval(() => {
-      const e = Math.min(total, ((Date.now() - start) / 1000) * RUN_SPEED);
-      const done = e >= total;
-      setElapsed(e);
-      setSamples((arr) => {
-        const next = [...arr, sampleAt(profile, e, done)];
-        return next.length > RUN_MEASURED_MAX_POINTS ? next.filter((_, i) => i % 2 === 0 || i === next.length - 1) : next;
+    if (invalid) return;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    api
+      .startRun(program.id)
+      .then((run) => {
+        if (cancelled) return;
+        stop = connectRunTelemetry(run.runId, {
+          onTrace: (s) => {
+            setElapsed(s.t);
+            const sample: Sample = {
+              t: s.t,
+              alvo: s.alvo,
+              oven: s.oven,
+              board: s.board,
+              current: s.current,
+              voltage: s.voltage,
+              ovenFan: s.ovenFan,
+              boardFan: s.boardFan,
+            };
+            setSamples((arr) => {
+              const next = [...arr, sample];
+              return next.length > RUN_MEASURED_MAX_POINTS ? next.filter((_, i) => i % 2 === 0 || i === next.length - 1) : next;
+            });
+          },
+          onStatus: (st) => setStatus(st),
+          onCompleted: () => showToast(`Execução de "${program.name}" concluída`),
+        });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        showToast(e instanceof ApiError ? e.message : "Falha ao iniciar a execução");
+        onClose();
       });
-      if (done) {
-        setStatus("done");
-        // TODO(backend): the board reports completion; persist the run report then.
-        showToast(`Execução de "${program.name}" concluída`);
-      }
-    }, TICK_MS);
-    return () => window.clearInterval(id);
-  }, [status, total, profile, program.name, invalid]);
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [program.id, invalid]);
 
   if (invalid) {
     return (
@@ -280,6 +283,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
         onConfirm={() => {
           setConfirmAbort(false);
           setStatus("aborted");
+          void api.stopRun().catch(() => {});
           showToast("Execução interrompida");
         }}
         onCancel={() => setConfirmAbort(false)}
