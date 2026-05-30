@@ -4,13 +4,15 @@ import { clsx } from "clsx";
 import Link from "next/link";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { useSession } from "@/hooks/useSession";
+import { CalibracaoTab } from "./CalibracaoTab";
 import { DiagnosticoTab } from "./DiagnosticoTab";
 import { GeralTab } from "./GeralTab";
 import { NotificacoesTab } from "./NotificacoesTab";
 import { RedeTab } from "./RedeTab";
 import { UsuariosTab } from "./UsuariosTab";
 
-type Tab = "geral" | "usuarios" | "rede" | "notificacoes" | "diagnostico";
+type Tab = "geral" | "usuarios" | "rede" | "notificacoes" | "diagnostico" | "calibracao";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "geral", label: "Geral", icon: "tune" },
@@ -20,22 +22,28 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "diagnostico", label: "Diagnóstico", icon: "monitor_heart" },
 ];
 
+/** The Calibração tab is reserved for the technician (calibration) session. */
+const CALIBRACAO_TAB: { id: Tab; label: string; icon: string } = { id: "calibracao", label: "Calibração", icon: "instant_mix" };
+
 /** Configurações screen: 5 tabs (Geral, Usuários, Rede, Notificações, Diagnóstico). Each form
  *  tab carries its own Cancelar/SALVAR; switching tabs discards unsaved edits on that tab. */
 export function ConfiguracoesScreen() {
   const [tab, setTab] = useState<Tab>("geral");
+  const session = useSession();
+  // Calibração is appended only for the technician session (the hidden "calibracao" login).
+  const tabs = session?.calibration ? [...TABS, CALIBRACAO_TAB] : TABS;
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-white/10 pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
         <h1 className='text-2xl font-semibold'>Configurações</h1>
-        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-white/10'>
+        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'>
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
       </header>
 
       <nav className='flex flex-wrap gap-2'>
-        {TABS.map(({ id, label, icon }) => (
+        {tabs.map(({ id, label, icon }) => (
           <button
             key={id}
             type='button'
@@ -43,7 +51,7 @@ export function ConfiguracoesScreen() {
             aria-current={tab === id ? "page" : undefined}
             className={clsx(
               "flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 font-semibold transition-colors",
-              tab === id ? "btn-link-active" : "hover:bg-white/10"
+              tab === id ? "btn-link-active" : "hover:bg-[var(--hover)]"
             )}
           >
             <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
@@ -58,6 +66,7 @@ export function ConfiguracoesScreen() {
         {tab === "rede" && <RedeTab />}
         {tab === "notificacoes" && <NotificacoesTab />}
         {tab === "diagnostico" && <DiagnosticoTab />}
+        {tab === "calibracao" && session?.calibration && <CalibracaoTab />}
       </div>
     </section>
   );

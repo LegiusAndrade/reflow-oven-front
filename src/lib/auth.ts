@@ -11,7 +11,8 @@ export const sessionStore = createJsonStore<Session | null>("reflow:session:v1",
 /** Mock password for every user. TODO(backend): validate against the API. */
 const MOCK_PASSWORD = "1234";
 
-// Hidden technician login → opens the secret calibration menu (never shown in the UI hint).
+// Hidden technician login → a full Admin session, flagged so it also sees the Calibração tab in
+// Configurações (the flag is never shown as a UI hint; normal logins don't get it).
 const SECRET_USER = "calibracao";
 const SECRET_PASSWORD = "calibra";
 
@@ -19,11 +20,11 @@ export function login(name: string, password: string): { ok: boolean; error?: st
   const key = name.trim().toLowerCase();
   if (!key) return { ok: false, error: "Informe o usuário." };
 
-  // Secret calibration access — bypasses the normal user store.
+  // Secret technician access — bypasses the normal user store; full Admin + calibration flag.
   if (key === SECRET_USER) {
     if (password !== SECRET_PASSWORD) return { ok: false, error: "Senha incorreta." };
     sessionStore.set({ id: "calibration", name: "Calibração", role: "Admin", loginAt: Date.now(), calibration: true });
-    return { ok: true, redirect: "/calibracao" };
+    return { ok: true, redirect: "/" };
   }
 
   const user = usersStore.get().find((u) => u.name.toLowerCase() === key);

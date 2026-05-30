@@ -22,9 +22,8 @@ export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const session = useSession();
-  // Regular users only see the routes their role can reach (Início + Programas); logged out or in
-  // the secret calibration mode → no nav.
-  const items = session && !session.calibration ? NAV_ITEMS.filter((item) => canAccess(session.role, item.href)) : [];
+  // Regular users only see the routes their role can reach (Início + Programas); logged out → no nav.
+  const items = session ? NAV_ITEMS.filter((item) => canAccess(session.role, item.href)) : [];
 
   const handleLogout = () => {
     logout();
