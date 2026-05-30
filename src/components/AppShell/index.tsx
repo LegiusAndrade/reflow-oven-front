@@ -11,7 +11,7 @@ import TopBar from "@/components/TopBar";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { useSession } from "@/hooks/useSession";
-import { canAccess } from "@/lib/auth";
+import { canAccess, refreshSession } from "@/lib/auth";
 import { MOCK_READINGS } from "@/lib/sensors";
 
 export interface IAppShellProps {
@@ -48,6 +48,11 @@ export function AppShell({ children }: IAppShellProps) {
       previouslyFocused?.focus();
     };
   }, [drawerOpen]);
+
+  // Re-validate the stored JWT against the API once hydrated (clears the session if expired).
+  useEffect(() => {
+    if (hydrated) void refreshSession();
+  }, [hydrated]);
 
   // Auth guard (deferred until hydrated so the persisted session loads): /login is always
   // reachable; every other route needs a session and an allowed role.

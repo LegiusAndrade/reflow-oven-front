@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
+import { api } from "@/lib/api";
 import { login } from "@/lib/auth";
 import { USER_NAME_MAX_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
@@ -13,7 +14,7 @@ import { showToast } from "@/lib/toast";
 const FIELD =
   "text-fg w-full rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] py-3 pr-3 pl-11 outline-none transition-colors placeholder:opacity-50 focus:border-[var(--brand)] focus:bg-[var(--surface-2)]";
 
-/** Login / password screen (Figma "Login User"). Mock auth: an existing user + password "1234".
+/** Login / password screen (Figma "Login User"). Real auth against the backend (JWT).
  *  Rendered inside the AppShell (TopBar + BottomBar stay; no sidebar while logged out). */
 export function LoginScreen() {
   const router = useRouter();
@@ -24,10 +25,13 @@ export function LoginScreen() {
   const [recoverOpen, setRecoverOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [recoverError, setRecoverError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = login(name, password);
+    setSubmitting(true);
+    const result = await login(name, password);
+    setSubmitting(false);
     if (!result.ok) {
       setError(result.error ?? "Falha no login.");
       return;
@@ -35,13 +39,17 @@ export function LoginScreen() {
     router.replace(result.redirect ?? "/");
   };
 
-  const recover = (e: React.FormEvent) => {
+  const recover = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
       setRecoverError("Informe o e-mail.");
       return;
     }
-    // TODO(backend): trigger the real recovery e-mail.
+    try {
+      await api.forgotPassword(email.trim());
+    } catch {
+      // Enumeration-safe: the API always reports success, so ignore transport errors here.
+    }
     showToast("Se houver uma conta com esse e-mail, enviaremos instruções de recuperação.");
     setRecoverOpen(false);
     setEmail("");
@@ -103,13 +111,13 @@ export function LoginScreen() {
               </div>
             </div>
 
-            <button type='submit' className='btn-action w-full cursor-pointer rounded-xl px-5 py-3 font-semibold'>
-              ENTRAR
+            <button type='submit' disabled={submitting} className='btn-action w-full cursor-pointer rounded-xl px-5 py-3 font-semibold disabled:opacity-60'>
+              {submitting ? "ENTRANDO…" : "ENTRAR"}
             </button>
 
             <p className='text-center text-xs opacity-50'>
-              Mock: usuário existente (ex.: <span className='font-semibold'>Lucas Silva</span> = Admin, <span className='font-semibold'>Vanessa</span> = Regular) · senha{" "}
-              <span className='font-semibold'>1234</span>
+              Dev: <span className='font-semibold'>lucas.silva</span> (Admin) · <span className='font-semibold'>vanessa</span> (Regular) · senha{" "}
+              <span className='font-semibold'>reflow1234</span>
             </p>
           </form>
         </div>

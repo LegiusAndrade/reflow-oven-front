@@ -1,42 +1,44 @@
+import { api, ApiError, getToken, setToken, type Role } from "./api";
 import { createJsonStore } from "./localStore";
-import { usersStore, type UserType } from "./users";
 
-export type Role = UserType; // "Admin" | "Regular"
+export type { Role }; // "Admin" | "Regular"
 
 export type Session = { id: string; name: string; role: Role; loginAt: number; calibration?: boolean };
 
-/** Logged-in user, persisted in localStorage (mock stage). TODO(backend): real auth/session. */
+/** Logged-in session, cached in localStorage. The source of truth is the JWT (see api.ts). */
 export const sessionStore = createJsonStore<Session | null>("reflow:session:v1", null);
 
-/** Mock password for every user. TODO(backend): validate against the API. */
-const MOCK_PASSWORD = "1234";
-
-// Hidden technician login → a full Admin session, flagged so it also sees the Calibração tab in
-// Configurações (the flag is never shown as a UI hint; normal logins don't get it).
-const SECRET_USER = "calibracao";
-const SECRET_PASSWORD = "calibra";
-
-export function login(name: string, password: string): { ok: boolean; error?: string; redirect?: string } {
-  const key = name.trim().toLowerCase();
-  if (!key) return { ok: false, error: "Informe o usuário." };
-
-  // Secret technician access — bypasses the normal user store; full Admin + calibration flag.
-  if (key === SECRET_USER) {
-    if (password !== SECRET_PASSWORD) return { ok: false, error: "Senha incorreta." };
-    sessionStore.set({ id: "calibration", name: "Calibração", role: "Admin", loginAt: Date.now(), calibration: true });
+/** Authenticate against the backend; on success stores the JWT and the session. */
+export async function login(name: string, password: string): Promise<{ ok: boolean; error?: string; redirect?: string }> {
+  try {
+    const result = await api.login(name.trim(), password);
+    if (!result.ok || !result.token || !result.session) {
+      return { ok: false, error: result.error ?? "Falha no login." };
+    }
+    setToken(result.token);
+    sessionStore.set(result.session);
     return { ok: true, redirect: "/" };
+  } catch (e) {
+    return { ok: false, error: e instanceof ApiError ? e.message : "Não foi possível conectar ao servidor." };
   }
-
-  const user = usersStore.get().find((u) => u.name.toLowerCase() === key);
-  if (!user) return { ok: false, error: "Usuário não encontrado." };
-  if (user.status === "Inativo") return { ok: false, error: "Usuário inativo." };
-  if (password !== MOCK_PASSWORD) return { ok: false, error: "Senha incorreta." };
-  sessionStore.set({ id: user.id, name: user.name, role: user.type, loginAt: Date.now() });
-  return { ok: true, redirect: "/" };
 }
 
-export function logout() {
+export function logout(): void {
+  setToken(null);
   sessionStore.set(null);
+}
+
+/** Re-validate the stored token against the API; clears the session if it is missing/expired. */
+export async function refreshSession(): Promise<void> {
+  if (!getToken()) {
+    sessionStore.set(null);
+    return;
+  }
+  try {
+    sessionStore.set(await api.me());
+  } catch {
+    logout();
+  }
 }
 
 /**
@@ -45,7 +47,6 @@ export function logout() {
  */
 export function canAccess(role: Role, pathname: string): boolean {
   if (role === "Admin") return true;
-  // Regular is view-only: home and the Programas list, but not create/edit (novo/editar).
   return pathname === "/" || pathname === "/programas";
 }
 
