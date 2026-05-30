@@ -1,31 +1,22 @@
-import type { SensorReadings } from "@/lib/sensors";
-import { useEffect, useState } from "react";
+"use client";
 
-const wander = (value: number, spread: number) => value + (Math.random() * 2 - 1) * spread;
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-const toStep = (v: number, step: number) => Math.round(v / step) * step;
+import { useEffect, useState } from "react";
+import { getToken } from "@/lib/api";
+import { connectDiagnostics } from "@/lib/realtime";
+import type { SensorReadings } from "@/lib/sensors";
 
 /**
- * Simulates a live RS422 feed by jittering the readings around their base values on an
- * interval. Placeholder until the real serial bridge (separate repo) is connected — at
- * that point this hook is the single seam to swap for the real data source.
+ * Live sensor readings from the backend's diagnostics SignalR hub (~1 Hz). Falls back to `base`
+ * until the first tick (or when not authenticated / the backend is offline). Replaces the old
+ * mock jitter — the single seam between the UI and the real data source.
  */
-export function useLiveReadings(base: SensorReadings, intervalMs = 1000): SensorReadings {
+export function useLiveReadings(base: SensorReadings): SensorReadings {
   const [readings, setReadings] = useState(base);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setReadings({
-        boardTempC: Math.round(clamp(wander(base.boardTempC, 1.5), 0, 200)),
-        boardFanRpm: toStep(clamp(wander(base.boardFanRpm, 60), 0, 6000), 10),
-        ovenTempC: Math.round(clamp(wander(base.ovenTempC, 1.5), 0, 300)),
-        ovenFanRpm: toStep(clamp(wander(base.ovenFanRpm, 60), 0, 6000), 10),
-        voltageV: Math.round(clamp(wander(base.voltageV, 2), 0, 250)),
-        currentA: Math.round(clamp(wander(base.currentA, 1), 0, 60)),
-      });
-    }, intervalMs);
-    return () => clearInterval(id);
-  }, [base, intervalMs]);
+    if (typeof window === "undefined" || !getToken()) return;
+    return connectDiagnostics((r) => setReadings(r));
+  }, []);
 
   return readings;
 }
