@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
+import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
-import { DEVICE_INFO, REPO_URL, type BoardInfo } from "@/lib/deviceInfo";
+import { api, getToken } from "@/lib/api";
+import { DEVICE_INFO, REPO_URL, type BoardInfo, type DeviceInfo } from "@/lib/deviceInfo";
 
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
@@ -46,8 +48,31 @@ function BoardCard({ icon, title, board }: { icon: string; title: string; board:
 
 /** Informação screen: device versions/serials + Pandewilly logo and a QR code to the repository. */
 export function InformacaoScreen() {
-  const d = DEVICE_INFO;
-  const freePct = Math.round((d.storageFreeGB / d.storageTotalGB) * 100);
+  const [d, setD] = useState<DeviceInfo>(DEVICE_INFO);
+
+  useEffect(() => {
+    if (!getToken()) return;
+    api
+      .device()
+      .then((dto) => {
+        const power = dto.boards.find((b) => b.role === "power");
+        const control = dto.boards.find((b) => b.role === "control");
+        setD({
+          storageFreeGB: dto.storageFreeGB,
+          storageTotalGB: dto.storageTotalGB,
+          firmwareVersion: dto.firmwareVersion,
+          htmlVersion: dto.htmlVersion,
+          backendVersion: dto.backendVersion,
+          boardIp: dto.boardIp,
+          os: dto.os,
+          power: power ?? DEVICE_INFO.power,
+          control: control ?? DEVICE_INFO.control,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  const freePct = d.storageTotalGB > 0 ? Math.round((d.storageFreeGB / d.storageTotalGB) * 100) : 0;
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>

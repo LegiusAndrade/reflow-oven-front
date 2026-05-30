@@ -246,5 +246,23 @@ export const api = {
   factoryReset: (confirm: string) => request<void>("/api/maintenance/factory-reset", { method: "POST", body: { confirm } }),
 
   // device
-  device: () => request<unknown>("/api/device"),
+  device: () => request<DeviceInfoDto>("/api/device"),
 };
+
+export interface BoardDto {
+  role: "power" | "control";
+  version: string;
+  serial: string;
+  hours: number;
+}
+
+export interface DeviceInfoDto {
+  storageFreeGB: number;
+  storageTotalGB: number;
+  firmwareVersion: string;
+  htmlVersion: string;
+  backendVersion: string;
+  boardIp: string;
+  os: { name: string; kernel: string };
+  boards: BoardDto[];
+}
