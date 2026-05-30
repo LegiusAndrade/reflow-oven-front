@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { api, ApiError } from "@/lib/api";
 import {
   CALIB_CURRENT_OFFSET_MAX,
   CALIB_CURRENT_OFFSET_MIN,
@@ -26,6 +27,17 @@ export function CalibracaoTab() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const dirty = (Object.keys(cal) as (keyof Calibration)[]).some((k) => cal[k] !== base[k]);
   const set = (patch: Partial<Calibration>) => setCal((c) => ({ ...c, ...patch }));
+
+  useEffect(() => {
+    api
+      .getCalibration()
+      .then((c) => {
+        const loaded = c as Calibration;
+        setCal(loaded);
+        setBase(loaded);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
@@ -94,10 +106,14 @@ export function CalibracaoTab() {
       <FormFooter
         dirty={dirty}
         onCancel={() => setCal(base)}
-        onSave={() => {
-          setBase(cal);
-          // TODO(backend): apply calibration over RS422.
-          showToast("Calibração salva");
+        onSave={async () => {
+          try {
+            await api.updateCalibration(cal);
+            setBase(cal);
+            showToast("Calibração salva");
+          } catch (e) {
+            showToast(e instanceof ApiError ? e.message : "Falha ao salvar a calibração");
+          }
         }}
       />
 
