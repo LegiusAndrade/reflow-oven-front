@@ -78,12 +78,13 @@ export function AppShell({ children }: IAppShellProps) {
   // validate the session), surface a connection error with a retry once the timeout elapses.
   const [bootTimedOut, setBootTimedOut] = useState(false);
   useEffect(() => {
-    if (!blocked) {
-      setBootTimedOut(false);
-      return;
-    }
+    if (!blocked) return;
     const id = window.setTimeout(() => setBootTimedOut(true), APP_BOOT_TIMEOUT_MS);
-    return () => window.clearTimeout(id);
+    // Reset on cleanup (i.e. when `blocked` clears) — avoids a synchronous setState in the effect body.
+    return () => {
+      window.clearTimeout(id);
+      setBootTimedOut(false);
+    };
   }, [blocked]);
 
   if (blocked) {
