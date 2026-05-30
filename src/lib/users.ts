@@ -90,7 +90,7 @@ export const usersStore: JsonStore<User[]> = {
 };
 
 export function isValidUsername(name: string): boolean {
-  return /^[\p{L}\p{N}._-]+$/u.test(name.trim());
+  return /^[\p{L}\p{N}.]+$/u.test(name.trim());
 }
 
 export function isValidEmail(email: string): boolean {

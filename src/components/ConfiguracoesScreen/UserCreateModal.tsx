@@ -19,8 +19,8 @@ const TYPE_OPTIONS: { value: UserType; label: string; icon: string }[] = [
   { value: "Regular", label: "Regular", icon: "person" },
 ];
 
-// Anything not allowed in a username (everything except letters, digits, . _ -) is stripped on input.
-const DISALLOWED = /[^\p{L}\p{N}._-]/gu;
+// Anything not allowed in a username (everything except letters, digits and the dot) is stripped on input.
+const DISALLOWED = /[^\p{L}\p{N}.]/gu;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 function nowStamp(): string {
@@ -78,7 +78,7 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
                 placeholder='ex.: joao.silva'
                 className='max-w-sm'
               />
-              <span className='text-xs opacity-50'>Mínimo {USER_NAME_MIN_LENGTH} caracteres, sem espaços ou caracteres especiais (colar desativado).</span>
+              <span className='text-xs opacity-50'>Mínimo {USER_NAME_MIN_LENGTH} caracteres — apenas letras, números e ponto (.), sem espaços (colar desativado).</span>
               {nameTaken && <span className='text-xs text-red-700 dark:text-red-400'>Esse usuário já existe.</span>}
             </div>
 
