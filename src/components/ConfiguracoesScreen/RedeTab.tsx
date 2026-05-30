@@ -3,6 +3,7 @@
 import { clsx } from "clsx";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { api } from "@/lib/api";
 import { NETWORK_FIELD_MAX_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 import { FormFooter, TextLine, Toggle, useSettingsDraft } from "./fields";
@@ -17,25 +18,23 @@ export function RedeTab() {
   const [pinging, setPinging] = useState(false);
   const [pingResult, setPingResult] = useState<{ ok: boolean; lines: string[] } | null>(null);
 
-  // Mock ping (a browser can't really ping). TODO(backend): run a real ping via the API/RS422.
-  const runPing = () => {
+  // Real ICMP ping via the backend (the browser can't ping directly).
+  const runPing = async () => {
     const host = pingHost.trim() || net.gateway || "192.168.0.1";
     setPinging(true);
     setPingResult(null);
-    window.setTimeout(() => {
-      const ok = Math.random() < 0.85;
-      if (ok) {
-        const times = Array.from({ length: 4 }, () => 8 + Math.floor(Math.random() * 30));
-        const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
-        setPingResult({
-          ok: true,
-          lines: [...times.map((t) => `Resposta de ${host}: bytes=32 tempo=${t}ms TTL=64`), `Pacotes: enviados=4, recebidos=4, perdidos=0 · média=${avg}ms`],
-        });
-      } else {
-        setPingResult({ ok: false, lines: [`Host de destino inacessível: ${host}`, "Pacotes: enviados=4, recebidos=0, perdidos=4 (100% de perda)"] });
-      }
+    try {
+      const res = await api.ping(host);
+      setPingResult(
+        res.ok
+          ? { ok: true, lines: [`Resposta de ${res.host}: tempo=${Math.round(res.ms)}ms`, "Pacotes: enviados=1, recebidos=1, perdidos=0"] }
+          : { ok: false, lines: [`Host de destino inacessível: ${res.host}`, "Pacotes: enviados=1, recebidos=0, perdidos=1 (100% de perda)"] }
+      );
+    } catch {
+      setPingResult({ ok: false, lines: [`Falha ao testar ${host}`] });
+    } finally {
       setPinging(false);
-    }, 800);
+    }
   };
 
   return (

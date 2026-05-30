@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
+import { api } from "@/lib/api";
 import { MOCK_READINGS } from "@/lib/sensors";
 import { SystemLogModal } from "./SystemLogModal";
 
@@ -26,8 +27,10 @@ export function DiagnosticoSensores() {
 
   const runTest = (id: string) => {
     setTests((t) => ({ ...t, [id]: "running" }));
-    // TODO(backend): trigger the real self-test over RS422.
-    window.setTimeout(() => setTests((t) => ({ ...t, [id]: Math.random() < 0.88 ? "ok" : "fail" })), 700);
+    api
+      .selfTest(id)
+      .then((res) => setTests((t) => ({ ...t, [id]: (res as { state?: string }).state === "ok" ? "ok" : "fail" })))
+      .catch(() => setTests((t) => ({ ...t, [id]: "fail" })));
   };
   const runAll = () => TESTS.forEach((t) => runTest(t.id));
 

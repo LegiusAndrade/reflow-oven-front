@@ -1,16 +1,22 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useAllPrograms } from "@/hooks/useAllPrograms";
 import { useStore } from "@/hooks/useStore";
-import { faultStats, programStats, topProgramsByRuns, topUsersByLogins, userStats } from "@/lib/diagnostics";
+import { api } from "@/lib/api";
+import { programStats, topProgramsByRuns, topUsersByLogins, userStats } from "@/lib/diagnostics";
 import { DIAG_RANK_DEFAULT, DIAG_RANK_MAX, DIAG_RANK_MIN } from "@/lib/limits";
-import { cleanupStore } from "@/lib/maintenance";
-import { MOCK_PROGRAMS } from "@/lib/programs";
 import type { ErrorSeverity } from "@/lib/reports";
 import { usersStore } from "@/lib/users";
+
+type Overview = {
+  stats: { programs: number; executions: number; failures: number; activeUsers: number; inactiveUsers: number; admins: number };
+  faultsByType: { code: string; severity: ErrorSeverity; message: string; count: number }[];
+  topUsers: { id: string; name: string; logins: number }[];
+  topPrograms: { id: string; name: string; runCount: number }[];
+};
 
 /** Severity → text/fill colors for the fault chips. */
 const SEVERITY_STYLE: Record<ErrorSeverity, string> = {
@@ -101,30 +107,44 @@ function RankCard({
 /** Diagnóstico statistics: overview counts, faults by type, and the two adjustable rankings. */
 export function DiagnosticoStats() {
   const users = useStore(usersStore);
-  const programs = useAllPrograms(MOCK_PROGRAMS);
+  const programs = useAllPrograms();
   const [userN, setUserN] = useState(DIAG_RANK_DEFAULT);
   const [progN, setProgN] = useState(DIAG_RANK_DEFAULT);
+  const [ov, setOv] = useState<Overview | null>(null);
 
-  const cleared = useStore(cleanupStore);
+  // Authoritative counts/rankings/faults from the API; fall back to store-derived values while loading.
+  useEffect(() => {
+    api
+      .diagnosticsOverview(DIAG_RANK_MAX)
+      .then((d) => setOv(d as Overview))
+      .catch(() => {});
+  }, []);
+
   const us = useMemo(() => userStats(users), [users]);
   const ps = useMemo(() => programStats(programs), [programs]);
-  // The fault log can be wiped by a maintenance cleanup; mirror it here so the same screen agrees.
-  const faults = useMemo(() => (cleared.falhas ? [] : faultStats()), [cleared.falhas]);
-  const totalFaults = useMemo(() => faults.reduce((sum, f) => sum + f.count, 0), [faults]);
-  const topUsers = useMemo(() => topUsersByLogins(users, userN), [users, userN]);
-  const topProgs = useMemo(() => topProgramsByRuns(programs, progN), [programs, progN]);
+
+  const programsCount = ov?.stats.programs ?? ps.total;
+  const executions = ov?.stats.executions ?? ps.totalRuns;
+  const activeUsers = ov?.stats.activeUsers ?? us.active;
+  const inactiveUsers = ov?.stats.inactiveUsers ?? us.inactive;
+  const admins = ov?.stats.admins ?? us.admins;
+
+  const faults = ov?.faultsByType ?? [];
+  const totalFaults = ov?.stats.failures ?? faults.reduce((sum, f) => sum + f.count, 0);
   const maxFault = Math.max(1, ...faults.map((f) => f.count));
+  const topUsers = (ov?.topUsers ?? topUsersByLogins(users, DIAG_RANK_MAX)).slice(0, userN);
+  const topProgs = (ov?.topPrograms ?? topProgramsByRuns(programs, DIAG_RANK_MAX)).slice(0, progN);
 
   return (
     <section className='flex flex-col gap-4'>
       {/* Overview counts */}
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-        <StatCard icon='article' label='Programas cadastrados' value={ps.total} />
-        <StatCard icon='play_circle' label='Execuções totais' value={ps.totalRuns} />
+        <StatCard icon='article' label='Programas cadastrados' value={programsCount} />
+        <StatCard icon='play_circle' label='Execuções totais' value={executions} />
         <StatCard icon='error' label='Falhas registradas' value={totalFaults} />
-        <StatCard icon='person' label='Usuários ativos' value={us.active} />
-        <StatCard icon='person_off' label='Usuários inativos' value={us.inactive} />
-        <StatCard icon='shield_person' label='Administradores' value={us.admins} />
+        <StatCard icon='person' label='Usuários ativos' value={activeUsers} />
+        <StatCard icon='person_off' label='Usuários inativos' value={inactiveUsers} />
+        <StatCard icon='shield_person' label='Administradores' value={admins} />
       </div>
 
       {/* Faults by type */}
@@ -166,7 +186,7 @@ export function DiagnosticoStats() {
           unit='logins'
           count={userN}
           onCount={setUserN}
-          rows={topUsers.map((u) => ({ id: u.id, name: u.name, value: u.logins, tag: u.type === "Admin" ? "Admin" : undefined }))}
+          rows={topUsers.map((u) => ({ id: u.id, name: u.name, value: u.logins }))}
         />
         <RankCard
           icon='trending_up'
