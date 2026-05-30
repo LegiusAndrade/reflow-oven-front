@@ -12,9 +12,11 @@ import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { useSession } from "@/hooks/useSession";
+import { useStore } from "@/hooks/useStore";
 import { canAccess, refreshSession } from "@/lib/auth";
 import { APP_BOOT_TIMEOUT_MS } from "@/lib/limits";
 import { logger } from "@/lib/logger";
+import { notificationsStore, unreadCount } from "@/lib/notifications";
 import { MOCK_READINGS } from "@/lib/sensors";
 
 export interface IAppShellProps {
@@ -36,6 +38,7 @@ export function AppShell({ children }: IAppShellProps) {
   const pathname = usePathname();
   const hydrated = useHydrated();
   const session = useSession();
+  const unread = unreadCount(useStore(notificationsStore));
 
   // While open: close on Esc, move focus into the drawer, and restore focus on close.
   useEffect(() => {
@@ -122,7 +125,7 @@ export function AppShell({ children }: IAppShellProps) {
 
   return (
     <div className='text-fg flex h-screen flex-col overflow-hidden'>
-      <TopBar statusNotification={{ amount: 3, status: "ACTIVE" }} connectedServer={true} signalWifi={{ signal: "OFF" }} user={session} />
+      <TopBar statusNotification={{ amount: unread, status: unread > 0 ? "ACTIVE" : "OFF" }} connectedServer={true} signalWifi={{ signal: "OFF" }} user={session} />
 
       {/* Content region between the bars. On xl+ the sidebar is docked (always open); below
           xl it bounds the slide-out drawer. */}

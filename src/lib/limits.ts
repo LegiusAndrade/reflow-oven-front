@@ -78,6 +78,10 @@ export const APP_BOOT_TIMEOUT_MS = 12000;
 /** Máximo de entradas mantidas no buffer em memória do logger (console + visualizador futuro). */
 export const LOG_RING_MAX = 500;
 
+// --- Notificações ---------------------------------------------------------------------
+/** Máximo de notificações mantidas (badge do sino + tela de Notificações). */
+export const NOTIFICATION_MAX_ITEMS = 50;
+
 // --- Diagnóstico (statistics rankings) -------------------------------------------------
 
 /** How many entries the "top users / top programs" rankings can show (operator-adjustable). */
