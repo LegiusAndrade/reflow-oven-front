@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
+import { ApiError } from "@/lib/api";
 import { showToast } from "@/lib/toast";
 import { isValidEmail, type User, type UserStatus, type UserType, upsertUser } from "@/lib/users";
 import { Segmented, TextLine } from "./fields";
@@ -34,15 +35,18 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
     setError("");
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) return;
     const trimmedEmail = email.trim();
     if (!trimmedEmail) return setError("Informe o e-mail.");
     if (!isValidEmail(trimmedEmail)) return setError("E-mail inválido.");
-    upsertUser({ ...user, email: trimmedEmail, status, type });
-    // TODO(backend): show this on the API success response.
-    showToast("Usuário atualizado");
-    onClose();
+    try {
+      await upsertUser({ ...user, email: trimmedEmail, status, type });
+      showToast("Usuário atualizado");
+      onClose();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Falha ao salvar o usuário.");
+    }
   };
 
   return (

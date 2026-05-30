@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
+import { ApiError } from "@/lib/api";
 import { USER_NAME_MAX_LENGTH, USER_NAME_MIN_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 import { isValidEmail, isValidUsername, type UserStatus, type UserType, upsertUser, usernameExists } from "@/lib/users";
@@ -50,12 +51,15 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
   const nameTaken = trimmedName.length > 0 && usernameExists(trimmedName);
   const canSubmit = isValidUsername(trimmedName) && trimmedName.length >= USER_NAME_MIN_LENGTH && !nameTaken && isValidEmail(email.trim());
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!canSubmit) return;
-    upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
-    // TODO(backend): create via the API and show the result.
-    showToast("Usuário criado");
-    onClose();
+    try {
+      await upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
+      showToast("Usuário criado");
+      onClose();
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : "Falha ao criar usuário");
+    }
   };
 
   return (

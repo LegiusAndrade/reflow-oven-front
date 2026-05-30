@@ -8,6 +8,7 @@ import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { TableScrollBox } from "@/components/TableScrollBox";
 import { useStore } from "@/hooks/useStore";
+import { ApiError } from "@/lib/api";
 import { showToast } from "@/lib/toast";
 import { removeUser, type User, usersStore } from "@/lib/users";
 import { UserCreateModal } from "./UserCreateModal";
@@ -230,11 +231,14 @@ export function UsuariosTab() {
         description={deleteUser ? `Tem certeza que deseja remover o usuário ${deleteUser.name}?` : ""}
         confirmLabel='Sim'
         cancelLabel='Não'
-        onConfirm={() => {
+        onConfirm={async () => {
           if (deleteUser) {
-            removeUser(deleteUser.id);
-            // TODO(backend): show this on the API success response.
-            showToast("Usuário removido");
+            try {
+              await removeUser(deleteUser.id);
+              showToast("Usuário removido");
+            } catch (e) {
+              showToast(e instanceof ApiError ? e.message : "Falha ao remover usuário");
+            }
           }
           setDeleteOpen(false);
         }}
