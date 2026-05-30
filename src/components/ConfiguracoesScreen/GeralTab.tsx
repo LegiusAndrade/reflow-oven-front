@@ -21,7 +21,7 @@ export function GeralTab() {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
-      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto [scrollbar-gutter:stable]'>
+      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
         <FieldGroup title='PID'>
           <NumberField label='P' value={draft.pid.p} onChange={(p) => setDraft({ ...draft, pid: { ...draft.pid, p } })} min={PID_MIN} max={PID_MAX} step={0.1} className='min-w-[6rem] flex-1' />
           <NumberField label='I' value={draft.pid.i} onChange={(i) => setDraft({ ...draft, pid: { ...draft.pid, i } })} min={PID_MIN} max={PID_MAX} step={0.1} className='min-w-[6rem] flex-1' />

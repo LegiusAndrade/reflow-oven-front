@@ -40,7 +40,7 @@ export function RedeTab() {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
-      <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto [scrollbar-gutter:stable]'>
+      <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
         <div className='flex flex-wrap gap-3'>
           <TextLine label='Endereço IP' value={net.ip} onChange={(ip) => setNet({ ip })} maxLength={NETWORK_FIELD_MAX_LENGTH} placeholder='192.168.0.1' className='flex-1' disabled={!net.staticIp} />
           <TextLine

@@ -39,7 +39,7 @@ export function DiagnosticoTab() {
         ))}
       </nav>
 
-      <div className='min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]'>
+      <div className='min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
         {sub === "stats" && <DiagnosticoStats />}
         {sub === "sensores" && <DiagnosticoSensores />}
         {sub === "manutencao" && <ManutencaoTab />}

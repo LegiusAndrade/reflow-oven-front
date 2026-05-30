@@ -76,7 +76,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
             {allSelected ? "Limpar seleção" : "Selecionar tudo"}
           </button>
 
-          <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto [scrollbar-gutter:stable]'>
+          <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
             {CATEGORIES.map((c) => {
               const count = countOf(c.id);
               const size = recordSizeBytes(c.id, count);

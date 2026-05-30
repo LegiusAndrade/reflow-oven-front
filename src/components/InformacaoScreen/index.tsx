@@ -58,7 +58,7 @@ export function InformacaoScreen() {
         </Link>
       </header>
 
-      <div className='flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto [scrollbar-gutter:stable] lg:flex-row lg:items-start'>
+      <div className='flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pr-3 [scrollbar-gutter:stable] lg:flex-row lg:items-start'>
         {/* Logo + repository QR */}
         <div className='flex shrink-0 flex-col items-center gap-3'>
           <Image src='/Logo.svg' alt='PandeWilly' width={112} height={112} priority className='size-28' />
