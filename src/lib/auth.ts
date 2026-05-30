@@ -55,7 +55,7 @@ export async function refreshSession(): Promise<void> {
  */
 export function canAccess(role: Role, pathname: string): boolean {
   if (role === "Admin") return true;
-  return pathname === "/" || pathname === "/programas";
+  return pathname === "/" || pathname === "/programas" || pathname === "/notificacoes";
 }
 
 /** Only Admin may create/edit/delete programs; Regular is view-only. */
