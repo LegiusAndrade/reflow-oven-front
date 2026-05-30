@@ -12,12 +12,14 @@ import {
   PID_MAX,
   PID_MIN,
 } from "@/lib/limits";
+import { DEFAULT_RUN_SERIES, RUN_SIGNALS } from "@/lib/run";
 import { showToast } from "@/lib/toast";
-import { FieldGroup, FormFooter, NumberField, useSettingsDraft } from "./fields";
+import { FieldGroup, FormFooter, NumberField, Toggle, useSettingsDraft } from "./fields";
 
 /** Geral tab: PID gains, oven limits, process timeout and supply-voltage thresholds. */
 export function GeralTab() {
   const { draft, setDraft, dirty, save, cancel } = useSettingsDraft();
+  const series = draft.run?.series ?? DEFAULT_RUN_SERIES;
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
@@ -81,6 +83,23 @@ export function GeralTab() {
             unit='V'
             className='flex-1'
           />
+        </FieldGroup>
+
+        <FieldGroup title='Gráfico da execução'>
+          <p className='w-full text-sm opacity-60'>Quais sinais aparecem no gráfico ao iniciar um programa (a legenda ainda liga/desliga ao vivo).</p>
+          {RUN_SIGNALS.map((sig) => (
+            <label key={sig.id} className='flex items-center gap-2.5 rounded-xl border border-[var(--border)] px-3 py-2'>
+              <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: sig.color }} aria-hidden='true' />
+              <span className='text-sm'>
+                {sig.name} <span className='opacity-50'>({sig.unit})</span>
+              </span>
+              <Toggle
+                checked={series[sig.id]}
+                onChange={(v) => setDraft({ ...draft, run: { series: { ...series, [sig.id]: v } } })}
+                label={`Mostrar ${sig.name} no gráfico da execução`}
+              />
+            </label>
+          ))}
         </FieldGroup>
       </div>
 

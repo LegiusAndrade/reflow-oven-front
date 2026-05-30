@@ -1,4 +1,5 @@
 import { createJsonStore } from "./localStore";
+import { DEFAULT_RUN_SERIES, type RunSignalId } from "./run";
 
 export type NotificationKind = "Normal" | "Atenção" | "Crítica" | "Grave";
 export type NotificationProcess = "Parar Processo" | "Continuar Processo";
@@ -23,6 +24,8 @@ export type Settings = {
   voltage: { min: number; max: number };
   network: { ip: string; mask: string; gateway: string; dnsPrimary: string; dnsSecondary: string; staticIp: boolean };
   notifications: NotificationSetting[];
+  /** Which signals the execution (INICIAR) chart shows by default. */
+  run: { series: Record<RunSignalId, boolean> };
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -44,9 +47,10 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "board-supply-undervoltage", alert: "Tensão de alimentação da placa abaixo do valor estipulado", process: "Parar Processo", buzzer: true, sound: "Contínuo", kind: "Crítica" },
     { id: "board-supply-overvoltage", alert: "Tensão de alimentação da placa acima do valor estipulado", process: "Parar Processo", buzzer: true, sound: "Contínuo", kind: "Crítica" },
   ],
+  run: { series: DEFAULT_RUN_SERIES },
 };
 
 /** Persisted in localStorage (mock stage). TODO(backend): replace with the API/RS422.
- *  Key bumped to v2 when the full notification list (image 8) was added, so older saved
- *  settings don't hide the new alerts. */
-export const settingsStore = createJsonStore<Settings>("reflow:settings:v2", DEFAULT_SETTINGS);
+ *  Key bumped v2→v3 when the execution-chart series (`run`) were added, so older saved
+ *  settings (which lack `run`) fall back to the new defaults instead of crashing. */
+export const settingsStore = createJsonStore<Settings>("reflow:settings:v3", DEFAULT_SETTINGS);

@@ -4,53 +4,59 @@ import { clsx } from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
-import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
+import { type Axis, MultiAxisChart, type Series } from "@/components/MultiAxisChart";
+import { useStore } from "@/hooks/useStore";
 import { RUN_MEASURED_MAX_POINTS } from "@/lib/limits";
-import type { ProfilePoint, Program } from "@/lib/programs";
-import { mmss, phaseAt, type RunPhase, tempAt, totalTime } from "@/lib/run";
+import type { Program } from "@/lib/programs";
+import { DEFAULT_RUN_SERIES, mmss, phaseAt, RUN_SIGNALS, type RunSignalId, tempAt, totalTime } from "@/lib/run";
+import { settingsStore } from "@/lib/settings";
 import { showToast } from "@/lib/toast";
 
 /** Simulation cadence and speed. RUN_SPEED 1 = real time (setpoint seconds = wall seconds). */
 const TICK_MS = 1000;
 const RUN_SPEED = 1;
+const SIG = Object.fromEntries(RUN_SIGNALS.map((s) => [s.id, s])) as Record<RunSignalId, (typeof RUN_SIGNALS)[number]>;
 
 type RunStatus = "running" | "done" | "aborted";
+type Sample = { t: number; alvo: number; oven: number; board: number; current: number; voltage: number; ovenFan: number; boardFan: number };
 
-/** Plausible actuator readings derived from the current phase (mock). TODO(backend). */
-function readingsFor(status: RunStatus, phase: RunPhase, elapsed: number) {
-  if (status !== "running") {
-    return { currentA: 0, voltageV: 0, ovenFan: status === "done" ? 3400 : 0, boardFan: status === "done" ? 3800 : 0 };
-  }
-  const wob = Math.sin(elapsed / 3);
-  switch (phase) {
-    case "Aquecimento":
-      return { currentA: 11 + wob, voltageV: 150 + wob * 4, ovenFan: 2400, boardFan: 3000 };
-    case "Pico":
-      return { currentA: 13 + wob, voltageV: 168 + wob * 4, ovenFan: 2500, boardFan: 3100 };
-    case "Patamar":
-      return { currentA: 5.5 + wob * 0.5, voltageV: 120 + wob * 3, ovenFan: 2300, boardFan: 3000 };
-    case "Resfriamento":
-      return { currentA: 1.2, voltageV: 20, ovenFan: 2600, boardFan: 3700 };
-  }
+/**
+ * One mock sample of every plotted signal at time `e`. Actuator signals follow smooth trends so
+ * each axis reads sensibly: current/voltage track the heating demand (setpoint slope + how hot
+ * we hold), the heatsink climbs gently with the grill, its fan ramps as it warms. TODO(backend).
+ */
+function sampleAt(profile: Program["profile"], e: number, done: boolean): Sample {
+  const alvo = tempAt(profile, e);
+  const oven = done ? alvo : alvo + Math.sin(e / 9) * 1.6;
+  const board = 28 + oven * 0.16;
+  const slope = tempAt(profile, e + 5) - tempAt(profile, Math.max(0, e - 1));
+  const demand = Math.max(0, slope) * 1.4 + (Math.max(0, alvo - 35) / 260) * 5;
+  const current = done ? 0 : Math.min(15, demand);
+  // Output voltage tracks the current draw, so they stay consistent (both ~0 while cooling).
+  const voltage = done ? 0 : Math.min(180, current * 13);
+  const ovenFan = done ? 3400 : alvo > 110 ? 2500 : 2200;
+  const boardFan = done ? 3800 : 2600 + Math.max(0, board - 45) * 22;
+  return { t: e, alvo, oven: Math.max(0, oven), board: Math.max(0, board), current, voltage, ovenFan, boardFan };
 }
 
 const STATUS_META: Record<RunStatus, { label: string; icon: string; cls: string }> = {
   running: { label: "Executando", icon: "play_circle", cls: "text-[var(--brand)]" },
-  done: { label: "Concluído", icon: "check_circle", cls: "text-emerald-400" },
-  aborted: { label: "Interrompido", icon: "cancel", cls: "text-red-400" },
+  done: { label: "Concluído", icon: "check_circle", cls: "text-emerald-700 dark:text-emerald-400" },
+  aborted: { label: "Interrompido", icon: "cancel", cls: "text-red-700 dark:text-red-400" },
 };
 
-/** Full-screen execution view: animates the measured curve against the setpoint with live readings. */
+/** Full-screen execution view: stacked time-synced charts (temp / V+I / rpm) + a live readings strip. */
 export function RunModal({ program, onClose }: { program: Program; onClose: () => void }) {
   const profile = program.profile;
   const total = totalTime(profile);
-  // A program with no duration (or fewer than two points) can't run meaningfully.
   const invalid = total <= 0 || profile.length < 2;
 
+  const settings = useStore(settingsStore);
   const [status, setStatus] = useState<RunStatus>("running");
   const [elapsed, setElapsed] = useState(0);
-  const [measured, setMeasured] = useState<ProfilePoint[]>([{ t: 0, temp: profile[0]?.temp ?? 25 }]);
+  const [samples, setSamples] = useState<Sample[]>(() => [sampleAt(profile, 0, false)]);
   const [confirmAbort, setConfirmAbort] = useState(false);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
   const startRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -60,13 +66,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
     const id = window.setInterval(() => {
       const e = Math.min(total, ((Date.now() - start) / 1000) * RUN_SPEED);
       const done = e >= total;
-      const target = tempAt(profile, e);
-      // Measured tracks the setpoint with a little thermal wobble; lands exactly on it at the end.
-      const meas = done ? target : target + (Math.sin(e / 6) + Math.sin(e / 1.7) * 0.4) * 2.2;
       setElapsed(e);
-      setMeasured((m) => {
-        const next = [...m, { t: e, temp: Math.max(0, meas) }];
-        // Decimate (keeping the latest point) so a long run can't grow the trace unbounded.
+      setSamples((arr) => {
+        const next = [...arr, sampleAt(profile, e, done)];
         return next.length > RUN_MEASURED_MAX_POINTS ? next.filter((_, i) => i % 2 === 0 || i === next.length - 1) : next;
       });
       if (done) {
@@ -81,20 +83,16 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   if (invalid) {
     return (
       <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
-        <div className='card flex w-[min(92vw,28rem)] flex-col gap-4 rounded-2xl border border-white/10 p-6'>
+        <div className='card flex w-[min(92vw,28rem)] flex-col gap-4 rounded-2xl border border-[var(--border)] p-6'>
           <div className='flex items-center gap-3'>
-            <IconGeneral icon='warning' fill={1} className='shrink-0 text-amber-400 [--icon-size:1.75rem]' />
+            <IconGeneral icon='warning' fill={1} className='shrink-0 text-amber-700 dark:text-amber-400 [--icon-size:1.75rem]' />
             <h1 className='text-xl font-semibold'>Programa sem duração</h1>
           </div>
           <p className='opacity-80'>
             O programa <span className='font-semibold'>{program.name}</span> não tem uma duração válida para executar. Edite o perfil e defina ao menos um estágio
             com tempo maior que zero.
           </p>
-          <button
-            type='button'
-            onClick={onClose}
-            className='btn-action flex cursor-pointer items-center gap-2 self-end rounded-xl px-5 py-2.5 font-semibold'
-          >
+          <button type='button' onClick={onClose} className='btn-action flex cursor-pointer items-center gap-2 self-end rounded-xl px-5 py-2.5 font-semibold'>
             <IconGeneral icon='check' fill={0} className='[--icon-size:1.25rem]' />
             Fechar
           </button>
@@ -103,32 +101,78 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
     );
   }
 
-  const target = tempAt(profile, elapsed);
-  const current = measured[measured.length - 1]?.temp ?? profile[0]?.temp ?? 25;
-  const phase = phaseAt(profile, elapsed);
-  const r = readingsFor(status, phase, elapsed);
+  const enabled = settings.run?.series ?? DEFAULT_RUN_SERIES;
+  const times = samples.map((s) => s.t);
+  const mkSeries = (id: RunSignalId, accessor: (_s: Sample) => number): Series => ({ name: SIG[id].name, color: SIG[id].color, unit: SIG[id].unit, values: samples.map(accessor) });
+
+  // Chart 1 — temperatures (shared °C axis) with the full expected profile faded behind.
+  const tempSeries: Series[] = [];
+  if (enabled.oven) tempSeries.push(mkSeries("oven", (s) => Math.round(s.oven)));
+  if (enabled.board) tempSeries.push(mkSeries("board", (s) => Math.round(s.board)));
+  const tempBg = enabled.alvo ? { color: SIG.alvo.color, points: profile.map((p) => ({ t: p.t, v: p.temp })) } : undefined;
+  const hasTemp = tempSeries.length > 0 || Boolean(tempBg);
+
+  // Chart 2 — tensão (eixo esquerdo, V) + corrente (eixo direito, A) no mesmo gráfico.
+  const vSeries = enabled.voltage ? mkSeries("voltage", (s) => Math.round(s.voltage)) : null;
+  const iSeries = enabled.current ? mkSeries("current", (s) => Number(s.current.toFixed(1))) : null;
+  let viLeft: Axis | null = null;
+  let viRight: Axis | undefined;
+  if (vSeries && iSeries) {
+    viLeft = { unit: "V (V)", series: [vSeries] };
+    viRight = { unit: "I (A)", series: [iSeries] };
+  } else if (vSeries) {
+    viLeft = { unit: "V (V)", series: [vSeries] };
+  } else if (iSeries) {
+    viLeft = { unit: "I (A)", series: [iSeries] };
+  }
+
+  // Chart 3 — fan speeds (shared rpm axis).
+  const rpmSeries: Series[] = [];
+  if (enabled.ovenFan) rpmSeries.push(mkSeries("ovenFan", (s) => Math.round(s.ovenFan)));
+  if (enabled.boardFan) rpmSeries.push(mkSeries("boardFan", (s) => Math.round(s.boardFan)));
+
+  const anyChart = hasTemp || Boolean(viLeft) || rpmSeries.length > 0;
+
+  // Readings strip reflects the hovered instant (synced with the crosshair) or the latest sample.
+  let readIdx = samples.length - 1;
+  if (hoverTime != null && samples.length) {
+    let bestD = Infinity;
+    samples.forEach((s, k) => {
+      const d = Math.abs(s.t - hoverTime);
+      if (d < bestD) {
+        bestD = d;
+        readIdx = k;
+      }
+    });
+  }
+  const rs = samples[readIdx] ?? samples[samples.length - 1];
   const progress = total ? Math.min(100, (elapsed / total) * 100) : 0;
+  const phase = phaseAt(profile, elapsed);
   const meta = STATUS_META[status];
+
+  const readings = [
+    { icon: "thermostat", label: "Grelha", value: Math.round(rs.oven), unit: "°C" },
+    { icon: "my_location", label: "Alvo", value: Math.round(rs.alvo), unit: "°C" },
+    { icon: "device_thermostat", label: "Dissipador", value: Math.round(rs.board), unit: "°C" },
+    { icon: "bolt", label: "Tensão", value: Math.round(rs.voltage), unit: "V" },
+    { icon: "electric_meter", label: "Corrente", value: rs.current.toFixed(1), unit: "A" },
+    { icon: "mode_fan", label: "Fan Forno", value: Math.round(rs.ovenFan), unit: "rpm" },
+    { icon: "mode_fan", label: "Fan Diss.", value: Math.round(rs.boardFan), unit: "rpm" },
+  ];
 
   const requestClose = () => {
     if (status === "running") setConfirmAbort(true);
     else onClose();
   };
 
-  const readings = [
-    { icon: "thermostat", label: "Temp. Grelha", value: Math.round(current), unit: "°C" },
-    { icon: "my_location", label: "Alvo", value: Math.round(target), unit: "°C" },
-    { icon: "electric_meter", label: "Corrente", value: r.currentA.toFixed(1), unit: "A" },
-    { icon: "bolt", label: "Tensão", value: Math.round(r.voltageV), unit: "V" },
-    { icon: "mode_fan", label: "Fan Forno", value: Math.round(r.ovenFan), unit: "rpm" },
-    { icon: "mode_fan", label: "Fan Diss.", value: Math.round(r.boardFan), unit: "rpm" },
-  ];
+  // Fixed, comfortable height per chart — the strip scrolls to reach the others (no squishing).
+  const chartWrap = "flex h-[280px] shrink-0 flex-col";
 
   return (
     <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
-      <div className='card flex h-[min(94vh,42rem)] w-[min(96vw,62rem)] flex-col gap-3 rounded-2xl border border-white/10 p-4'>
+      <div className='card flex h-[min(96vh,44rem)] w-[min(96vw,64rem)] flex-col gap-3 rounded-2xl border border-[var(--border)] p-4'>
         {/* Header */}
-        <header className='flex shrink-0 items-center justify-between gap-4 border-b border-white/10 pb-3'>
+        <header className='flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
           <div className='flex min-w-0 items-center gap-3'>
             <IconGeneral icon={meta.icon} fill={1} className={clsx("shrink-0 [--icon-size:1.75rem]", meta.cls)} />
             <div className='min-w-0'>
@@ -143,37 +187,55 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
             <span className='text-lg font-semibold tabular-nums'>
               {mmss(elapsed)} <span className='opacity-50'>/ {mmss(total)}</span>
             </span>
-            <button
-              type='button'
-              onClick={requestClose}
-              aria-label='Fechar'
-              className='btn-press grid size-10 cursor-pointer place-items-center rounded-full hover:bg-white/10'
-            >
+            <button type='button' onClick={requestClose} aria-label='Fechar' className='btn-press grid size-10 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'>
               <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
             </button>
           </div>
         </header>
 
-        {/* Live chart: setpoint (solid) + measured so far (dashed) + current marker */}
-        <div className='min-h-0 flex-1'>
-          <TemperatureProfileChart
-            points={profile}
-            comparePoints={measured.length >= 2 ? measured : undefined}
-            marker={{ t: elapsed, temp: current, label: mmss(elapsed) }}
-            className='h-full w-full'
-          />
+        {/* Three time-synced charts (scrolls on the 1024×600 baseline) */}
+        <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+          {hasTemp && (
+            <section className={chartWrap}>
+              <p className='mb-1 text-base font-semibold opacity-70'>Temperatura</p>
+              <MultiAxisChart
+                times={times}
+                xMaxSec={total}
+                left={{ unit: "°C", series: tempSeries }}
+                background={tempBg}
+                hoverTime={hoverTime}
+                onHoverTime={setHoverTime}
+                className='min-h-0 flex-1'
+              />
+            </section>
+          )}
+          {viLeft && (
+            <section className={chartWrap}>
+              <p className='mb-1 text-base font-semibold opacity-70'>Tensão &amp; Corrente</p>
+              <MultiAxisChart times={times} xMaxSec={total} left={viLeft} right={viRight} hoverTime={hoverTime} onHoverTime={setHoverTime} className='min-h-0 flex-1' />
+            </section>
+          )}
+          {rpmSeries.length > 0 && (
+            <section className={chartWrap}>
+              <p className='mb-1 text-base font-semibold opacity-70'>Ventoinhas</p>
+              <MultiAxisChart times={times} xMaxSec={total} left={{ unit: "rpm", series: rpmSeries }} hoverTime={hoverTime} onHoverTime={setHoverTime} className='min-h-0 flex-1' />
+            </section>
+          )}
+          {!anyChart && (
+            <div className='grid h-full place-items-center text-center text-sm opacity-60'>Nenhuma série habilitada. Ative em Configurações → Geral → Gráfico da execução.</div>
+          )}
         </div>
 
-        {/* Live readings */}
-        <div className='grid shrink-0 grid-cols-3 gap-2 sm:grid-cols-6'>
+        {/* Live readings strip — always visible, follows the crosshair or the latest sample */}
+        <div className='grid shrink-0 grid-cols-4 gap-2 sm:grid-cols-7'>
           {readings.map((s) => (
-            <div key={s.label} className='flex items-center gap-2 rounded-xl border border-white/10 p-2'>
-              <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.375rem]' />
+            <div key={s.label} className='flex items-center gap-2 rounded-xl border border-[var(--border)] px-2 py-1.5'>
+              <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.25rem]' />
               <div className='min-w-0'>
-                <p className='truncate text-xs opacity-60'>{s.label}</p>
-                <p className='text-base font-semibold tabular-nums'>
+                <p className='truncate text-[11px] opacity-60'>{s.label}</p>
+                <p className='text-sm font-semibold tabular-nums'>
                   {s.value}
-                  <span className='ml-0.5 text-xs font-normal opacity-60'>{s.unit}</span>
+                  <span className='ml-0.5 text-[10px] font-normal opacity-60'>{s.unit}</span>
                 </p>
               </div>
             </div>
@@ -182,7 +244,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
 
         {/* Progress + actions */}
         <div className='flex shrink-0 items-center gap-4'>
-          <div className='h-2.5 flex-1 overflow-hidden rounded-full bg-white/10'>
+          <div className='h-2.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]'>
             <div
               className={clsx("h-full rounded-full transition-[width] duration-500", status === "aborted" ? "bg-red-400" : "bg-[var(--brand)]")}
               style={{ width: `${progress}%` }}

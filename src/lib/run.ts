@@ -46,3 +46,32 @@ export function mmss(sec: number): string {
   const s = Math.max(0, Math.round(sec));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
+
+// --- Live signals plotted on the execution chart ---------------------------------------
+
+/** The signals the execution chart can show (operator picks which in Configurações → Geral). */
+export type RunSignalId = "alvo" | "oven" | "board" | "current" | "voltage" | "ovenFan" | "boardFan";
+
+export type RunSignalDef = { id: RunSignalId; name: string; unit: string; color: string };
+
+/** Catalog of the execution signals (colors match the Relatórios snapshot for consistency). */
+export const RUN_SIGNALS: RunSignalDef[] = [
+  { id: "alvo", name: "Alvo (setpoint)", unit: "°C", color: "#93c5fd" },
+  { id: "oven", name: "Temp. Grelha", unit: "°C", color: "#fbbf24" },
+  { id: "board", name: "Temp. Dissipador", unit: "°C", color: "#a78bfa" },
+  { id: "current", name: "Corrente", unit: "A", color: "#f87171" },
+  { id: "voltage", name: "Tensão", unit: "V", color: "#22d3ee" },
+  { id: "ovenFan", name: "Fan Forno", unit: "rpm", color: "#f472b6" },
+  { id: "boardFan", name: "Fan Diss.", unit: "rpm", color: "#34d399" },
+];
+
+/** Which signals are shown by default (the operator can change this in Configurações). */
+export const DEFAULT_RUN_SERIES: Record<RunSignalId, boolean> = {
+  alvo: true,
+  oven: true,
+  board: false,
+  current: true,
+  voltage: true,
+  ovenFan: false,
+  boardFan: false,
+};
