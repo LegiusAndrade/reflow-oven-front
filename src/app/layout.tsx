@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
+import "react-simple-keyboard/build/css/index.css";
 import "./globals.css";
 
 const nunito = Nunito({

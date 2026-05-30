@@ -416,3 +416,108 @@
 .text-fg {
   color: var(--fg);
 }
+
+/* ---------------------------------------------------------
+   VIRTUAL KEYBOARD (on-screen, touchscreen)
+   Overrides react-simple-keyboard's default theme with our
+   semantic tokens. Selectors are scoped under .vk-sheet so they
+   win over the library's .hg-* rules regardless of import order.
+   --------------------------------------------------------- */
+.vk-sheet {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 99999; /* above the bottom bar, drawers and modals */
+  padding: clamp(0.4rem, 1.2vh, 0.75rem) clamp(0.5rem, 1.5vw, 1.1rem) calc(clamp(0.4rem, 1.2vh, 0.75rem) + env(safe-area-inset-bottom, 0px));
+  background: var(--bottom-bar-bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -10px 30px rgb(0 0 0 / 0.28);
+  animation: vk-slide-up 140ms ease-out;
+}
+
+@keyframes vk-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.vk-sheet .vk-keyboard.hg-theme-default {
+  background: transparent;
+  padding: 0;
+  max-width: 60rem;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.vk-sheet .hg-row {
+  display: flex;
+  gap: clamp(0.25rem, 0.8vw, 0.5rem);
+}
+
+.vk-sheet .hg-row + .hg-row {
+  margin-top: clamp(0.25rem, 0.9vh, 0.5rem);
+}
+
+.vk-sheet .hg-button {
+  flex: 1;
+  height: clamp(2.4rem, 7vh, 3.4rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.12);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 100ms ease,
+    background 120ms ease,
+    filter 120ms ease;
+}
+
+.vk-sheet .hg-button:hover {
+  background: var(--hover);
+  transform: translateY(-1px);
+}
+
+.vk-sheet .hg-button:active {
+  background: var(--surface-2);
+  transform: scale(0.94);
+}
+
+/* Functional keys: wider + distinct surface */
+.vk-sheet .hg-button-space {
+  flex: 4;
+}
+
+.vk-sheet .hg-button-bksp,
+.vk-sheet .hg-button-shift,
+.vk-sheet .hg-button-symbols,
+.vk-sheet .hg-button-abc {
+  flex: 1.5;
+  background: var(--surface-2);
+}
+
+.vk-sheet .hg-button-enter {
+  flex: 1.6;
+  background: var(--btn-action-bg);
+  color: var(--btn-action-fg);
+  border-color: transparent;
+}
+
+.vk-sheet .hg-button-enter:hover {
+  background: var(--btn-action-hover-bg);
+}
+
+.vk-sheet .hg-button-close {
+  flex: 1.4;
+  background: var(--surface-2);
+  color: var(--fg);
+}

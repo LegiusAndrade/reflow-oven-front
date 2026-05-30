@@ -2736,6 +2736,11 @@ react-is@^16.13.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
+react-simple-keyboard@^3.8.219:
+  version "3.8.219"
+  resolved "https://registry.yarnpkg.com/react-simple-keyboard/-/react-simple-keyboard-3.8.219.tgz#3f738f5a9ca326b136b29e8dc6bb6db971e19ae2"
+  integrity sha512-EXeFvLxzbzFoL8QruUDubXJVzb+/l0uJGBrsk9tAYnjg2+5ESxdc8zvh0WP5e5ccltNG5EsabctlVlzP/MSi5Q==
+
 react@19.2.6:
   version "19.2.6"
   resolved "https://registry.yarnpkg.com/react/-/react-19.2.6.tgz#3dadb8e12b2a7934c1d5317973e5dce1301f9a4d"
