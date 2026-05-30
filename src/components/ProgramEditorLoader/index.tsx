@@ -1,34 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { ProgramEditorScreen } from "@/components/ProgramEditorScreen";
-import { useStoredPrograms } from "@/hooks/useStoredPrograms";
-import { MOCK_PROGRAMS } from "@/lib/programs";
+import { api } from "@/lib/api";
+import type { Program } from "@/lib/programs";
+import { toProgram } from "@/lib/programStore";
 
-const subscribeNoop = () => () => {};
+type LoaderState = { status: "loading" } | { status: "ready"; program: Program } | { status: "notfound" };
 
-/** False during SSR and the first client render, true afterwards — without a hydration mismatch. */
-function useHydrated(): boolean {
-  return useSyncExternalStore(subscribeNoop, () => true, () => false);
-}
-
-/**
- * Resolves a program by id from the stored set (localStorage) or the seed programs and hands
- * it to the editor pre-filled. Stored programs aren't available on the server, so we gate on
- * `useHydrated`: render a neutral placeholder until the client list is in, then editor or
- * not-found. The two stores reconcile together, so there's no "not found" flash.
- */
+/** Fetches a program by id from the API and hands it to the editor pre-filled. */
 export function ProgramEditorLoader({ programId }: { programId: string }) {
-  const stored = useStoredPrograms();
-  const hydrated = useHydrated();
-  const program = stored.find((p) => p.id === programId) ?? MOCK_PROGRAMS.find((p) => p.id === programId) ?? null;
+  const [state, setState] = useState<LoaderState>({ status: "loading" });
 
-  if (!hydrated) {
+  useEffect(() => {
+    let alive = true;
+    api
+      .getProgram(programId)
+      .then((dto) => alive && setState({ status: "ready", program: toProgram(dto) }))
+      .catch(() => alive && setState({ status: "notfound" }));
+    return () => {
+      alive = false;
+    };
+  }, [programId]);
+
+  if (state.status === "loading") {
     return <section className='card grid h-full place-items-center rounded-xl p-6 opacity-70'>Carregando…</section>;
   }
 
-  if (!program) {
+  if (state.status === "notfound") {
     return (
       <section className='card grid h-full place-items-center gap-4 rounded-xl p-6 text-center'>
         <p className='opacity-70'>Programa não encontrado.</p>
@@ -39,5 +39,5 @@ export function ProgramEditorLoader({ programId }: { programId: string }) {
     );
   }
 
-  return <ProgramEditorScreen title='Editar Programa' initialProgram={program} />;
+  return <ProgramEditorScreen title='Editar Programa' initialProgram={state.program} />;
 }

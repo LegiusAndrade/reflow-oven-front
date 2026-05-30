@@ -17,8 +17,9 @@ import {
   PROGRAM_DESCRIPTION_MAX_LENGTH,
   PROGRAM_NAME_MAX_LENGTH,
 } from "@/lib/limits";
+import { ApiError } from "@/lib/api";
 import type { ProfilePoint, ProfileSegment, Program, Ramp } from "@/lib/programs";
-import { upsertStoredProgram } from "@/lib/programStore";
+import { saveProgram } from "@/lib/programStore";
 import { showToast } from "@/lib/toast";
 
 type Segment = ProfileSegment & { id: string };
@@ -118,24 +119,29 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
     setConfirmClearOpen(false);
   };
 
-  // Saving upserts the program in localStorage and returns to the list. Editing keeps the
-  // original id/run stats; a new program gets a fresh id. Needs a name and at least one point.
+  // Saving sends the editable segments to the API (the server derives the sampled profile) and
+  // returns to the list. Editing updates the existing program; a new one is created server-side.
   const canSave = name.trim().length > 0 && segments.length > 0;
-  const handleSave = () => {
-    if (!canSave) return;
-    const program: Program = {
-      id: initialProgram?.id ?? crypto.randomUUID(),
-      name: name.trim(),
-      description: description.trim() || undefined,
-      runCount: initialProgram?.runCount ?? 0,
-      lastUsed: initialProgram?.lastUsed ?? "Nunca",
-      profile,
-      segments: segments.map(({ temp, durationSec, ramp }) => ({ temp, durationSec, ramp })),
-    };
-    upsertStoredProgram(program);
-    // TODO(backend): show this on the API success response (and a "error" toast on failure).
-    showToast(initialProgram ? "Programa atualizado" : "Programa criado");
-    router.push("/programas");
+  const [saving, setSaving] = useState(false);
+  const handleSave = async () => {
+    if (!canSave || saving) return;
+    setSaving(true);
+    try {
+      await saveProgram(
+        {
+          name: name.trim(),
+          description: description.trim() || null,
+          segments: segments.map(({ temp, durationSec, ramp }) => ({ temp, durationSec, ramp })),
+        },
+        initialProgram?.id
+      );
+      showToast(initialProgram ? "Programa atualizado" : "Programa criado");
+      router.push("/programas");
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : "Falha ao salvar o programa");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const numberInputClass = "w-20 rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 tabular-nums outline-none focus:border-[var(--brand)]";
@@ -291,12 +297,12 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
         <button
           type='button'
           onClick={handleSave}
-          disabled={!canSave}
+          disabled={!canSave || saving}
           title={canSave ? undefined : "Informe um nome e ao menos um ponto"}
-          className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'
+          className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold disabled:opacity-60'
         >
           <IconGeneral icon='save' fill={0} className='[--icon-size:1.25rem]' />
-          SALVAR
+          {saving ? "SALVANDO…" : "SALVAR"}
         </button>
       </footer>
 

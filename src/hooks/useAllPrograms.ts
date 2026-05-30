@@ -1,28 +1,14 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import type { Program } from "@/lib/programs";
-import {
-  getHiddenIdsServerSnapshot,
-  getHiddenIdsSnapshot,
-  getStoredProgramsServerSnapshot,
-  getStoredProgramsSnapshot,
-  subscribeStoredPrograms,
-} from "@/lib/programStore";
+import { getStoredProgramsServerSnapshot, getStoredProgramsSnapshot, subscribeStoredPrograms } from "@/lib/programStore";
 
 /**
- * The programs to show: user-created (stored, newest first) + the given seed list, deduped
- * by id (a stored program overrides a seed with the same id) and minus deleted ids. Reactive
- * to localStorage changes; SSR-safe (seed only until hydrated).
+ * The full program list (catalog + user-created, minus soft-deleted), served by the backend and
+ * cached client-side. Reactive to mutations; SSR-safe (empty until hydrated/loaded). The `_seed`
+ * parameter is kept for call-site compatibility but is ignored — the API is the source of truth.
  */
-export function useAllPrograms(seed: Program[]): Program[] {
-  const stored = useSyncExternalStore(subscribeStoredPrograms, getStoredProgramsSnapshot, getStoredProgramsServerSnapshot);
-  const hidden = useSyncExternalStore(subscribeStoredPrograms, getHiddenIdsSnapshot, getHiddenIdsServerSnapshot);
-
-  return useMemo(() => {
-    const storedIds = new Set(stored.map((p) => p.id));
-    const hiddenIds = new Set(hidden);
-    const merged = [...stored, ...seed.filter((p) => !storedIds.has(p.id))];
-    return merged.filter((p) => !hiddenIds.has(p.id));
-  }, [stored, hidden, seed]);
+export function useAllPrograms(_seed?: Program[]): Program[] {
+  return useSyncExternalStore(subscribeStoredPrograms, getStoredProgramsSnapshot, getStoredProgramsServerSnapshot);
 }

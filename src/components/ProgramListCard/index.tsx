@@ -9,6 +9,7 @@ import { Modal } from "@/components/Modal";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import { useFavoriteIds } from "@/hooks/useFavoriteIds";
 import { useSession } from "@/hooks/useSession";
+import { ApiError } from "@/lib/api";
 import { canManagePrograms } from "@/lib/auth";
 import type { Program } from "@/lib/programs";
 import { deleteProgram, toggleFavorite } from "@/lib/programStore";
@@ -36,7 +37,7 @@ export function ProgramListCard({ program }: { program: Program }) {
         <h3 className='truncate text-lg font-semibold'>{program.name}</h3>
         <button
           type='button'
-          onClick={() => toggleFavorite(program.id)}
+          onClick={() => void toggleFavorite(program.id)}
           aria-pressed={isFavorite}
           aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           className={clsx("btn-press shrink-0 cursor-pointer text-[var(--brand)]", !isFavorite && "opacity-50 hover:opacity-100")}
@@ -94,10 +95,13 @@ export function ProgramListCard({ program }: { program: Program }) {
         description={`"${program.name}" será removido permanentemente. Esta ação não pode ser desfeita.`}
         confirmLabel='Deletar'
         cancelLabel='Cancelar'
-        onConfirm={() => {
-          deleteProgram(program.id);
-          // TODO(backend): show this on the API success response (and a "error" toast on failure).
-          showToast("Programa deletado");
+        onConfirm={async () => {
+          try {
+            await deleteProgram(program.id);
+            showToast("Programa deletado");
+          } catch (e) {
+            showToast(e instanceof ApiError ? e.message : "Falha ao deletar o programa");
+          }
           setConfirmDeleteOpen(false);
         }}
         onCancel={() => setConfirmDeleteOpen(false)}
