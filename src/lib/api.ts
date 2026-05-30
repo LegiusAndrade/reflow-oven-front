@@ -218,6 +218,7 @@ export interface RunStatusDto {
 export const api = {
   // auth
   login: (username: string, password: string) => request<LoginResult>("/api/auth/login", { method: "POST", body: { username, password }, auth: false }),
+  logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<SessionDto>("/api/auth/me"),
   forgotPassword: (email: string) => request<{ ok: boolean }>("/api/auth/forgot-password", { method: "POST", body: { email }, auth: false }),
 

@@ -25,6 +25,9 @@ export async function login(name: string, password: string): Promise<{ ok: boole
 }
 
 export function logout(): void {
+  // Best-effort server notice for the audit/security log; fire before we drop the token so the
+  // request still carries it. Never blocks or fails the local logout.
+  void api.logout().catch(() => {});
   setToken(null);
   sessionStore.set(null);
 }

@@ -74,6 +74,10 @@ export const API_TIMEOUT_MS = 12000;
 /** Tempo que o app espera no carregamento (validação de sessão) antes de mostrar erro de conexão. */
 export const APP_BOOT_TIMEOUT_MS = 12000;
 
+// --- Logger ---------------------------------------------------------------------------
+/** Máximo de entradas mantidas no buffer em memória do logger (console + visualizador futuro). */
+export const LOG_RING_MAX = 500;
+
 // --- Diagnóstico (statistics rankings) -------------------------------------------------
 
 /** How many entries the "top users / top programs" rankings can show (operator-adjustable). */

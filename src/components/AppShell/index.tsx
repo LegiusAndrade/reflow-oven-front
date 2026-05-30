@@ -14,6 +14,7 @@ import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { useSession } from "@/hooks/useSession";
 import { canAccess, refreshSession } from "@/lib/auth";
 import { APP_BOOT_TIMEOUT_MS } from "@/lib/limits";
+import { logger } from "@/lib/logger";
 import { MOCK_READINGS } from "@/lib/sensors";
 
 export interface IAppShellProps {
@@ -55,6 +56,11 @@ export function AppShell({ children }: IAppShellProps) {
   useEffect(() => {
     if (hydrated) void refreshSession();
   }, [hydrated]);
+
+  // Console trail of navigation (see src/lib/logger.ts).
+  useEffect(() => {
+    logger.info("route", pathname);
+  }, [pathname]);
 
   // Auth guard (deferred until hydrated so the persisted session loads): /login is always
   // reachable; every other route needs a session and an allowed role.
