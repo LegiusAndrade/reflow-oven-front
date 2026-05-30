@@ -1,6 +1,6 @@
 import MenuToggle from "../MenuToggle";
 import { IconGeneral } from "../Icon/IconGeneral";
-import type { SensorReadings } from "@/lib/sensors";
+import { formatReading, type SensorReadings } from "@/lib/sensors";
 
 export interface IBottomBarProps {
   readings: SensorReadings;
@@ -42,15 +42,15 @@ export default function BottomBar({ readings, menuOpen = false, onMenuClick, sho
       )}
 
       <div className='ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-base tabular-nums sm:text-lg'>
-        <Reading icon='developer_board' value={`${boardTempC} ºC`} />
+        <Reading icon='developer_board' value={`${formatReading(boardTempC, "°C")} ºC`} />
         <Divider />
-        <Reading icon='speed' value={`${boardFanRpm} RPM`} />
+        <Reading icon='speed' value={`${formatReading(boardFanRpm, "rpm")} RPM`} />
         <Divider />
-        <Reading icon='microwave' value={`${ovenTempC} ºC`} />
+        <Reading icon='microwave' value={`${formatReading(ovenTempC, "°C")} ºC`} />
         <Divider />
-        <Reading icon='speed' value={`${ovenFanRpm} RPM`} />
+        <Reading icon='speed' value={`${formatReading(ovenFanRpm, "rpm")} RPM`} />
         <Divider />
-        <Reading icon='electric_meter' value={`${voltageV}V @ ${currentA}A`} />
+        <Reading icon='electric_meter' value={`${formatReading(voltageV, "V")}V @ ${formatReading(currentA, "A")}A`} />
       </div>
     </div>
   );

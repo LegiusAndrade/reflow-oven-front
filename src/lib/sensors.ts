@@ -27,3 +27,8 @@ export const MOCK_READINGS: SensorReadings = {
   voltageV: 110,
   currentA: 20,
 };
+
+/** Display a live reading: RPM as a whole number, everything else (°C/V/A) with one decimal. */
+export function formatReading(value: number, unit: string): string {
+  return unit === "rpm" ? String(Math.round(value)) : value.toFixed(1);
+}
