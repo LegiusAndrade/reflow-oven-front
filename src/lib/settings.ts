@@ -1,4 +1,5 @@
-import { createJsonStore } from "./localStore";
+import { api } from "./api";
+import { createApiStore } from "./apiStore";
 import { DEFAULT_RUN_SERIES, type RunSignalId } from "./run";
 
 export type NotificationKind = "Normal" | "Atenção" | "Crítica" | "Grave";
@@ -50,7 +51,9 @@ export const DEFAULT_SETTINGS: Settings = {
   run: { series: DEFAULT_RUN_SERIES },
 };
 
-/** Persisted in localStorage (mock stage). TODO(backend): replace with the API/RS422.
- *  Key bumped v2→v3 when the execution-chart series (`run`) were added, so older saved
- *  settings (which lack `run`) fall back to the new defaults instead of crashing. */
-export const settingsStore = createJsonStore<Settings>("reflow:settings:v3", DEFAULT_SETTINGS);
+/** Backed by the API (GET/PUT /api/settings); falls back to DEFAULT_SETTINGS until loaded. */
+export const settingsStore = createApiStore<Settings>({
+  fallback: DEFAULT_SETTINGS,
+  load: () => api.getSettings() as Promise<Settings>,
+  save: (s) => api.updateSettings(s),
+});
