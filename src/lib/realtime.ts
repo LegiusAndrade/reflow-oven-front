@@ -9,7 +9,7 @@ const build = (path: string): signalR.HubConnection =>
   new signalR.HubConnectionBuilder()
     .withUrl(`${API_URL}${path}`, { accessTokenFactory: () => getToken() ?? "" })
     .withAutomaticReconnect()
-    .configureLogging(signalR.LogLevel.Warning)
+    .configureLogging(signalR.LogLevel.Critical)
     .build();
 
 /** Subscribe to the 1 Hz sensor stream (Diagnóstico / BottomBar). Returns a stop function. */

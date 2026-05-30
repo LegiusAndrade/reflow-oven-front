@@ -5,7 +5,7 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { api, ApiError } from "@/lib/api";
-import { MOCK_READINGS } from "@/lib/sensors";
+import { formatReading, MOCK_READINGS } from "@/lib/sensors";
 import { showToast } from "@/lib/toast";
 import { SystemLogModal } from "./SystemLogModal";
 
@@ -39,12 +39,12 @@ export function DiagnosticoSensores() {
   const runAll = () => TESTS.forEach((t) => runTest(t.id));
 
   const sensors = [
-    { icon: "thermostat", label: "Temp. Grelha", value: r.ovenTempC, unit: "°C" },
-    { icon: "device_thermostat", label: "Temp. Dissipador", value: r.boardTempC, unit: "°C" },
-    { icon: "bolt", label: "Tensão Saída", value: r.voltageV, unit: "V" },
-    { icon: "electric_meter", label: "Corrente Saída", value: r.currentA, unit: "A" },
-    { icon: "mode_fan", label: "RPM Fan Forno", value: r.ovenFanRpm, unit: "rpm" },
-    { icon: "mode_fan", label: "RPM Fan Dissipador", value: r.boardFanRpm, unit: "rpm" },
+    { icon: "thermostat", label: "Temp. Grelha", value: formatReading(r.ovenTempC, "°C"), unit: "°C" },
+    { icon: "device_thermostat", label: "Temp. Dissipador", value: formatReading(r.boardTempC, "°C"), unit: "°C" },
+    { icon: "bolt", label: "Tensão Saída", value: formatReading(r.voltageV, "V"), unit: "V" },
+    { icon: "electric_meter", label: "Corrente Saída", value: formatReading(r.currentA, "A"), unit: "A" },
+    { icon: "mode_fan", label: "RPM Fan Forno", value: formatReading(r.ovenFanRpm, "rpm"), unit: "rpm" },
+    { icon: "mode_fan", label: "RPM Fan Dissipador", value: formatReading(r.boardFanRpm, "rpm"), unit: "rpm" },
   ];
 
   return (

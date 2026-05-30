@@ -43,6 +43,12 @@ export function NumberField({ label, value, onChange, min, max, step = 1, unit, 
           max={max}
           step={step}
           onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          onBlur={(e) => {
+            // Snap the typed/pasted value into [min, max] when the field loses focus.
+            const n = e.target.value === "" ? (min ?? 0) : Number(e.target.value);
+            const clamped = Math.min(max ?? n, Math.max(min ?? n, n));
+            if (clamped !== value) onChange(clamped);
+          }}
           className={clsx(INPUT_CLS, "tabular-nums", unit && "pr-12")}
         />
         {unit && <span className='pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm opacity-50'>{unit}</span>}
