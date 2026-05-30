@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { useStore } from "@/hooks/useStore";
+import { ApiError } from "@/lib/api";
 import { cleanupStore, type CleanupId, formatBytes, performCleanup, recordCount, recordSizeBytes } from "@/lib/maintenance";
 import { showToast } from "@/lib/toast";
 import { usersStore } from "@/lib/users";
@@ -52,10 +53,13 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
   const totalRecords = chosen.reduce((sum, id) => sum + countOf(id), 0);
   const totalBytes = chosen.reduce((sum, id) => sum + recordSizeBytes(id, countOf(id)), 0);
 
-  const runCleanup = () => {
-    performCleanup(chosen);
-    // TODO(backend): show this on the API success response.
-    showToast(`Limpeza concluída — ${totalRecords} ${totalRecords === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
+  const runCleanup = async () => {
+    try {
+      await performCleanup(chosen);
+      showToast(`Limpeza concluída — ${totalRecords} ${totalRecords === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : "Falha na limpeza do banco");
+    }
     setConfirming(false);
     onClose();
   };

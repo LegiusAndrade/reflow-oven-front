@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
+import { ApiError } from "@/lib/api";
 import { factoryReset } from "@/lib/maintenance";
 import { showToast } from "@/lib/toast";
 
@@ -29,13 +30,16 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
   }
 
   const ready = text.trim().toUpperCase() === CONFIRM_WORD;
-  const confirm = () => {
+  const confirm = async () => {
     if (!ready) return;
-    factoryReset();
-    // TODO(backend): perform the reset on the board and confirm on the API response.
-    showToast("Reset de fábrica concluído. Faça login novamente.");
-    onClose();
-    router.replace("/login");
+    try {
+      await factoryReset();
+      showToast("Reset de fábrica concluído. Faça login novamente.");
+      onClose();
+      router.replace("/login");
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : "Falha no reset de fábrica");
+    }
   };
 
   return (

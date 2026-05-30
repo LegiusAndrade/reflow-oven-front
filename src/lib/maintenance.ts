@@ -8,13 +8,11 @@
  * board/server instead of flagging them client-side.
  */
 
+import { api, setToken } from "./api";
 import { sessionStore } from "./auth";
 import { createJsonStore } from "./localStore";
 import { MOCK_LOGS } from "./logs";
-import type { Program } from "./programs";
-import { resetPrograms } from "./programStore";
 import { MOCK_CHANGES, MOCK_ERRORS, MOCK_EXECUTIONS } from "./reports";
-import { DEFAULT_SETTINGS, settingsStore } from "./settings";
 import { type User, usersStore } from "./users";
 
 /** Clearable record categories. "inativos" is a real user removal; the rest are log/record flags. */
@@ -83,8 +81,10 @@ export function formatBytes(bytes: number): string {
   return `${(kb / 1024).toFixed(1)} MB`;
 }
 
-/** Run a cleanup over the selected categories: remove inactive users for real, flag the rest. */
-export function performCleanup(ids: CleanupId[]): void {
+/** Run a real cleanup over the selected categories (deletes server-side), then reflect it locally. */
+export async function performCleanup(ids: CleanupId[]): Promise<void> {
+  if (ids.length === 0) return;
+  await api.cleanup(ids);
   if (ids.includes("inativos")) {
     usersStore.update((list) => list.filter((u) => u.status !== "Inativo"));
   }
@@ -100,46 +100,13 @@ export function performCleanup(ids: CleanupId[]): void {
 
 // --- Factory reset ---------------------------------------------------------------------
 
-/** The single Admin account left after a factory reset (logs in with the mock password). */
-const FACTORY_ADMIN: User = {
-  id: "user-admin",
-  name: "Admin",
-  email: "admin@reflow.local",
-  type: "Admin",
-  status: "Ativo",
-  createdAt: "01/01/25 - 00:00:00",
-  lastLogin: "—",
-  events: [],
-};
-
-/** The single default program left after a factory reset. */
-const FACTORY_PROGRAM: Program = {
-  id: "factory-default",
-  name: "Perfil Padrão",
-  runCount: 0,
-  lastUsed: "Nunca",
-  profile: [
-    { t: 0, temp: 25 },
-    { t: 90, temp: 150 },
-    { t: 180, temp: 180 },
-    { t: 210, temp: 217 },
-    { t: 240, temp: 245 },
-    { t: 270, temp: 210 },
-    { t: 330, temp: 120 },
-    { t: 390, temp: 45 },
-  ],
-};
-
 /**
- * Wipe the device to a clean factory state: one Admin user, one default program, default
- * settings, empty history/logs, and no session (the caller should redirect to /login).
- * TODO(backend): perform the reset on the board/server.
+ * Wipe the device to a clean factory state on the backend (one Admin, one default program,
+ * default settings, empty history), then clear the local session. The caller redirects to /login.
  */
-export function factoryReset(): void {
-  usersStore.set([FACTORY_ADMIN]);
-  resetPrograms([FACTORY_PROGRAM]);
-  settingsStore.set(DEFAULT_SETTINGS);
-  // A factory unit has no history — flag every log/record category as cleared.
+export async function factoryReset(): Promise<void> {
+  await api.factoryReset("RESETAR");
   cleanupStore.set({ execucoes: true, alteracoes: true, falhas: true, logs: true });
+  setToken(null);
   sessionStore.set(null);
 }
