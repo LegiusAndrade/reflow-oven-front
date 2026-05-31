@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { IconGeneral } from "../Icon/IconGeneral";
 import IconNotification, { IIconNotificationProps } from "../Icon/Notification";
 import IconWifi, { IIconWifiProps } from "../Icon/Wifi";
@@ -47,7 +48,10 @@ export default function TopBar({ network, connectedServer, statusNotification, u
             <IconWifi signal='OFF' />
           )}
           <IconGeneral className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]' icon={connectedServer ? "public" : "public_off"} fill={1} />
-          <IconNotification status={statusNotification.status} amount={statusNotification.amount} />
+          {/* The bell opens the notifications screen (route + store + mark-as-read already exist). */}
+          <Link href='/notificacoes' aria-label='Notificações' className='btn-press inline-flex cursor-pointer'>
+            <IconNotification status={statusNotification.status} amount={statusNotification.amount} />
+          </Link>
           <ThemeToggle />
         </div>
         <span className='tabular-nums sm:text-2xl'>{"12:20 09/05/25"}</span>
