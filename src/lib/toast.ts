@@ -1,9 +1,16 @@
+import { TOAST_DEDUPE_MS } from "./limits";
+
 export type ToastType = "success" | "error" | "info";
 export type Toast = { id: string; message: string; type: ToastType };
 
 const EMPTY: Toast[] = [];
 let toasts: Toast[] = EMPTY;
 const listeners = new Set<() => void>();
+
+// When the server is down several pollers (sessão, notificações, stores) surface the SAME offline
+// error each tick; without a guard they stack. Suppress an identical toast (same type+message) fired
+// again within TOAST_DEDUPE_MS. Keyed by `${type}:${message}` so distinct messages still show.
+const lastShownAt = new Map<string, number>();
 
 function emit(): void {
   for (const listener of listeners) listener();
@@ -33,6 +40,11 @@ export function getToastsServerSnapshot(): Toast[] {
  * `showToast(message, "error")` in the failure path.
  */
 export function showToast(message: string, type: ToastType = "success", durationMs = 3000): string {
+  const key = `${type}:${message}`;
+  const now = Date.now();
+  const prev = lastShownAt.get(key);
+  if (prev !== undefined && now - prev < TOAST_DEDUPE_MS) return ""; // identical toast still on screen
+  lastShownAt.set(key, now);
   const id = crypto.randomUUID();
   toasts = [...toasts, { id, message, type }];
   emit();

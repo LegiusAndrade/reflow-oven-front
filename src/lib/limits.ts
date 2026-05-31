@@ -92,6 +92,10 @@ export const NOTIFICATION_POLL_MS = 30000;
 export const SYSTEM_STATUS_POLL_MS = 20000;
 /** Intervalo entre buscas das métricas do SO (carga da CPU) na tela Informação — polling leve. */
 export const SYSTEM_METRICS_POLL_MS = 5000;
+/** Janela em que um toast idêntico (mesmo tipo+mensagem) é suprimido — evita que vários pollers
+ *  empilhem o mesmo erro "offline" a cada tick quando o servidor cai. Abaixo de todos os intervalos
+ *  de polling acima, então ticks consecutivos nunca disparam o mesmo toast duas vezes. */
+export const TOAST_DEDUPE_MS = 5000;
 
 // --- Logger ---------------------------------------------------------------------------
 /** Máximo de entradas mantidas no buffer em memória do logger (console + visualizador futuro). */

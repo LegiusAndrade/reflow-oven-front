@@ -49,7 +49,8 @@ export async function refreshSession(): Promise<void> {
     // (e.g. the device booted before the backend) must keep the cached session, otherwise we
     // bounce the user to /login on every hiccup.
     if (e instanceof ApiError && (e.status === 401 || e.status === 403)) logout();
-    else if (e instanceof ApiError && e.status === 0) showToast("Não foi possível conectar ao servidor.", "error");
+    // Use the ApiError's own message so every status-0 source shares one dedupe key (see showToast).
+    else if (e instanceof ApiError && e.status === 0) showToast(e.message, "error");
   }
 }
 
