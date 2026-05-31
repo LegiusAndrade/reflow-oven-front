@@ -137,7 +137,9 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
 
   // Saving sends the editable segments to the API (the server derives the sampled profile) and
   // returns to the list. Editing updates the existing program; a new one is created server-side.
-  const canSave = name.trim().length > 0 && segments.length > 0;
+  // A profile whose durations are all 0 has no time span (its preview/total would read "0s"), so it
+  // can't be saved — individual 0 s segments are allowed (backend PointDurationMin = 0), just not all.
+  const canSave = name.trim().length > 0 && segments.length > 0 && totalSec > 0;
   const [saving, setSaving] = useState(false);
   const handleSave = async () => {
     if (!canSave || saving) return;
@@ -324,7 +326,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
           type='button'
           onClick={handleSave}
           disabled={!canSave || saving}
-          title={canSave ? undefined : "Informe um nome e ao menos um ponto"}
+          title={canSave ? undefined : "Informe um nome e um perfil com tempo total maior que zero"}
           className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold disabled:opacity-60'
         >
           <IconGeneral icon='save' fill={0} className='[--icon-size:1.25rem]' />

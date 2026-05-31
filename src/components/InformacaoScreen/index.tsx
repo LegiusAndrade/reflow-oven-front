@@ -24,6 +24,32 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
   );
 }
 
+/**
+ * CPU load row — owns its own polling so the 5 s tick only re-renders this row, not the whole
+ * Informação tree (QR code, board cards). Failures are ignored so a transient hiccup keeps the
+ * last value; the interval is cleared on unmount.
+ */
+function CpuLoadRow() {
+  const [metrics, setMetrics] = useState<SystemMetricsDto | null>(null);
+  useEffect(() => {
+    if (!getToken()) return;
+    let alive = true;
+    const tick = () =>
+      api
+        .systemMetrics()
+        .then((m) => alive && setMetrics(m))
+        .catch(() => {});
+    void tick();
+    const id = window.setInterval(tick, SYSTEM_METRICS_POLL_MS);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, []);
+  const value = metrics ? `${Math.round(metrics.cpuLoadPercent)}%${metrics.cpuTempC != null ? ` · ${Math.round(metrics.cpuTempC)}°C` : ""}` : "—";
+  return <InfoRow icon='speed' label='Carga da CPU' value={value} />;
+}
+
 /** A titled info block (border + subtle fill + icon header) — the shared card chrome. */
 function InfoCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
   return (
@@ -54,7 +80,6 @@ function BoardCard({ icon, title, board }: { icon: string; title: string; board:
 export function InformacaoScreen() {
   const [d, setD] = useState<DeviceInfo>(DEVICE_INFO);
   const [update, setUpdate] = useState<UpdateStatusDto | null>(null);
-  const [metrics, setMetrics] = useState<SystemMetricsDto | null>(null);
   const [applying, setApplying] = useState(false);
   const session = useStore(sessionStore);
   const isAdmin = session?.role === "Admin";
@@ -76,20 +101,6 @@ export function InformacaoScreen() {
   useEffect(() => {
     if (!getToken()) return;
     api.getUpdateStatus().then(setUpdate).catch(() => {});
-  }, []);
-
-  // Live OS metrics (CPU load) — light polling while the screen is open; failures are ignored so a
-  // transient hiccup just keeps the last value. Cleared on unmount.
-  useEffect(() => {
-    if (!getToken()) return;
-    let alive = true;
-    const tick = () => api.systemMetrics().then((m) => alive && setMetrics(m)).catch(() => {});
-    void tick();
-    const id = window.setInterval(tick, SYSTEM_METRICS_POLL_MS);
-    return () => {
-      alive = false;
-      window.clearInterval(id);
-    };
   }, []);
 
   useEffect(() => {
@@ -167,11 +178,7 @@ export function InformacaoScreen() {
           <InfoCard icon='dashboard' title='Sistema'>
             <dl className='grid min-w-0 gap-x-8 gap-y-3 sm:grid-cols-2'>
               <InfoRow icon='hard_drive' label='Armazenamento disponível' value={`${d.storageFreeGB} GB de ${d.storageTotalGB} GB (${freePct}%)`} />
-              <InfoRow
-                icon='speed'
-                label='Carga da CPU'
-                value={metrics ? `${Math.round(metrics.cpuLoadPercent)}%${metrics.cpuTempC != null ? ` · ${Math.round(metrics.cpuTempC)}°C` : ""}` : "—"}
-              />
+              <CpuLoadRow />
               <InfoRow icon='lan' label='IP da Placa' value={d.boardIp} />
               <InfoRow icon='memory' label='Versão do Firmware' value={d.firmwareVersion} />
               <InfoRow icon='code' label='Versão do HTML' value={d.htmlVersion} />
