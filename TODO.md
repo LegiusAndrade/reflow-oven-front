@@ -10,10 +10,9 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ### Prontas no backend — falta só o front consumir
 > A auditoria da integração mostrou que vários itens que pareciam "faltar no backend" **já estão implementados** lá; aqui é trabalho de front.
-- [ ] **Alterações — gráfico anterior × atual a partir do diff de pontos** — o `GET /api/changes/{id}` já devolve o diff **completo** por ponto: `role` (`added`/`removed`/`changed`/**`unchanged`**) + valores atuais (`Temp/TimeSec/Ramp`) e, nos `changed`, os anteriores (`PrevTemp/PrevTimeSec/PrevRamp`). Reconstruir os dois perfis no front e desenhar:
-  - **anterior** = pontos `unchanged`/`removed` (valores atuais) + `changed` (valores `Prev*`); ignora `added`.
-  - **atual** = pontos `unchanged`/`added` (valores atuais) + `changed` (valores atuais); ignora `removed`.
-  - Mapear `role`/`Prev*` no `reportsClient.ts` e alimentar o gráfico antes×depois. **Não precisa mexer no backend.** _(corrige a nota antiga que dizia "diff simplificado")_
+- [ ] **Alterações — gráfico do perfil** — o `GET /api/changes/{id}` traz `points` com **um único `role` por mudança** (`added` no Criado, `changed-after` no Editado, `removed` no Removido) — ou seja, **só uma curva por alteração** (não existem `Prev*` nem `unchanged`; `timeSec` já é cumulativo). O `reportsClient` parou de montar a curva na migração mock→API, então o gráfico **sumiu**.
+  - **Agora (sem backend):** restaurar a curva única — Criado=curva nova, Removido=curva removida, Editado=curva atual (`points` → `{ t: timeSec, temp }`); alimenta o `TemperatureProfileChart` que já existe.
+  - **Antes × depois (Editado):** o backend guarda **só a curva nova** numa edição — decisão registrada no backend (H fechado como "diff por ponto basta", sem persistir `BeforeProfile`/`AfterProfile`). Então **não há** sobreposição antes×depois para edições; mostramos uma curva só. _(corrige minha nota anterior, que assumia `Prev*`/`unchanged` — esses campos não existem no backend)_
 - [ ] **Sino/Notificações reais** — trocar o mock de `notifications.ts` pelo feed real: `GET /api/notifications`, `GET /api/notifications/unread-count`, `POST /{id}/read`, `POST /read-all`, `DELETE /api/notifications`.
 - [ ] **Card "atualização disponível" real** — trocar a simulação por `GET /api/system/update` (+ botão chamando `POST /api/system/update`).
 - [ ] **Ícone Wi-Fi × cabo** na TopBar — a partir de `GET /api/system/network` (`medium` = `wifi`/`ethernet`).
