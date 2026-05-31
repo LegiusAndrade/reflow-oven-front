@@ -10,8 +10,9 @@ export const PROGRAM_NAME_MAX_LENGTH = 40;
 /** Program description — maximum characters. */
 export const PROGRAM_DESCRIPTION_MAX_LENGTH = 120;
 
-/** Temperature profile — maximum number of points. */
-export const PROFILE_MAX_POINTS = 30;
+/** Temperature profile — maximum number of points (segments). Mirrors the backend
+ *  `DomainConstants.ProfileMaxPoints` (100); the backend rejects a save above it. */
+export const PROFILE_MAX_POINTS = 100;
 
 /** Per-point target temperature (°C). */
 export const POINT_TEMP_MIN = 0;

@@ -38,6 +38,19 @@ const START_TEMP = 25;
 /** Keep a numeric input within [min, max]; empty/NaN falls back to min. */
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
 
+/** Total profile time as "1h 5min 30s" / "5min 30s" / "45s" (omits zero h/min, always shows s). */
+function fmtTotal(sec: number): string {
+  const s = Math.max(0, Math.round(sec));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  const parts: string[] = [];
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}min`);
+  parts.push(`${r}s`);
+  return parts.join(" ");
+}
+
 /**
  * Build a temperature × time curve from the segment list, for the preview. Each segment
  * goes from the previous temperature to its target over its duration, shaped by `ramp`:
@@ -110,6 +123,9 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
 
   const profile = useMemo(() => toProfile(segments), [segments]);
   const incoming = useMemo(() => incomingTemps(segments), [segments]);
+  // Total profile time = sum of the segment durations (every ramp, Fixo included, advances time).
+  const totalSec = useMemo(() => segments.reduce((sum, s) => sum + Math.max(0, s.durationSec), 0), [segments]);
+  const atMax = segments.length >= PROFILE_MAX_POINTS;
 
   const update = (id: string, patch: Partial<Segment>) => setSegments((segs) => segs.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const remove = (id: string) => setSegments((segs) => segs.filter((s) => s.id !== id));
@@ -259,26 +275,36 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                 </tbody>
               </table>
             </div>
-            <div className='flex items-center justify-between gap-3'>
-              <button
-                type='button'
-                onClick={add}
-                disabled={segments.length >= PROFILE_MAX_POINTS}
-                title={segments.length >= PROFILE_MAX_POINTS ? `Máximo de ${PROFILE_MAX_POINTS} pontos` : undefined}
-                className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 font-semibold'
-              >
-                <IconGeneral icon='add' fill={0} className='[--icon-size:1.25rem]' />
-                Adicionar Ponto
-              </button>
-              <button
-                type='button'
-                onClick={() => setConfirmClearOpen(true)}
-                disabled={segments.length === 0}
-                className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-700 dark:text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
-              >
-                <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
-                Limpar Pontos
-              </button>
+            <div className='flex flex-wrap items-center justify-between gap-x-3 gap-y-2'>
+              <div className='flex items-center gap-3'>
+                <button
+                  type='button'
+                  onClick={add}
+                  disabled={atMax}
+                  title={atMax ? `Máximo de ${PROFILE_MAX_POINTS} pontos` : undefined}
+                  className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 font-semibold'
+                >
+                  <IconGeneral icon='add' fill={0} className='[--icon-size:1.25rem]' />
+                  Adicionar Ponto
+                </button>
+                <span className={clsx("text-sm tabular-nums", atMax ? "font-semibold text-amber-700 dark:text-amber-400" : "opacity-70")}>
+                  {segments.length}/{PROFILE_MAX_POINTS} pontos
+                </span>
+              </div>
+              <div className='flex items-center gap-3'>
+                <span className='text-sm opacity-70 tabular-nums'>
+                  Tempo total: <span className='font-semibold'>{fmtTotal(totalSec)}</span>
+                </span>
+                <button
+                  type='button'
+                  onClick={() => setConfirmClearOpen(true)}
+                  disabled={segments.length === 0}
+                  className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/40 px-4 py-2.5 font-semibold text-red-700 dark:text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
+                >
+                  <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
+                  Limpar Pontos
+                </button>
+              </div>
             </div>
           </div>
 
