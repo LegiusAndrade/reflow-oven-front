@@ -110,6 +110,18 @@ export type RunStatusKind = "running" | "done" | "aborted";
 export type RunPhase = "Aquecimento" | "Patamar" | "Pico" | "Resfriamento";
 export type RunSignalId = "alvo" | "oven" | "board" | "current" | "voltage" | "ovenFan" | "boardFan";
 
+/** Wire literals are lowercase; "system" is resolved at runtime via prefers-color-scheme (see lib/theme.ts). */
+export type Theme = "light" | "dark" | "system";
+
+/** Per-user visible execution-chart series. The flag names mirror the RunSignalId union exactly. */
+export type RunSeriesDto = Record<RunSignalId, boolean>;
+
+/** Per-user preferences (theme + execution-chart series), persisted via /api/me/preferences. */
+export interface UserPreferencesDto {
+  theme: Theme;
+  chartSeries: RunSeriesDto;
+}
+
 export interface SessionDto {
   id: string;
   name: string;
@@ -117,6 +129,10 @@ export interface SessionDto {
   /** epoch ms */
   loginAt: number;
   calibration?: boolean;
+  // Per-user preferences hydrated from the DB. `theme` is always present (defaults "system");
+  // `chartSeries` is omitted for the technician/calibration session.
+  theme: Theme;
+  chartSeries?: RunSeriesDto;
 }
 
 export interface LoginResult {
@@ -364,6 +380,11 @@ export const api = {
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<SessionDto>("/api/auth/me"),
   forgotPassword: (email: string) => request<{ ok: boolean }>("/api/auth/forgot-password", { method: "POST", body: { email }, auth: false }),
+
+  // per-user preferences (theme + execution-chart series). PUT is full-replace — always send the
+  // complete object. The technician/calibration session returns 403 (preferences in-session only).
+  getPreferences: () => request<UserPreferencesDto>("/api/me/preferences"),
+  updatePreferences: (body: UserPreferencesDto) => request<UserPreferencesDto>("/api/me/preferences", { method: "PUT", body }),
 
   // programs
   listPrograms: (q: ProgramListQuery = {}) => request<PagedResult<ProgramDto>>(`/api/programs${qs({ ...q })}`),

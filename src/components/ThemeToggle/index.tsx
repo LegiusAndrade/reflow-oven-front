@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { useStore } from "@/hooks/useStore";
+import { preferencesStore, setTheme } from "@/lib/preferences";
+import { resolveTheme } from "@/lib/theme";
 
-/** Light/dark theme toggle — flips `data-theme` on <html>. Mock: in-session only (resets on
- *  reload). TODO(backend/persist): remember the choice in localStorage and apply before paint. */
+/** Light/dark theme toggle — flips `data-theme` on <html>. The choice is persisted per-user via
+ *  setTheme() (applies it immediately and saves to the backend). A "system" value arriving from the
+ *  backend is honored by reflecting its resolved (dark/light) state here. */
 export function ThemeToggle() {
-  const [dark, setDark] = useState(true); // layout defaults to data-theme="dark"
+  const prefs = useStore(preferencesStore);
+  const dark = resolveTheme(prefs.theme) === "dark";
 
   const toggle = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.dataset.theme = next ? "dark" : "light";
+    void setTheme(dark ? "light" : "dark");
   };
 
   return (

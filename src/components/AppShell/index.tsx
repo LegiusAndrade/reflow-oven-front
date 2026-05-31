@@ -18,7 +18,10 @@ import { canAccess, refreshSession } from "@/lib/auth";
 import { APP_BOOT_TIMEOUT_MS } from "@/lib/limits";
 import { logger } from "@/lib/logger";
 import { notificationsStore, refreshNotifications, startNotificationsPolling, unreadCount } from "@/lib/notifications";
+import { preferencesStore } from "@/lib/preferences";
+import { DEFAULT_RUN_SERIES } from "@/lib/run";
 import { MOCK_READINGS } from "@/lib/sensors";
+import { applyTheme } from "@/lib/theme";
 
 export interface IAppShellProps {
   children: React.ReactNode;
@@ -61,6 +64,21 @@ export function AppShell({ children }: IAppShellProps) {
   useEffect(() => {
     if (hydrated) void refreshSession();
   }, [hydrated]);
+
+  // Apply the per-user theme + seed the prefs store from the session — keyed on the session itself so
+  // it re-runs on every transition: boot-from-cache, the refreshSession result, AND a fresh login
+  // (router.replace keeps this shell mounted, so a [hydrated]-only effect would miss the login and the
+  // new user would keep the previous defaults until a manual reload). Imperative applyTheme (not
+  // setState) avoids react-hooks/set-state-in-effect and a dark<->light flash; seeding from the session
+  // means no redundant GET /api/me/preferences. Logout (session→null) resets both to the defaults.
+  useEffect(() => {
+    if (!hydrated) return;
+    applyTheme(session?.theme ?? "system");
+    preferencesStore.seed({
+      theme: session?.theme ?? "system",
+      chartSeries: session?.chartSeries ?? DEFAULT_RUN_SERIES,
+    });
+  }, [hydrated, session]);
 
   // Console trail of navigation (see src/lib/logger.ts).
   useEffect(() => {

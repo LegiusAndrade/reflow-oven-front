@@ -12,6 +12,8 @@ import {
   PID_MAX,
   PID_MIN,
 } from "@/lib/limits";
+import { useStore } from "@/hooks/useStore";
+import { preferencesStore, setChartSeries } from "@/lib/preferences";
 import { DEFAULT_RUN_SERIES, RUN_SIGNALS } from "@/lib/run";
 import { showToast } from "@/lib/toast";
 import { FieldGroup, FormFooter, NumberField, Toggle, useSettingsDraft } from "./fields";
@@ -19,7 +21,11 @@ import { FieldGroup, FormFooter, NumberField, Toggle, useSettingsDraft } from ".
 /** Geral tab: PID gains, oven limits, process timeout and supply-voltage thresholds. */
 export function GeralTab() {
   const { draft, setDraft, dirty, save, cancel } = useSettingsDraft();
-  const series = draft.run?.series ?? DEFAULT_RUN_SERIES;
+  // The execution-chart series are per-user prefs (not device settings): each user — Admin or
+  // Regular — saves their own. Toggling persists immediately (no Cancelar/SALVAR), since the
+  // backend PUT is full-replace and there's no draft to batch.
+  const prefs = useStore(preferencesStore);
+  const series = prefs.chartSeries ?? DEFAULT_RUN_SERIES;
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
@@ -86,7 +92,7 @@ export function GeralTab() {
         </FieldGroup>
 
         <FieldGroup title='Gráfico da execução'>
-          <p className='w-full text-sm opacity-60'>Quais sinais aparecem no gráfico ao iniciar um programa (a legenda ainda liga/desliga ao vivo).</p>
+          <p className='w-full text-sm opacity-60'>Quais sinais aparecem no gráfico ao iniciar um programa (salvo por usuário; a legenda ainda liga/desliga ao vivo).</p>
           {RUN_SIGNALS.map((sig) => (
             <label key={sig.id} className='flex items-center gap-2.5 rounded-xl border border-[var(--border)] px-3 py-2'>
               <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: sig.color }} aria-hidden='true' />
@@ -95,7 +101,7 @@ export function GeralTab() {
               </span>
               <Toggle
                 checked={series[sig.id]}
-                onChange={(v) => setDraft({ ...draft, run: { series: { ...series, [sig.id]: v } } })}
+                onChange={(v) => void setChartSeries({ ...series, [sig.id]: v })}
                 label={`Mostrar ${sig.name} no gráfico da execução`}
               />
             </label>

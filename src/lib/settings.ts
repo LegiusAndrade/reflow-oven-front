@@ -25,7 +25,10 @@ export type Settings = {
   voltage: { min: number; max: number };
   network: { ip: string; mask: string; gateway: string; dnsPrimary: string; dnsSecondary: string; staticIp: boolean };
   notifications: NotificationSetting[];
-  /** Which signals the execution (INICIAR) chart shows by default. */
+  // NOTE: the execution-chart series moved to per-user preferences (src/lib/preferences.ts) — the
+  // chart (RunModal) and Configurações → Geral now read/write `chartSeries` there, NOT this field.
+  // Kept only so the /api/settings GET/PUT round-trip body shape is unchanged (the device-settings
+  // DTO may still carry it); it is no longer surfaced in the UI.
   run: { series: Record<RunSignalId, boolean> };
 };
 

@@ -1,10 +1,13 @@
-import { api, ApiError, getToken, setToken, type Role } from "./api";
+import { api, ApiError, getToken, setToken, type Role, type Theme, type RunSeriesDto } from "./api";
 import { createJsonStore } from "./localStore";
 import { showToast } from "./toast";
 
-export type { Role }; // "Admin" | "Regular"
+export type { Role, Theme, RunSeriesDto }; // "Admin" | "Regular"
 
-export type Session = { id: string; name: string; role: Role; loginAt: number; calibration?: boolean };
+// `theme` is always present on a real session (defaults "system"); `chartSeries` is omitted for the
+// technician/calibration session. login()/refreshSession() store the SessionDto verbatim, so both
+// hydrate the per-user prefs for free.
+export type Session = { id: string; name: string; role: Role; loginAt: number; calibration?: boolean; theme?: Theme; chartSeries?: RunSeriesDto };
 
 /** Logged-in session, cached in localStorage. The source of truth is the JWT (see api.ts). */
 export const sessionStore = createJsonStore<Session | null>("reflow:session:v1", null);
@@ -32,7 +35,8 @@ export function logout(): void {
   sessionStore.set(null);
 }
 
-/** Re-validate the stored token against the API; clears the session if it is missing/expired. */
+/** Re-validate the stored token against the API; clears the session if it is missing/expired.
+ *  AppShell reacts to the resulting sessionStore change to apply the per-user theme/prefs. */
 export async function refreshSession(): Promise<void> {
   if (!getToken()) {
     sessionStore.set(null);

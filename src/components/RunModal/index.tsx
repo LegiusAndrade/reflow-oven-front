@@ -11,7 +11,7 @@ import { api, ApiError } from "@/lib/api";
 import type { Program } from "@/lib/programs";
 import { connectRunTelemetry } from "@/lib/realtime";
 import { DEFAULT_RUN_SERIES, mmss, phaseAt, RUN_SIGNALS, type RunSignalId, totalTime } from "@/lib/run";
-import { settingsStore } from "@/lib/settings";
+import { preferencesStore } from "@/lib/preferences";
 import { showToast } from "@/lib/toast";
 
 const SIG = Object.fromEntries(RUN_SIGNALS.map((s) => [s.id, s])) as Record<RunSignalId, (typeof RUN_SIGNALS)[number]>;
@@ -36,7 +36,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   const total = totalTime(profile);
   const invalid = total <= 0 || profile.length < 2;
 
-  const settings = useStore(settingsStore);
+  const prefs = useStore(preferencesStore);
   const [status, setStatus] = useState<RunStatus>("running");
   const [elapsed, setElapsed] = useState(0);
   const [samples, setSamples] = useState<Sample[]>(() => [
@@ -130,7 +130,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
     );
   }
 
-  const enabled = settings.run?.series ?? DEFAULT_RUN_SERIES;
+  const enabled = prefs.chartSeries ?? DEFAULT_RUN_SERIES;
   const times = samples.map((s) => s.t);
   const mkSeries = (id: RunSignalId, accessor: (_s: Sample) => number): Series => ({ name: SIG[id].name, color: SIG[id].color, unit: SIG[id].unit, values: samples.map(accessor) });
 
