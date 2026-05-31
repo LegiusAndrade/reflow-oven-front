@@ -5,26 +5,21 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ## Próximas
 
-### Em andamento
-- [ ] **Programas — paginação no servidor** — `programStore` virou cache por página (search/filter/sort/page/pageSize via `GET /api/programs`, conta pelo `total`). _(em revisão/commit)_
-
-### Prontas no backend — falta só o front consumir
-> A auditoria da integração mostrou que vários itens que pareciam "faltar no backend" **já estão implementados** lá; aqui é trabalho de front.
-- [ ] **Alterações — gráfico do perfil** — o `GET /api/changes/{id}` traz `points` com **um único `role` por mudança** (`added` no Criado, `changed-after` no Editado, `removed` no Removido) — ou seja, **só uma curva por alteração** (não existem `Prev*` nem `unchanged`; `timeSec` já é cumulativo). O `reportsClient` parou de montar a curva na migração mock→API, então o gráfico **sumiu**.
-  - **Agora (sem backend):** restaurar a curva única — Criado=curva nova, Removido=curva removida, Editado=curva atual (`points` → `{ t: timeSec, temp }`); alimenta o `TemperatureProfileChart` que já existe.
-  - **Antes × depois (Editado):** o backend guarda **só a curva nova** numa edição — decisão registrada no backend (H fechado como "diff por ponto basta", sem persistir `BeforeProfile`/`AfterProfile`). Então **não há** sobreposição antes×depois para edições; mostramos uma curva só. _(corrige minha nota anterior, que assumia `Prev*`/`unchanged` — esses campos não existem no backend)_
-- [ ] **Sino/Notificações reais** — trocar o mock de `notifications.ts` pelo feed real: `GET /api/notifications`, `GET /api/notifications/unread-count`, `POST /{id}/read`, `POST /read-all`, `DELETE /api/notifications`.
-- [ ] **Card "atualização disponível" real** — trocar a simulação por `GET /api/system/update` (+ botão chamando `POST /api/system/update`).
-- [ ] **Ícone Wi-Fi × cabo** na TopBar — a partir de `GET /api/system/network` (`medium` = `wifi`/`ethernet`).
-- [ ] **Ícone do globo (servidor central)** — a partir de `GET /api/system/connectivity` (ou `status.centralServerOnline`).
-
-### Dependem de backend novo (ver `../reflow-oven-backend/TODO.md`)
-- [ ] **Relatórios — paginação no servidor** — o backend já tem `page/pageSize/search/from/to`, mas o dropdown "Filtrar por…" (status/ação/severidade) e o nível do Log do Sistema **não têm parâmetro** — precisa do item **F** antes, senão a paginação filtraria só a página atual.
-- [ ] **Persistir tema + séries do gráfico por usuário** — precisa de preferências por usuário no backend (item **A**); hoje o tema só vive na sessão.
-- [ ] **Aba Rede** — listar interfaces, escolher interface prioritária e **porta** no teste de ping (item **B**); migrar a config para `/api/system/*`.
-- [ ] **Gráfico do relatório de execução multi-sinal** (corrente/tensão/RPM/temp. dissipador) — precisa do trace persistido por execução (item **C**).
+> O backend já fechou os itens A–H (ver `../reflow-oven-backend/TODO.md`), então estes deixaram de
+> estar bloqueados — agora é trabalho de front consumir os novos endpoints/contratos.
+- [ ] **Relatórios — paginação no servidor** — backend tem `page/pageSize/search/from/to` **e** agora os filtros por aba (`status`/`action`/`severity`) e `level` do Log do Sistema (item **F**). Migrar `RelatoriosScreen`/`reportsClient` para paginar/filtrar no servidor (hoje busca 200 e filtra/pagina no cliente).
+- [ ] **Persistir tema + séries do gráfico por usuário** — consumir `GET/PUT /api/me/preferences` (item **A**); hidratar o tema no boot via `/api/auth/me`/login (hoje o tema só vive na sessão).
+- [ ] **Aba Rede** — listar interfaces (`GET /api/system/interfaces`), escolher a prioritária (`POST /api/system/interfaces/priority`) e enviar a **porta** no teste de ping (item **B**); migrar a config para `/api/system/*`.
+- [ ] **Gráfico do relatório de execução multi-sinal** (corrente/tensão/RPM/temp. dissipador) — consumir `ExecutionDetailDto.Trace` (item **C**).
+- [ ] **Aviso de pouco espaço em disco** — o backend já notifica (sino + e-mail, item **D**); confirmar que aparece bem na tela (o feed real do sino já chega).
 
 ## Feito
+
+- [x] **Programas — paginação no servidor** — `programStore` virou cache por página (search/filter/sort/page/pageSize via `GET /api/programs`, paginação/contagem pelo `total`; clamp em 100). Telas Programas e galeria do Início.
+- [x] **Alterações — gráfico do perfil restaurado** — `reportsClient` remonta a curva a partir dos `points` do `GET /api/changes/{id}` (uma curva por mudança: Criado=nova, Editado=atual, Removido=removida; `timeSec` cumulativo). Sumira na migração mock→API.
+- [x] **Card "atualização disponível" real** — `GET/POST /api/system/update` na tela Informação (mostra versão atual/disponível; botão "Atualizar" só para Admin); substituiu a simulação.
+- [x] **Sino/Notificações reais** — `notifications.ts` virou store via API com polling (`GET /api/notifications` + `unread-count` + `read-all`); badge e tela reais, toast em nova notificação.
+- [x] **Ícones Wi-Fi × cabo + globo na TopBar** — `useSystemStatus` faz polling de `GET /api/system/status`: Wi-Fi/cabo por `network.link` e globo por `centralServerOnline`.
 
 - [x] **Cadastro de usuário — senha no formulário** — campos Senha + Confirmar senha (obrigatórios, mín. 8 / máx. 72, qualquer caractere) na criação e "Nova senha" opcional na edição; removido o default `reflow1234` (`users.ts` agora exige a senha enviada). _Obs.: o `reflow1234` que aparece na tela de login é a senha da conta dev semeada, não um default de cadastro._
 - [x] **Integração com o backend (.NET)** — substituída a persistência mock em `localStorage` pela **API REST + SignalR**: autenticação real (JWT) + recuperação de senha, Programas/Usuários/Configurações/Calibração via API, **execução ao vivo** (start/stop + telemetria SignalR), leituras ao vivo (BottomBar/Sensores), Relatórios/Diagnóstico/Manutenção lendo dados reais; toasts na resposta da API (`src/lib/api.ts`, `realtime.ts`, `apiStore.ts`, `reportsClient.ts`)
