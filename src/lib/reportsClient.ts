@@ -5,6 +5,7 @@
  */
 import { api } from "./api";
 import { REPORT_PAGE_SIZE } from "./limits";
+import type { ProfilePoint } from "./programs";
 import type { ChangeAction, ChangeDetail, ChangeLogEntry, ChangePointRow, ErrorLogEntry, ErrorSeverity, ExecutionReport, ExecutionStatus, LogEvent, LogEventKind } from "./reports";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -103,17 +104,42 @@ const changeFromSummary = (c: ChangeSummaryDto): ChangeLogEntry => ({
   detail: c.detailKind === "config" ? { kind: "config", bullets: [] } : { kind: "program" },
 });
 
+/** Build a setpoint curve from change points: sorted by index, timeSec used directly as `t`
+ *  (it is cumulative — equals the profile point's t), with an origin prepended so the curve has
+ *  >= 2 points (matches the genRunProfile origin). Empty input yields an empty curve. */
+function pointsToProfile(rows: ChangePtDto[]): ProfilePoint[] {
+  if (rows.length === 0) return [];
+  const sorted = [...rows].sort((a, b) => a.index - b.index);
+  return [{ t: 0, temp: 25 }, ...sorted.map((p) => ({ t: p.timeSec, temp: p.temp }))];
+}
+
 export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
   const c = (await api.change(id)) as ChangeDetailDto;
   const mapRow = (p: ChangePtDto): ChangePointRow => ({ index: p.index, temp: p.temp, timeSec: p.timeSec, ramp: p.ramp });
-  const detail: ChangeDetail =
-    c.detailKind === "config"
-      ? { kind: "config", bullets: c.configBullets ?? [] }
-      : {
-          kind: "program",
-          added: c.points.filter((p) => p.role === "added" || p.role === "changed-after").map(mapRow),
-          removed: c.points.filter((p) => p.role === "removed" || p.role === "changed-before").map(mapRow),
-        };
+  let detail: ChangeDetail;
+  if (c.detailKind === "config") {
+    detail = { kind: "config", bullets: c.configBullets ?? [] };
+  } else {
+    // The backend stamps a single uniform role on all points of a change, so each change carries
+    // exactly one curve: Criado → added, Editado → changed-after, Removido → removed.
+    const added = c.points.filter((p) => p.role === "added");
+    const removed = c.points.filter((p) => p.role === "removed");
+    const changedAfter = c.points.filter((p) => p.role === "changed-after");
+    const changedBefore = c.points.filter((p) => p.role === "changed-before");
+    let afterProfile: ProfilePoint[] | undefined;
+    let beforeProfile: ProfilePoint[] | undefined;
+    if (added.length > 0) afterProfile = pointsToProfile(added);
+    if (removed.length > 0) beforeProfile = pointsToProfile(removed);
+    if (changedAfter.length > 0) afterProfile = pointsToProfile(changedAfter);
+    if (changedBefore.length > 0) beforeProfile = pointsToProfile(changedBefore);
+    detail = {
+      kind: "program",
+      afterProfile,
+      beforeProfile,
+      added: c.points.filter((p) => p.role === "added" || p.role === "changed-after").map(mapRow),
+      removed: c.points.filter((p) => p.role === "removed" || p.role === "changed-before").map(mapRow),
+    };
+  }
   return { ...changeFromSummary(c), detail };
 }
 
