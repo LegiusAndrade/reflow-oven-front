@@ -12,8 +12,11 @@ const X_LABEL_DY = 20;
 // Labels use the same responsive scale as the rest of the UI (matches the "Execuções" line).
 const LABEL_CLS = "[fill:var(--fg)] text-sm opacity-70 sm:text-base";
 
-/** "Nice" step (1/2/5 × 10ⁿ) so axis ticks land on round numbers. */
+/** "Nice" step (1/2/5 × 10ⁿ) so axis ticks land on round numbers. A non-positive/non-finite range
+ *  (e.g. a profile whose points are all at t=0 — every duration zeroed) has no span to divide, so we
+ *  fall back to 1: callers floor the axis max at the step, keeping the scale finite (no NaN). */
 function niceStep(range: number, targetTicks: number): number {
+  if (!(range > 0)) return 1;
   const raw = range / Math.max(targetTicks, 1);
   const mag = 10 ** Math.floor(Math.log10(raw));
   const norm = raw / mag;
@@ -111,10 +114,12 @@ function Plot({
   const maxTime = Math.max(...allPoints.map((p) => p.t));
   const maxTemp = Math.max(...allPoints.map((p) => p.temp));
 
+  // Floor each axis max at one step so a zero/degenerate domain still yields a positive divisor
+  // (a flat profile at t=0 draws at the left edge instead of producing NaN coordinates).
   const yStep = niceStep(maxTemp, 5);
-  const yMax = Math.ceil(maxTemp / yStep) * yStep;
+  const yMax = Math.max(yStep, Math.ceil(maxTemp / yStep) * yStep);
   const xStep = niceStep(maxTime, 5);
-  const xMax = Math.ceil(maxTime / xStep) * xStep;
+  const xMax = Math.max(xStep, Math.ceil(maxTime / xStep) * xStep);
 
   const sx = (t: number) => pad.left + (t / xMax) * plotW;
   const sy = (temp: number) => pad.top + plotH - (temp / yMax) * plotH;
