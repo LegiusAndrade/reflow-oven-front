@@ -92,7 +92,9 @@ export function GeralTab() {
         </FieldGroup>
 
         <FieldGroup title='Gráfico da execução'>
-          <p className='w-full text-sm opacity-60'>Quais sinais aparecem no gráfico ao iniciar um programa (salvo por usuário; a legenda ainda liga/desliga ao vivo).</p>
+          <p className='w-full text-sm opacity-60'>
+            Quais sinais aparecem no gráfico ao iniciar um programa — salvo automaticamente, por usuário (não depende de SALVAR/Cancelar; a legenda ainda liga/desliga ao vivo).
+          </p>
           {RUN_SIGNALS.map((sig) => (
             <label key={sig.id} className='flex items-center gap-2.5 rounded-xl border border-[var(--border)] px-3 py-2'>
               <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: sig.color }} aria-hidden='true' />

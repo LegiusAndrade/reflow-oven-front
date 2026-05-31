@@ -12,6 +12,7 @@
 
 import { api, ApiError } from "./api";
 import type { Theme, RunSeriesDto, UserPreferencesDto } from "./api";
+import { sessionStore } from "./auth";
 import type { JsonStore } from "./localStore";
 import { DEFAULT_RUN_SERIES } from "./run";
 import { applyTheme } from "./theme";
@@ -31,8 +32,15 @@ interface PreferencesStore extends JsonStore<UserPreferencesDto> {
 }
 
 function createPreferencesStore(): PreferencesStore {
-  let value = DEFAULT_PREFERENCES;
-  let loaded = false;
+  // Seed synchronously from the cached session (written at the last login) so the common path needs
+  // no GET and a child component that subscribes before AppShell's seed effect can't trigger a
+  // redundant fetch — React runs child effects (ThemeToggle/RunModal/GeralTab) BEFORE the parent's.
+  // SSR-safe: sessionStore.get() returns null without a window.
+  const cached = sessionStore.get();
+  let value: UserPreferencesDto = cached
+    ? { theme: cached.theme ?? "system", chartSeries: cached.chartSeries ?? DEFAULT_RUN_SERIES }
+    : DEFAULT_PREFERENCES;
+  let loaded = Boolean(cached);
   let loading = false;
   const listeners = new Set<() => void>();
   const notify = () => listeners.forEach((l) => l());
@@ -43,6 +51,9 @@ function createPreferencesStore(): PreferencesStore {
     api
       .getPreferences()
       .then((v) => {
+        // A seed()/set() (login, optimistic write) may have taken ownership while this GET was in
+        // flight — a stale response must not clobber it (lost-update / revert-on-mount).
+        if (loaded) return;
         value = v;
         loaded = true;
         notify();
@@ -65,10 +76,12 @@ function createPreferencesStore(): PreferencesStore {
     getServerSnapshot: () => DEFAULT_PREFERENCES,
     set: (v) => {
       value = v;
+      loaded = true; // an explicit write owns the value — a late initial GET must not revert it
       notify();
     },
     update: (fn) => {
       value = fn(value);
+      loaded = true;
       notify();
     },
     subscribe: (cb) => {

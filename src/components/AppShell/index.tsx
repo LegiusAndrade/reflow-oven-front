@@ -73,11 +73,20 @@ export function AppShell({ children }: IAppShellProps) {
   // means no redundant GET /api/me/preferences. Logout (session→null) resets both to the defaults.
   useEffect(() => {
     if (!hydrated) return;
-    applyTheme(session?.theme ?? "system");
-    preferencesStore.seed({
-      theme: session?.theme ?? "system",
-      chartSeries: session?.chartSeries ?? DEFAULT_RUN_SERIES,
-    });
+    const theme = session?.theme ?? "system";
+    applyTheme(theme);
+    preferencesStore.seed({ theme, chartSeries: session?.chartSeries ?? DEFAULT_RUN_SERIES });
+    // While following the OS ("system"), re-apply on dark/light changes so the palette — and the
+    // toggle icon, via the store re-seed (new ref → re-render, current chartSeries preserved) —
+    // track the OS without a reload.
+    if (theme !== "system" || typeof window === "undefined") return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      applyTheme("system");
+      preferencesStore.seed({ ...preferencesStore.get() });
+    };
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
   }, [hydrated, session]);
 
   // Console trail of navigation (see src/lib/logger.ts).
