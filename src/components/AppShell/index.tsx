@@ -13,10 +13,11 @@ import { useHydrated } from "@/hooks/useHydrated";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { useSession } from "@/hooks/useSession";
 import { useStore } from "@/hooks/useStore";
+import { useSystemStatus } from "@/hooks/useSystemStatus";
 import { canAccess, refreshSession } from "@/lib/auth";
 import { APP_BOOT_TIMEOUT_MS } from "@/lib/limits";
 import { logger } from "@/lib/logger";
-import { notificationsStore, unreadCount } from "@/lib/notifications";
+import { notificationsStore, refreshNotifications, startNotificationsPolling, unreadCount } from "@/lib/notifications";
 import { MOCK_READINGS } from "@/lib/sensors";
 
 export interface IAppShellProps {
@@ -39,6 +40,7 @@ export function AppShell({ children }: IAppShellProps) {
   const hydrated = useHydrated();
   const session = useSession();
   const unread = unreadCount(useStore(notificationsStore));
+  const sys = useSystemStatus(Boolean(session));
 
   // While open: close on Esc, move focus into the drawer, and restore focus on close.
   useEffect(() => {
@@ -64,6 +66,18 @@ export function AppShell({ children }: IAppShellProps) {
   useEffect(() => {
     logger.info("route", pathname);
   }, [pathname]);
+
+  // Poll the notifications feed while signed in (never on /login). Stops on logout/unmount.
+  useEffect(() => {
+    if (!session) return;
+    return startNotificationsPolling();
+  }, [session]);
+
+  // Also refresh the feed on every navigation while signed in.
+  useEffect(() => {
+    if (!session) return;
+    void refreshNotifications();
+  }, [session, pathname]);
 
   // Auth guard (deferred until hydrated so the persisted session loads): /login is always
   // reachable; every other route needs a session and an allowed role.
@@ -125,7 +139,12 @@ export function AppShell({ children }: IAppShellProps) {
 
   return (
     <div className='text-fg flex h-screen flex-col overflow-hidden'>
-      <TopBar statusNotification={{ amount: unread, status: unread > 0 ? "ACTIVE" : "NONE" }} connectedServer={true} signalWifi={{ signal: "OFF" }} user={session} />
+      <TopBar
+        statusNotification={{ amount: unread, status: unread > 0 ? "ACTIVE" : "NONE" }}
+        connectedServer={sys.centralOnline}
+        network={{ link: sys.link, connected: sys.connected, signalPercent: sys.signalPercent }}
+        user={session}
+      />
 
       {/* Content region between the bars. On xl+ the sidebar is docked (always open); below
           xl it bounds the slide-out drawer. */}

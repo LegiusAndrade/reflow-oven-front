@@ -219,6 +219,36 @@ export interface UpdateStatusDto {
   updateAvailable: boolean;
 }
 
+export interface NotificationDto {
+  id: string;
+  kind: "info" | "error" | "update";
+  /** ISO 8601 */
+  at: string;
+  title: string;
+  message: string;
+  read: boolean;
+}
+
+export interface UnreadCountDto {
+  count: number;
+}
+
+export type NetworkLink = "Nenhum" | "Cabo" | "WiFi";
+
+export interface NetworkStatusDto {
+  link: NetworkLink;
+  interface: string;
+  ip: string;
+  ssid?: string;
+  signalPercent?: number;
+  staticIp: boolean;
+}
+
+export interface SystemStatusDto {
+  network: NetworkStatusDto;
+  centralServerOnline: boolean;
+}
+
 // --- Endpoints ---------------------------------------------------------------------------
 
 export const api = {
@@ -284,7 +314,14 @@ export const api = {
   // device
   device: () => request<DeviceInfoDto>("/api/device"),
 
+  // notifications
+  listNotifications: (limit?: number) => request<NotificationDto[]>(`/api/notifications${qs({ limit })}`),
+  unreadNotificationCount: () => request<UnreadCountDto>("/api/notifications/unread-count"),
+  markNotificationRead: (id: string) => request<void>(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "POST" }),
+  markAllNotificationsRead: () => request<void>("/api/notifications/read-all", { method: "POST" }),
+
   // system / OTA
+  systemStatus: () => request<SystemStatusDto>("/api/system/status"),
   getUpdateStatus: () => request<UpdateStatusDto>("/api/system/update"),
   applyUpdate: () => request<void>("/api/system/update", { method: "POST" }),
 };

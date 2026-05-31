@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useStore } from "@/hooks/useStore";
-import { type AppNotification, formatNotificationStamp, markAllRead, notificationsStore } from "@/lib/notifications";
+import { type AppNotification, formatNotificationStamp, markAllRead, notificationsStore, refreshNotifications } from "@/lib/notifications";
 
 const KIND_META: Record<AppNotification["kind"], { icon: string; cls: string }> = {
   update: { icon: "system_update", cls: "text-[var(--brand)]" },
@@ -17,7 +17,11 @@ export function NotificacoesScreen() {
   const list = useStore(notificationsStore);
 
   useEffect(() => {
-    return () => markAllRead();
+    void refreshNotifications();
+    // Mark everything read when leaving the screen.
+    return () => {
+      void markAllRead();
+    };
   }, []);
 
   return (
