@@ -9,8 +9,9 @@ import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { TableScrollBox } from "@/components/TableScrollBox";
 import type { ChangeLogEntry, ErrorLogEntry, ExecutionReport } from "@/lib/reports";
-import { ApiError } from "@/lib/api";
+import { ApiError, type ChangeActionWire, type ErrorSeverityWire, type ExecutionStatusWire } from "@/lib/api";
 import { fetchChangeDetail, fetchChanges, fetchErrorDetail, fetchErrors, fetchExecutionDetail, fetchExecutions } from "@/lib/reportsClient";
+import { PROGRAM_SEARCH_DEBOUNCE_MS, REPORT_PAGE_SIZE_MAX } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 import { ActionBadge, SeverityBadge, StatusBadge } from "./badges";
 import { ChangeDetail } from "./ChangeDetail";
@@ -33,22 +34,27 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "erros", label: "Erros", icon: "error" },
 ];
 
-/** "Filtrar por..." options per tab (the second filter, on top of search + date range). */
+/** Sentinel for the "no per-tab filter" dropdown option (maps to an undefined query param). */
+const FILTER_ALL = "todos";
+
+/** "Filtrar por..." options per tab (the second filter, on top of search + date range). Each
+ *  `value` (except the sentinel) is the case-sensitive, accent-free WIRE literal the backend
+ *  matches — sent verbatim as `status` / `action` / `severity`; the label stays pt-BR. */
 const FILTERS: Record<Tab, ISelectOption<string>[]> = {
   execucoes: [
-    { value: "all", label: "Todos os status", icon: "list" },
-    { value: "Concluído", label: "Concluído", icon: "check_circle" },
+    { value: FILTER_ALL, label: "Todos os status", icon: "list" },
+    { value: "Concluido", label: "Concluído", icon: "check_circle" },
     { value: "Falha", label: "Falha", icon: "cancel" },
   ],
   alteracoes: [
-    { value: "all", label: "Todas as ações", icon: "list" },
+    { value: FILTER_ALL, label: "Todas as ações", icon: "list" },
     { value: "Criado", label: "Criado", icon: "add_circle" },
     { value: "Editado", label: "Editado", icon: "edit" },
     { value: "Removido", label: "Removido", icon: "delete" },
   ],
   erros: [
-    { value: "all", label: "Todas as severidades", icon: "list" },
-    { value: "Crítico", label: "Crítico", icon: "error" },
+    { value: FILTER_ALL, label: "Todas as severidades", icon: "list" },
+    { value: "Critico", label: "Crítico", icon: "error" },
     { value: "Alerta", label: "Alerta", icon: "warning" },
     { value: "Aviso", label: "Aviso", icon: "info" },
   ],
@@ -60,43 +66,32 @@ const SEARCH_PLACEHOLDER: Record<Tab, string> = {
   erros: "Pesquisar erro...",
 };
 
-/** "dd/mm/aa - HH:MM:SS" -> "20aa-mm-dd" so a date range can be compared as ISO strings. */
-function dateISO(formatted: string): string {
-  const m = /^(\d{2})\/(\d{2})\/(\d{2})/.exec(formatted);
-  return m ? `20${m[3]}-${m[2]}-${m[1]}` : "";
-}
-
-function inRange(formatted: string, start: string, end: string): boolean {
-  const iso = dateISO(formatted);
-  if (!iso) return true;
-  if (start && iso < start) return false;
-  if (end && iso > end) return false;
-  return true;
-}
-
 /** Today as ISO "yyyy-mm-dd" (computed once) — caps the date filters at the present. */
 const TODAY_ISO = (() => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 })();
 
+/** Widen a date-only bound to a raw timestamp: the backend compares `from`/`to` as raw `>=`/`<=`,
+ *  so a `to` of "yyyy-mm-dd" must reach end-of-day to stay inclusive. Empty -> undefined. */
+const fromTs = (d: string) => (d ? `${d}T00:00:00` : undefined);
+const toTs = (d: string) => (d ? `${d}T23:59:59.999` : undefined);
+
 export function RelatoriosScreen() {
-  const [executions, setExecutions] = useState<ExecutionReport[]>([]);
-  const [changes, setChanges] = useState<ChangeLogEntry[]>([]);
-  const [errors, setErrors] = useState<ErrorLogEntry[]>([]);
-
-  useEffect(() => {
-    Promise.all([fetchExecutions().then(setExecutions), fetchChanges().then(setChanges), fetchErrors().then(setErrors)]).catch((e) =>
-      showToast(e instanceof ApiError ? e.message : "Falha ao carregar os relatórios")
-    );
-  }, []);
-
   const [tab, setTab] = useState<Tab>("execucoes");
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [filter, setFilter] = useState(FILTER_ALL);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(0);
+
+  // Server-side rows + filtered total for the ACTIVE tab only (one tab is fetched at a time).
+  const [executions, setExecutions] = useState<ExecutionReport[]>([]);
+  const [changes, setChanges] = useState<ChangeLogEntry[]>([]);
+  const [errors, setErrors] = useState<ErrorLogEntry[]>([]);
+  const [total, setTotal] = useState(0);
+
   const tableAreaRef = useRef<HTMLDivElement>(null);
   const [areaH, setAreaH] = useState(0);
   // A selected row opens a full-area detail overlay (execução/erro) or a modal (alteração);
@@ -132,33 +127,78 @@ export function RelatoriosScreen() {
     return () => ro.disconnect();
   }, []);
 
-  const q = query.trim().toLowerCase();
-
-  const visibleExecutions = executions.filter(
-    (e) => inRange(e.startedAt, startDate, endDate) && (filter === "all" || e.status === filter) && (!q || e.programName.toLowerCase().includes(q))
-  );
-  const visibleChanges = changes.filter(
-    (c) => inRange(c.at, startDate, endDate) && (filter === "all" || c.action === filter) && (!q || c.target.toLowerCase().includes(q))
-  );
-  const visibleErrors = errors.filter(
-    (x) =>
-      inRange(x.at, startDate, endDate) && (filter === "all" || x.severity === filter) && (!q || `${x.code} ${x.message}`.toLowerCase().includes(q))
-  );
-
-  const count = tab === "execucoes" ? visibleExecutions.length : tab === "alteracoes" ? visibleChanges.length : visibleErrors.length;
   // Rows that fit the measured area; on a small area (1024×600) we still show a full block,
   // which then scrolls internally. Larger areas fit more, so they paginate without scrolling.
   const fit = Math.max(1, Math.floor((areaH - HEADER_H) / ROW_H));
   const perPage = Math.max(MIN_ROWS_PER_PAGE, fit);
-  const pages = Math.max(1, Math.ceil(count / perPage));
+  // Page count comes from the FILTERED total (the server's count), never items.length.
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  // Derived clamp into range: a stale `page` (after the total shrinks or a filter narrows the
+  // result) is pinned during render — the fetch below keys off `activePage`, so a shrunk total
+  // self-corrects without a setState-in-effect. Each filter control resets `page` to 0 directly.
   const activePage = Math.min(page, pages - 1);
   const start = activePage * perPage;
+
+  // Debounce the search box so a query doesn't fire on every keystroke; settling on a new term
+  // jumps back to the first page (the old page index is meaningless against a new result set).
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(0);
+    }, PROGRAM_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  // Single server fetch for the active tab; re-runs on any query input. A `cancelled` flag drops
+  // a stale response so a slow earlier request can't overwrite a newer one.
+  useEffect(() => {
+    let cancelled = false;
+    const base = {
+      page: activePage + 1, // backend is 1-based
+      pageSize: Math.min(perPage, REPORT_PAGE_SIZE_MAX),
+      search: debouncedQuery || undefined,
+      from: fromTs(startDate),
+      to: toTs(endDate),
+    };
+    const filterValue = filter === FILTER_ALL ? undefined : filter;
+    const run = async () => {
+      try {
+        if (tab === "execucoes") {
+          const res = await fetchExecutions({ ...base, status: filterValue as ExecutionStatusWire | undefined });
+          if (!cancelled) {
+            setExecutions(res.items);
+            setTotal(res.total);
+          }
+        } else if (tab === "alteracoes") {
+          const res = await fetchChanges({ ...base, action: filterValue as ChangeActionWire | undefined });
+          if (!cancelled) {
+            setChanges(res.items);
+            setTotal(res.total);
+          }
+        } else {
+          const res = await fetchErrors({ ...base, severity: filterValue as ErrorSeverityWire | undefined });
+          if (!cancelled) {
+            setErrors(res.items);
+            setTotal(res.total);
+          }
+        }
+      } catch (e) {
+        if (!cancelled) showToast(e instanceof ApiError ? e.message : "Falha ao carregar os relatórios");
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, activePage, debouncedQuery, startDate, endDate, filter, perPage]);
+
+  const count = total;
 
   // The "Filtrar por..." options are tab-specific, so reset it (and the search) on tab change.
   const switchTab = (id: Tab) => {
     setTab(id);
     setQuery("");
-    setFilter("all");
+    setFilter(FILTER_ALL);
     setPage(0);
   };
 
@@ -221,10 +261,7 @@ export function RelatoriosScreen() {
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
           <input
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder={SEARCH_PLACEHOLDER[tab]}
             className='w-full bg-transparent outline-none placeholder:opacity-60'
           />
@@ -243,13 +280,9 @@ export function RelatoriosScreen() {
 
       {/* Content: one page of rows, sized to the measured area so it paginates instead of scrolling */}
       <div ref={tableAreaRef} className='min-h-0 flex-1'>
-        {tab === "execucoes" && (
-          <ExecutionsTable executions={visibleExecutions.slice(start, start + perPage)} startIndex={start} onOpen={openExec} />
-        )}
-        {tab === "alteracoes" && <ChangesTable changes={visibleChanges.slice(start, start + perPage)} startIndex={start} onOpen={openChange} />}
-        {tab === "erros" && (
-          <ErrorsTable errors={visibleErrors.slice(start, start + perPage)} startIndex={start} onOpen={openError} />
-        )}
+        {tab === "execucoes" && <ExecutionsTable executions={executions} startIndex={start} onOpen={openExec} />}
+        {tab === "alteracoes" && <ChangesTable changes={changes} startIndex={start} onOpen={openChange} />}
+        {tab === "erros" && <ErrorsTable errors={errors} startIndex={start} onOpen={openError} />}
       </div>
 
       {/* Footer: record count on the left, pagination centered */}

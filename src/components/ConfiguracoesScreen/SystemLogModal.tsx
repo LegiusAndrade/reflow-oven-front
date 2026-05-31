@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TableScrollBox } from "@/components/TableScrollBox";
-import { api, ApiError } from "@/lib/api";
-import { SYSTEM_LOG_PAGE_SIZE } from "@/lib/limits";
+import { api, ApiError, type SystemLogLevelWire } from "@/lib/api";
+import { REPORT_PAGE_SIZE_MAX } from "@/lib/limits";
 import { type LogEntry, type LogLevel } from "@/lib/logs";
 import { showToast } from "@/lib/toast";
 import { Segmented } from "./fields";
@@ -37,18 +37,19 @@ export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () =
   const [filter, setFilter] = useState<Filter>("all");
   const [base, setBase] = useState<LogEntry[]>([]);
 
+  // The level filter is forwarded to the server (re-fetches on change), so `logs` renders the
+  // returned page directly — no client-side level filtering.
   useEffect(() => {
     if (!open) return;
     api
-      .systemLog({ pageSize: SYSTEM_LOG_PAGE_SIZE })
+      .systemLog({ page: 1, pageSize: REPORT_PAGE_SIZE_MAX, level: filter === "all" ? undefined : (filter as SystemLogLevelWire) })
       .then((res) => {
-        const items = (res as { items: { at: string; level: LogLevel; message: string }[] }).items;
-        setBase(items.map((l) => ({ at: fmtLog(l.at), level: l.level, message: l.message })));
+        setBase(res.items.map((l) => ({ at: fmtLog(l.at), level: l.level, message: l.message })));
       })
       .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar o log do sistema"));
-  }, [open]);
+  }, [open, filter]);
 
-  const logs = filter === "all" ? base : base.filter((l) => l.level === filter);
+  const logs = base;
 
   return (
     <Modal open={open} title='Log do Sistema' onClose={onClose} panelClassName='h-[85vh] w-[90vw] max-w-3xl'>

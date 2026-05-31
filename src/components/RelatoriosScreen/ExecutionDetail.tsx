@@ -4,6 +4,7 @@ import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import type { ExecutionReport } from "@/lib/reports";
 import { StatusBadge } from "./badges";
 import { DetailShell, EventList, Field, SectionTitle } from "./detailParts";
+import { SnapshotChart } from "./SnapshotChart";
 
 /** Full detail of a past run (Figma "Report Detail Exec"): profile chart, key figures,
  *  the programmed-vs-measured comparison, and the run's event timeline. */
@@ -38,6 +39,16 @@ export function ExecutionDetail({ exec, onClose }: { exec: ExecutionReport; onCl
             )}
           </ul>
         </div>
+
+        {/* Multi-signal trace captured during the run (only when the run recorded signals) */}
+        {exec.trace && exec.trace.series.length > 0 && (
+          <section>
+            <SectionTitle>Sinais da Execução</SectionTitle>
+            <div className='h-[clamp(240px,46vh,400px)] rounded-xl border border-[var(--border)] p-2'>
+              <SnapshotChart snapshot={exec.trace} className='h-full w-full' />
+            </div>
+          </section>
+        )}
 
         {/* Key figures */}
         <section>

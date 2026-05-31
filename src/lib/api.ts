@@ -5,6 +5,9 @@
  */
 
 import { API_TIMEOUT_MS } from "./limits";
+// Type-only import (erased at runtime, so it forms no import cycle): the report row DTOs carry
+// the same accented display unions the Relatórios screen renders.
+import type { ChangeAction, ErrorSeverity, ExecutionStatus } from "./reports";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5248";
 
@@ -88,7 +91,9 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   return data as T;
 }
 
-const qs = (params: Record<string, unknown>): string => {
+// Accept `object` (not just Record<string, unknown>) so the typed report query interfaces below
+// can be passed without a cast — Object.entries() reads them the same way regardless.
+const qs = (params: object): string => {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== "") sp.set(k, String(v));
@@ -249,6 +254,81 @@ export interface SystemStatusDto {
   centralServerOnline: boolean;
 }
 
+// --- Reports (filter + paging) ----------------------------------------------------------
+// Filter values are the backend enum MEMBER NAMES (accent-free), which is what ASP.NET's
+// query-string enum binding parses — distinct from the accented JSON response values
+// (e.g. response "Concluído"/"Crítico" vs. filter "Concluido"/"Critico").
+export type ExecutionStatusWire = "Concluido" | "Falha";
+export type ChangeActionWire = "Criado" | "Editado" | "Removido";
+export type ErrorSeverityWire = "Critico" | "Alerta" | "Aviso";
+/** system-log level is a raw string (no backend enum). */
+export type SystemLogLevelWire = "INFO" | "Aviso" | "Erro";
+
+/** Common paged + filtered report query. The backend clamps `pageSize` to 1..200; `from`/`to`
+ *  are raw timestamps (not end-of-day inclusive — callers widen a date-only `to` themselves). */
+export interface ReportQuery {
+  page: number;
+  pageSize: number;
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface ExecutionReportQuery extends ReportQuery {
+  status?: ExecutionStatusWire;
+}
+
+export interface ChangeReportQuery extends ReportQuery {
+  action?: ChangeActionWire;
+}
+
+export interface ErrorReportQuery extends ReportQuery {
+  severity?: ErrorSeverityWire;
+}
+
+export interface SystemLogQuery extends ReportQuery {
+  level?: SystemLogLevelWire;
+}
+
+// Row DTOs (the list-summary shape each report endpoint returns). Field names mirror what
+// reportsClient already consumes — do not rename.
+export interface ExecutionSummaryRow {
+  id: string;
+  programId?: string | null;
+  programName: string;
+  userName?: string | null;
+  startedAt: string;
+  durationSeconds: number;
+  status: ExecutionStatus;
+  peakTemp: number;
+  peakCurrent: number;
+}
+
+export interface ChangeSummaryRow {
+  id: string;
+  at: string;
+  action: ChangeAction;
+  target: string;
+  userName?: string | null;
+  detailKind: "config" | "program";
+}
+
+export interface ErrorSummaryRow {
+  id: string;
+  at: string;
+  faultTypeCode: string;
+  severity: ErrorSeverity;
+  message: string;
+  userName?: string | null;
+  programName?: string | null;
+}
+
+export interface SystemLogRow {
+  at: string;
+  level: SystemLogLevelWire;
+  message: string;
+}
+
 // --- Endpoints ---------------------------------------------------------------------------
 
 export const api = {
@@ -284,14 +364,14 @@ export const api = {
   startRun: (programId: string) => request<RunStatusDto>("/api/runs/start", { method: "POST", body: { programId } }),
   stopRun: () => request<RunStatusDto | null>("/api/runs/stop", { method: "POST" }),
 
-  // reports (read-only)
-  executions: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/executions${qs(q)}`),
+  // reports (read-only — paged + filtered server-side)
+  executions: (q: ExecutionReportQuery) => request<PagedResult<ExecutionSummaryRow>>(`/api/reports/executions${qs(q)}`),
   execution: (id: string) => request<unknown>(`/api/executions/${encodeURIComponent(id)}`),
-  errors: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/errors${qs(q)}`),
+  errors: (q: ErrorReportQuery) => request<PagedResult<ErrorSummaryRow>>(`/api/reports/errors${qs(q)}`),
   error: (id: string) => request<unknown>(`/api/errors/${encodeURIComponent(id)}`),
-  changes: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/changes${qs(q)}`),
+  changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/reports/changes${qs(q)}`),
   change: (id: string) => request<unknown>(`/api/changes/${encodeURIComponent(id)}`),
-  systemLog: (q: Record<string, unknown> = {}) => request<PagedResult<unknown>>(`/api/system-log${qs(q)}`),
+  systemLog: (q: SystemLogQuery) => request<PagedResult<SystemLogRow>>(`/api/reports/system-log${qs(q)}`),
   faultTypes: () => request<unknown[]>("/api/fault-types"),
 
   // diagnostics

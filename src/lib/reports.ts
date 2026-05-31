@@ -82,6 +82,9 @@ export type ExecutionReport = {
   comparison: ProfileComparisonRow[];
   /** Timeline of alerts/faults during the run (empty = "Nenhum alerta registrado."). */
   events: LogEvent[];
+  /** Multi-signal trace captured during the run (voltages/current/temps/RPMs), charted in the
+   *  detail view. Present only on a fetched detail; a run with no signals has an empty series. */
+  trace?: FailureSnapshot;
 };
 
 const PROGRAM_NAMES = [

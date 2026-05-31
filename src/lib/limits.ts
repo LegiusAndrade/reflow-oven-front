@@ -67,10 +67,9 @@ export const PROGRAM_LIST_PAGE_SIZE = 100;
 export const PROGRAM_PAGE_SIZE_MAX = 100;
 /** Programs — debounce the Programas search box (ms). */
 export const PROGRAM_SEARCH_DEBOUNCE_MS = 300;
-/** Reports — page size when fetching execution/change/error lists for the tables. */
-export const REPORT_PAGE_SIZE = 200;
-/** System log — page size when fetching entries for the modal. */
-export const SYSTEM_LOG_PAGE_SIZE = 200;
+/** Relatórios — o backend limita uma página a 200 registros (clamp 1..200); espelhamos o teto
+ *  para limitar o pageSize medido pela viewport (Relatórios e Log do Sistema). */
+export const REPORT_PAGE_SIZE_MAX = 200;
 
 // --- Conexão (timeouts em ms) ---------------------------------------------------------
 /** Tempo máximo de uma requisição REST antes de abortar e reportar "servidor não respondeu". */

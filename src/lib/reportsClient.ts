@@ -3,8 +3,7 @@
  * types. Lists return summaries (enough for the tables); full detail is fetched by id when an
  * overlay opens. Timestamps are formatted to the "dd/mm/aa - HH:MM:SS" the UI expects.
  */
-import { api } from "./api";
-import { REPORT_PAGE_SIZE } from "./limits";
+import { api, type ChangeReportQuery, type ErrorReportQuery, type ExecutionReportQuery } from "./api";
 import type { ProfilePoint } from "./programs";
 import type { ChangeAction, ChangeDetail, ChangeLogEntry, ChangePointRow, ErrorLogEntry, ErrorSeverity, ExecutionReport, ExecutionStatus, LogEvent, LogEventKind } from "./reports";
 
@@ -38,7 +37,7 @@ interface ExecSummaryDto { id: string; programId?: string | null; programName: s
 interface ProfilePtDto { t: number; temp: number; kind: "programmed" | "measured" }
 interface CompRowDto { tempProg: number; tempReal: number; timeProgSeconds: number; timeRealSeconds: number; stageIndex: number }
 interface LogEventDto { at: string; kind: LogEventKind; message: string }
-interface ExecDetailDto extends ExecSummaryDto { faultAtT?: number | null; faultAtTemp?: number | null; points: ProfilePtDto[]; comparison: CompRowDto[]; events: LogEventDto[] }
+interface ExecDetailDto extends ExecSummaryDto { faultAtT?: number | null; faultAtTemp?: number | null; points: ProfilePtDto[]; comparison: CompRowDto[]; events: LogEventDto[]; trace: { durationSec: number; series: SnapSeriesDto[] } }
 
 interface ChangeSummaryDto { id: string; at: string; action: ChangeAction; target: string; userName?: string | null; detailKind: "config" | "program" }
 interface ChangePtDto { index: number; temp: number; timeSec: number; ramp: string; role: "added" | "removed" | "changed-before" | "changed-after" }
@@ -51,9 +50,9 @@ interface ErrDetailDto extends ErrSummaryDto { programId?: string | null; ovenTe
 const mapEvent = (e: LogEventDto): LogEvent => ({ at: fmtTime(e.at), kind: e.kind, message: e.message });
 
 // --- Executions -------------------------------------------------------------------------
-export async function fetchExecutions(): Promise<ExecutionReport[]> {
-  const res = (await api.executions({ pageSize: REPORT_PAGE_SIZE })) as Paged<ExecSummaryDto>;
-  return res.items.map((e) => execFromSummary(e));
+export async function fetchExecutions(q: ExecutionReportQuery): Promise<{ items: ExecutionReport[]; total: number }> {
+  const res = (await api.executions(q)) as Paged<ExecSummaryDto>;
+  return { items: res.items.map((e) => execFromSummary(e)), total: res.total };
 }
 
 const execFromSummary = (e: ExecSummaryDto): ExecutionReport => ({
@@ -69,6 +68,7 @@ const execFromSummary = (e: ExecSummaryDto): ExecutionReport => ({
   realProfile: [],
   comparison: [],
   events: [],
+  trace: undefined,
 });
 
 export async function fetchExecutionDetail(id: string): Promise<ExecutionReport> {
@@ -78,6 +78,7 @@ export async function fetchExecutionDetail(id: string): Promise<ExecutionReport>
     profile: e.points.filter((p) => p.kind === "programmed").map((p) => ({ t: p.t, temp: p.temp })),
     realProfile: e.points.filter((p) => p.kind === "measured").map((p) => ({ t: p.t, temp: p.temp })),
     faultAt: e.faultAtT != null && e.faultAtTemp != null ? { t: e.faultAtT, temp: e.faultAtTemp } : undefined,
+    trace: e.trace,
     comparison: e.comparison.map((c) => ({
       tempProg: c.tempProg,
       tempReal: c.tempReal,
@@ -90,9 +91,9 @@ export async function fetchExecutionDetail(id: string): Promise<ExecutionReport>
 }
 
 // --- Changes ----------------------------------------------------------------------------
-export async function fetchChanges(): Promise<ChangeLogEntry[]> {
-  const res = (await api.changes({ pageSize: REPORT_PAGE_SIZE })) as Paged<ChangeSummaryDto>;
-  return res.items.map(changeFromSummary);
+export async function fetchChanges(q: ChangeReportQuery): Promise<{ items: ChangeLogEntry[]; total: number }> {
+  const res = (await api.changes(q)) as Paged<ChangeSummaryDto>;
+  return { items: res.items.map(changeFromSummary), total: res.total };
 }
 
 const changeFromSummary = (c: ChangeSummaryDto): ChangeLogEntry => ({
@@ -144,9 +145,9 @@ export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
 }
 
 // --- Errors -----------------------------------------------------------------------------
-export async function fetchErrors(): Promise<ErrorLogEntry[]> {
-  const res = (await api.errors({ pageSize: REPORT_PAGE_SIZE })) as Paged<ErrSummaryDto>;
-  return res.items.map(errorFromSummary);
+export async function fetchErrors(q: ErrorReportQuery): Promise<{ items: ErrorLogEntry[]; total: number }> {
+  const res = (await api.errors(q)) as Paged<ErrSummaryDto>;
+  return { items: res.items.map(errorFromSummary), total: res.total };
 }
 
 const errorFromSummary = (e: ErrSummaryDto): ErrorLogEntry => ({
