@@ -77,6 +77,9 @@ export const PROGRAM_SEARCH_DEBOUNCE_MS = 300;
 /** Relatórios — o backend limita uma página a 200 registros (clamp 1..200); espelhamos o teto
  *  para limitar o pageSize medido pela viewport (Relatórios e Log do Sistema). */
 export const REPORT_PAGE_SIZE_MAX = 200;
+/** Relatórios — nº máximo de edições mantidas por programa (espelha o backend
+ *  `DomainConstants.ChangeRetentionPerProgramMax`); o histórico de edições busca até esse total. */
+export const CHANGE_RETENTION_PER_PROGRAM_MAX = 10;
 
 // --- Conexão (timeouts em ms) ---------------------------------------------------------
 /** Tempo máximo de uma requisição REST antes de abortar e reportar "servidor não respondeu". */

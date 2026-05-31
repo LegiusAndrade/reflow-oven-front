@@ -189,6 +189,8 @@ export type ChangeDetail =
   | { kind: "config"; bullets: string[] }
   | {
       kind: "program";
+      /** Id of the program this change targets — lets the detail load the program's edit history. */
+      programId?: string;
       /** Setpoint curve after a creation/edit (absent for a removal). */
       afterProfile?: ProfilePoint[];
       /** Setpoint curve before an edit/removal (absent for a creation). */

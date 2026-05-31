@@ -135,6 +135,7 @@ export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
     if (changedBefore.length > 0) beforeProfile = pointsToProfile(changedBefore);
     detail = {
       kind: "program",
+      programId: c.programId ?? undefined,
       afterProfile,
       beforeProfile,
       added: c.points.filter((p) => p.role === "added" || p.role === "changed-after").map(mapRow),

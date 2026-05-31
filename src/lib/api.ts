@@ -338,6 +338,8 @@ export interface ExecutionReportQuery extends ReportQuery {
 
 export interface ChangeReportQuery extends ReportQuery {
   action?: ChangeActionWire;
+  /** Restrict to one program's change log (the edit-history overlay) — bound to ReportQuery.ProgramId. */
+  programId?: string;
 }
 
 export interface ErrorReportQuery extends ReportQuery {

@@ -27,10 +27,19 @@ function ticks(max: number, step: number): number[] {
   return out;
 }
 
+/** An extra curve overlaid on the primary one, in its own color (e.g. another edition of a program). */
+export interface IProfileOverlay {
+  points: ProfilePoint[];
+  color: string;
+  dashed?: boolean;
+}
+
 export interface ITemperatureProfileChartProps {
   points: ProfilePoint[];
   /** Optional second curve drawn dashed (e.g. a "before"/"programmed" profile to compare against). */
   comparePoints?: ProfilePoint[];
+  /** Extra curves overlaid on the primary, each in its own color (e.g. a program's other editions). */
+  overlays?: IProfileOverlay[];
   /** Optional point to flag on the chart (e.g. where a run faulted). */
   marker?: { t: number; temp: number; label: string };
   className?: string;
@@ -46,7 +55,7 @@ const MARKER_COLOR = "#f87171";
  * container and draws in real pixels; text uses Tailwind's fluid type scale. When the
  * rendered width is small it auto-switches to a compact preview (curve + peak, no axes).
  */
-export function TemperatureProfileChart({ points, comparePoints, marker, className }: ITemperatureProfileChartProps) {
+export function TemperatureProfileChart({ points, comparePoints, overlays, marker, className }: ITemperatureProfileChartProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
 
@@ -67,7 +76,7 @@ export function TemperatureProfileChart({ points, comparePoints, marker, classNa
   // container can grow but not shrink back (a ResizeObserver feedback loop).
   return (
     <div ref={ref} className={`relative overflow-hidden ${className ?? ""}`}>
-      {ready ? <Plot points={points} comparePoints={comparePoints} marker={marker} w={w} h={h} /> : null}
+      {ready ? <Plot points={points} comparePoints={comparePoints} overlays={overlays} marker={marker} w={w} h={h} /> : null}
     </div>
   );
 }
@@ -75,12 +84,14 @@ export function TemperatureProfileChart({ points, comparePoints, marker, classNa
 function Plot({
   points,
   comparePoints,
+  overlays,
   marker,
   w,
   h,
 }: {
   points: ProfilePoint[];
   comparePoints?: ProfilePoint[];
+  overlays?: IProfileOverlay[];
   marker?: { t: number; temp: number; label: string };
   w: number;
   h: number;
@@ -90,8 +101,13 @@ function Plot({
   const plotW = w - pad.left - pad.right;
   const plotH = h - pad.top - pad.bottom;
 
-  // Scale the axes to fit both curves when a compare overlay is present.
-  const allPoints = comparePoints && comparePoints.length >= 2 ? [...points, ...comparePoints] : points;
+  // Scale the axes to fit every drawn curve (primary + optional before-compare + overlay editions).
+  const validOverlays = overlays?.filter((o) => o.points.length >= 2) ?? [];
+  const allPoints = [
+    ...points,
+    ...(comparePoints && comparePoints.length >= 2 ? comparePoints : []),
+    ...validOverlays.flatMap((o) => o.points),
+  ];
   const maxTime = Math.max(...allPoints.map((p) => p.t));
   const maxTemp = Math.max(...allPoints.map((p) => p.temp));
 
@@ -103,12 +119,10 @@ function Plot({
   const sx = (t: number) => pad.left + (t / xMax) * plotW;
   const sy = (temp: number) => pad.top + plotH - (temp / yMax) * plotH;
 
-  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.t).toFixed(1)},${sy(p.temp).toFixed(1)}`).join(" ");
+  const pathOf = (pts: ProfilePoint[]) => pts.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.t).toFixed(1)},${sy(p.temp).toFixed(1)}`).join(" ");
+  const linePath = pathOf(points);
   const areaPath = `${linePath} L${sx(maxTime).toFixed(1)},${sy(0).toFixed(1)} L${sx(0).toFixed(1)},${sy(0).toFixed(1)} Z`;
-  const comparePath =
-    comparePoints && comparePoints.length >= 2
-      ? comparePoints.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.t).toFixed(1)},${sy(p.temp).toFixed(1)}`).join(" ")
-      : null;
+  const comparePath = comparePoints && comparePoints.length >= 2 ? pathOf(comparePoints) : null;
   const peak = points.reduce((a, b) => (b.temp > a.temp ? b : a));
 
   return (
@@ -158,6 +172,20 @@ function Plot({
       {comparePath && (
         <path d={comparePath} fill='none' stroke={COMPARE_COLOR} strokeWidth={compact ? 2 : 2.5} strokeDasharray='6 5' strokeLinejoin='round' strokeLinecap='round' />
       )}
+
+      {/* Overlay curves (e.g. other editions of the program), each in its own color, under the primary line */}
+      {validOverlays.map((o, i) => (
+        <path
+          key={i}
+          d={pathOf(o.points)}
+          fill='none'
+          stroke={o.color}
+          strokeWidth={compact ? 2 : 2.5}
+          strokeDasharray={o.dashed ? "6 5" : undefined}
+          strokeLinejoin='round'
+          strokeLinecap='round'
+        />
+      ))}
 
       {/* Setpoint curve */}
       <path d={linePath} fill='none' className='[stroke:var(--brand)]' strokeWidth={compact ? 2 : 3} strokeLinejoin='round' strokeLinecap='round' />

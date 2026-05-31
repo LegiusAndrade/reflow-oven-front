@@ -1,10 +1,14 @@
 "use client";
 
 import { clsx } from "clsx";
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
+import { CHANGE_RETENTION_PER_PROGRAM_MAX } from "@/lib/limits";
+import type { ProfilePoint } from "@/lib/programs";
 import type { ChangeLogEntry, ChangePointRow } from "@/lib/reports";
+import { fetchChangeDetail, fetchChanges } from "@/lib/reportsClient";
 
 /**
  * Detail of an audit-log change (Figma "Example Change Config" / "Example Change Program"),
@@ -81,6 +85,7 @@ export function ChangeDetail({ change, open, onClose }: { change: ChangeLogEntry
                 <PointTable rows={detail.removed} />
               </section>
             )}
+            {detail.programId && change && <EditionCompare programId={detail.programId} current={change} />}
           </div>
         )}
       </div>
@@ -153,5 +158,116 @@ function DiffRow({ sign, row }: { sign: "+" | "-"; row: ChangePointRow }) {
       <td className='tabular-nums'>{row.timeSec}</td>
       <td>{row.ramp}</td>
     </tr>
+  );
+}
+
+/** Distinct overlay colors (the opened change is the brand-colored primary; these color the others). */
+const EDITION_COLORS = ["#a78bfa", "#34d399", "#f472b6", "#22d3ee", "#fb923c", "#60a5fa", "#facc15", "#2dd4bf", "#fca5a5"];
+
+/** The resulting setpoint curve of one change: the after-curve of a create/edit, the removed curve of a deletion. */
+function curveOf(entry: ChangeLogEntry): ProfilePoint[] | null {
+  if (entry.detail.kind !== "program") return null;
+  return entry.detail.afterProfile ?? entry.detail.beforeProfile ?? null;
+}
+
+/**
+ * Edit history of a program: lists its recent editions (up to the backend retention cap) and lets the
+ * user tick which to overlay on the chart — the opened change is the solid brand primary curve, each
+ * ticked edition adds a colored curve. The editions list and each edition's curve are fetched lazily
+ * when the section is expanded / a row is ticked, so a closed section costs nothing.
+ */
+function EditionCompare({ programId, current }: { programId: string; current: ChangeLogEntry }) {
+  const [open, setOpen] = useState(false);
+  const [editions, setEditions] = useState<ChangeLogEntry[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [overlayIds, setOverlayIds] = useState<string[]>([]);
+  // id → its resulting curve (undefined = still loading, null = no curve / fetch failed).
+  const [curves, setCurves] = useState<Record<string, ProfilePoint[] | null>>({});
+
+  // Fetch this program's editions the first time the section is expanded (filtered server-side by programId).
+  useEffect(() => {
+    if (!open || editions) return;
+    let cancelled = false;
+    fetchChanges({ page: 1, pageSize: CHANGE_RETENTION_PER_PROGRAM_MAX, programId })
+      .then((r) => !cancelled && setEditions(r.items))
+      .catch(() => !cancelled && setFailed(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, editions, programId]);
+
+  // The opened change is always the primary curve, so the toggleable list excludes it.
+  const others = (editions ?? []).filter((e) => e.id !== current.id);
+  const colorFor = (id: string) => EDITION_COLORS[Math.max(0, others.findIndex((e) => e.id === id)) % EDITION_COLORS.length];
+
+  const toggle = (id: string) => {
+    setOverlayIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+    if (!(id in curves)) {
+      fetchChangeDetail(id)
+        .then((full) => setCurves((c) => ({ ...c, [id]: curveOf(full) })))
+        .catch(() => setCurves((c) => ({ ...c, [id]: null })));
+    }
+  };
+
+  const primary = curveOf(current);
+  const overlays = overlayIds
+    .map((id) => ({ points: curves[id], color: colorFor(id) }))
+    .filter((o): o is { points: ProfilePoint[]; color: string } => Array.isArray(o.points) && o.points.length >= 2);
+
+  // A lone creation (no other editions) has nothing to compare — hide the section once we know.
+  if (editions && others.length === 0) return null;
+
+  return (
+    <section className='flex flex-col gap-3 border-t border-[var(--border)] pt-4'>
+      <button
+        type='button'
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className='btn-press flex items-center gap-2 self-start rounded-lg px-2 py-1 font-medium hover:bg-[var(--hover)]'
+      >
+        <IconGeneral icon={open ? "expand_less" : "expand_more"} fill={0} className='[--icon-size:1.25rem]' />
+        Comparar com outras edições
+      </button>
+
+      {open && (
+        <>
+          {failed && <p className='text-sm opacity-70'>Não foi possível carregar o histórico de edições.</p>}
+          {!failed && !editions && <p className='text-sm opacity-60'>Carregando edições…</p>}
+          {editions && primary && (
+            <>
+              <div className='h-[clamp(170px,28vh,260px)] rounded-xl border border-[var(--border)] p-2'>
+                <TemperatureProfileChart points={primary} overlays={overlays} className='h-full w-full' />
+              </div>
+              <ul className='flex flex-col gap-1.5'>
+                <li className='flex items-center gap-2 text-sm'>
+                  <span className='inline-block h-[3px] w-5 shrink-0 rounded bg-[var(--brand)]' aria-hidden='true' />
+                  <span className='font-medium tabular-nums'>{current.at}</span>
+                  <span className='opacity-60'>· esta edição</span>
+                </li>
+                {others.map((e) => {
+                  const checked = overlayIds.includes(e.id);
+                  return (
+                    <li key={e.id}>
+                      <label className='flex cursor-pointer items-center gap-2 text-sm'>
+                        <input type='checkbox' checked={checked} onChange={() => toggle(e.id)} className='size-4 accent-[var(--brand)]' />
+                        <span
+                          className='inline-block h-[3px] w-5 shrink-0 rounded'
+                          style={{ backgroundColor: checked ? colorFor(e.id) : "var(--border)" }}
+                          aria-hidden='true'
+                        />
+                        <span className='tabular-nums'>{e.at}</span>
+                        <span className='opacity-60'>· {e.action}</span>
+                        {checked && curves[e.id] === undefined && <span className='opacity-50'>carregando…</span>}
+                        {checked && curves[e.id] === null && <span className='text-amber-600 dark:text-amber-400'>sem curva</span>}
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+    </section>
   );
 }
