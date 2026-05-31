@@ -7,14 +7,21 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 > O backend já fechou os itens A–H (ver `../reflow-oven-backend/TODO.md`), então estes deixaram de
 > estar bloqueados — agora é trabalho de front consumir os novos endpoints/contratos.
-- [ ] **Relatórios — paginação no servidor** — backend tem `page/pageSize/search/from/to` **e** agora os filtros por aba (`status`/`action`/`severity`) e `level` do Log do Sistema (item **F**). Migrar `RelatoriosScreen`/`reportsClient` para paginar/filtrar no servidor (hoje busca 200 e filtra/pagina no cliente).
 - [ ] **Persistir tema + séries do gráfico por usuário** — consumir `GET/PUT /api/me/preferences` (item **A**); hidratar o tema no boot via `/api/auth/me`/login (hoje o tema só vive na sessão).
 - [ ] **Aba Rede** — listar interfaces (`GET /api/system/interfaces`), escolher a prioritária (`POST /api/system/interfaces/priority`) e enviar a **porta** no teste de ping (item **B**); migrar a config para `/api/system/*`.
 - [ ] **Gráfico do relatório de execução multi-sinal** (corrente/tensão/RPM/temp. dissipador) — consumir `ExecutionDetailDto.Trace` (item **C**).
 - [ ] **Aviso de pouco espaço em disco** — o backend já notifica (sino + e-mail, item **D**); confirmar que aparece bem na tela (o feed real do sino já chega).
+- [ ] **Alterações — antes × depois numa edição** — o backend vai passar a gravar a curva anterior (`changed-before`) além da `changed-after` no `UpdateAsync`. O `reportsClient` **já está preparado** (particiona por `role` e preenche `beforeProfile` quando `changed-before` aparece → o `ChangeDetail` liga o overlay sozinho). **Validar** assim que o backend publicar: confirmar que o `role` vem exatamente `"changed-before"`/`"changed-after"` e que as duas curvas aparecem.
+
+### Pedidos novos (2026-05-31)
+- [ ] **Editor de programa — limite de 100 pontos + contador + tempo total** — hoje o limite é **30** (`PROFILE_MAX_POINTS` no front e `ProfileMaxPoints` no backend). Subir para **100** (precisa mudar **os dois** — o backend valida `req.Segments.Count > ProfileMaxPoints` e rejeita). Na tela de criação/edição mostrar um contador **`x/100 pontos`** ao lado do botão "Adicionar Ponto" e o **tempo total** do perfil (soma das durações dos segmentos). _(o cap continua centralizado em `limits.ts`)_
+- [ ] **Relatórios — histórico de edições de um programa** — o backend guarda as últimas **N** edições por programa (`ChangeRetentionPerProgramMax`) e o `GET /api/changes` aceita `programId`. Na Alteração de um programa, listar as datas das edições (legendas) e deixar o usuário **ticar quais** quer ver sobreposto no gráfico de mudança (multi-curva, cada edição com sua cor). _(depende do antes×depois acima para ter as curvas por edição)_
+- [ ] **Informação — carga da CPU (%)** — o backend já expõe `SystemMetricsDto.CpuLoadPercent` (média dos núcleos do OrangePi). Falta o front: adicionar `api.systemMetrics()` (ou usar `status.metrics`) e mostrar a CPU % no card "Sistema" da tela Informação (junto de armazenamento/firmware), idealmente com polling leve.
 
 ## Feito
 
+- [x] **Relatórios — paginação + filtros no servidor** — `RelatoriosScreen`/`reportsClient` agora paginam e filtram no backend (`page/pageSize/search/from/to` + filtro por aba `status`/`action`/`severity` e `level` do Log do Sistema); paginação pelo `total`, busca com debounce, `to` como fim do dia. Removidos os filtros/slice no cliente.
+- [x] **Relatório de execução — gráfico multi-sinal** — consome `ExecutionDetailDto.Trace` e desenha as séries (corrente/tensão/RPM/temp. etc.) no `SnapshotChart` ao lado do Programado × Real.
 - [x] **Programas — paginação no servidor** — `programStore` virou cache por página (search/filter/sort/page/pageSize via `GET /api/programs`, paginação/contagem pelo `total`; clamp em 100). Telas Programas e galeria do Início.
 - [x] **Alterações — gráfico do perfil restaurado** — `reportsClient` remonta a curva a partir dos `points` do `GET /api/changes/{id}` (uma curva por mudança: Criado=nova, Editado=atual, Removido=removida; `timeSec` cumulativo). Sumira na migração mock→API.
 - [x] **Card "atualização disponível" real** — `GET/POST /api/system/update` na tela Informação (mostra versão atual/disponível; botão "Atualizar" só para Admin); substituiu a simulação.
