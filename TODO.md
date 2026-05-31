@@ -5,11 +5,9 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ## Próximas
 
-> O backend já fechou os itens A–H (ver `../reflow-oven-backend/TODO.md`), então estes deixaram de
-> estar bloqueados — agora é trabalho de front consumir os novos endpoints/contratos.
-- [ ] **Persistir tema + séries do gráfico por usuário** — consumir `GET/PUT /api/me/preferences` (item **A**); hidratar o tema no boot via `/api/auth/me`/login (hoje o tema só vive na sessão).
-- [ ] **Aba Rede** — listar interfaces (`GET /api/system/interfaces`), escolher a prioritária (`POST /api/system/interfaces/priority`) e enviar a **porta** no teste de ping (item **B**); migrar a config para `/api/system/*`.
-- [ ] **Gráfico do relatório de execução multi-sinal** (corrente/tensão/RPM/temp. dissipador) — consumir `ExecutionDetailDto.Trace` (item **C**).
+> O backend fechou os itens A–H (ver `../reflow-oven-backend/TODO.md`). O front já consome **A/B/C/F**
+> (ver "Feito"); restam só a verificação visual de **D** e a validação de **H** (quando o backend
+> publicar a curva `changed-before`), além dos "Pedidos novos" abaixo.
 - [ ] **Aviso de pouco espaço em disco** — o backend já notifica (sino + e-mail, item **D**); confirmar que aparece bem na tela (o feed real do sino já chega).
 - [ ] **Alterações — antes × depois numa edição** — o backend vai passar a gravar a curva anterior (`changed-before`) além da `changed-after` no `UpdateAsync`. O `reportsClient` **já está preparado** (particiona por `role` e preenche `beforeProfile` quando `changed-before` aparece → o `ChangeDetail` liga o overlay sozinho). **Validar** assim que o backend publicar: confirmar que o `role` vem exatamente `"changed-before"`/`"changed-after"` e que as duas curvas aparecem.
 
@@ -20,6 +18,8 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ## Feito
 
+- [x] **Tema + séries do gráfico por usuário** — `preferences.ts`/`theme.ts` consomem `GET/PUT /api/me/preferences`: o tema (claro/escuro/sistema) e quais sinais aparecem no gráfico da execução agora são **por usuário**, não por dispositivo. Hidratados da sessão (sem GET extra), gravação otimista com rollback (+ guarda de corrida) e 403 da sessão técnica tolerado; `layout.tsx` aplica o tema antes do paint (sem flash claro↔escuro).
+- [x] **Aba Rede** — lista as interfaces (`GET /api/system/interfaces`), escolhe a prioritária (`POST /api/system/interfaces/priority`) e envia a **porta** no teste de ping; config de rede migrada para `/api/system/*`.
 - [x] **Relatórios — paginação + filtros no servidor** — `RelatoriosScreen`/`reportsClient` agora paginam e filtram no backend (`page/pageSize/search/from/to` + filtro por aba `status`/`action`/`severity` e `level` do Log do Sistema); paginação pelo `total`, busca com debounce, `to` como fim do dia. Removidos os filtros/slice no cliente.
 - [x] **Relatório de execução — gráfico multi-sinal** — consome `ExecutionDetailDto.Trace` e desenha as séries (corrente/tensão/RPM/temp. etc.) no `SnapshotChart` ao lado do Programado × Real.
 - [x] **Programas — paginação no servidor** — `programStore` virou cache por página (search/filter/sort/page/pageSize via `GET /api/programs`, paginação/contagem pelo `total`; clamp em 100). Telas Programas e galeria do Início.
