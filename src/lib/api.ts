@@ -412,14 +412,15 @@ export const api = {
   startRun: (programId: string) => request<RunStatusDto>("/api/runs/start", { method: "POST", body: { programId } }),
   stopRun: () => request<RunStatusDto | null>("/api/runs/stop", { method: "POST" }),
 
-  // reports (read-only — paged + filtered server-side)
-  executions: (q: ExecutionReportQuery) => request<PagedResult<ExecutionSummaryRow>>(`/api/reports/executions${qs(q)}`),
+  // reports (read-only — paged + filtered server-side). The backend serves these at the bare
+  // /api/{executions,changes,errors,system-log} routes (no "reports" prefix) — see ReportControllers.cs.
+  executions: (q: ExecutionReportQuery) => request<PagedResult<ExecutionSummaryRow>>(`/api/executions${qs(q)}`),
   execution: (id: string) => request<unknown>(`/api/executions/${encodeURIComponent(id)}`),
-  errors: (q: ErrorReportQuery) => request<PagedResult<ErrorSummaryRow>>(`/api/reports/errors${qs(q)}`),
+  errors: (q: ErrorReportQuery) => request<PagedResult<ErrorSummaryRow>>(`/api/errors${qs(q)}`),
   error: (id: string) => request<unknown>(`/api/errors/${encodeURIComponent(id)}`),
-  changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/reports/changes${qs(q)}`),
+  changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/changes${qs(q)}`),
   change: (id: string) => request<unknown>(`/api/changes/${encodeURIComponent(id)}`),
-  systemLog: (q: SystemLogQuery) => request<PagedResult<SystemLogRow>>(`/api/reports/system-log${qs(q)}`),
+  systemLog: (q: SystemLogQuery) => request<PagedResult<SystemLogRow>>(`/api/system-log${qs(q)}`),
   faultTypes: () => request<unknown[]>("/api/fault-types"),
 
   // diagnostics
