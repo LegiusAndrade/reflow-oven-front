@@ -29,11 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Apply the saved theme before first paint to avoid a dark<->light flash (see THEME_BOOT_SCRIPT). */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
-        {/* Google Material Symbols */}
-        <link
-          href='https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
-          rel='stylesheet'
-        />
+        {/* Material Symbols (Rounded) — auto-hospedada (@font-face em globals.css) p/ funcionar offline no
+            kiosk; preload acelera o 1º paint dos ícones. */}
+        <link rel='preload' href='/fonts/MaterialSymbolsRounded.woff2' as='font' type='font/woff2' crossOrigin='anonymous' />
       </head>
       <body className='antialiased bg-app'>{children}</body>
     </html>

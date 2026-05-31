@@ -10,6 +10,35 @@
    `text-amber-700 dark:text-amber-300` flips with the app theme (not prefers-color-scheme). */
 @custom-variant dark ([data-theme='dark'] &);
 
+/* Material Symbols (Rounded) auto-hospedada — antes vinha só do CDN do Google, então no kiosk OFFLINE
+   (Raspberry/Orange Pi) a fonte não carregava e a ligadura ("signal_wifi_3_bar", "public", "notifications"…)
+   era desenhada como TEXTO/emoji — era isso o "ícone do WiFi zoado". O .woff2 variável (FILL/GRAD/opsz/wght)
+   está em /public/fonts; font-display:block evita um flash de texto. A classe .material-symbols-rounded (antes
+   fornecida pelo CSS do CDN) é definida aqui, com 'liga' para converter o texto da ligadura no glyph. */
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url("/fonts/MaterialSymbolsRounded.woff2") format("woff2");
+}
+
+.material-symbols-rounded {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
 /* ---------------------------------------------------------
    FLUID TYPE SCALE
    Each step grows a little with the viewport via clamp(), then
