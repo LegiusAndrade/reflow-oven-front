@@ -46,6 +46,12 @@ export const CONFIG_VOLTAGE_MAX = 300;
 /** Network text fields (IP / mask / gateway / DNS) — max characters. */
 export const NETWORK_FIELD_MAX_LENGTH = 15;
 
+/** Porta do teste de ping (TCP) — faixa válida e tamanho máximo do campo (65535 tem 5 dígitos).
+ *  Vazio/0 => ping ICMP; 1..65535 => teste de conexão TCP na porta. */
+export const PING_PORT_MIN = 1;
+export const PING_PORT_MAX = 65535;
+export const PING_PORT_MAX_LENGTH = 5;
+
 /** User name — min/max characters. Allowed charset (letters, digits and the dot) lives in
  *  `sanitizeUsername`/`isValidUsername` in lib/users.ts. */
 export const USER_NAME_MIN_LENGTH = 3;

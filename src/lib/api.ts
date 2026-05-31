@@ -240,6 +240,22 @@ export interface UnreadCountDto {
 
 export type NetworkLink = "Nenhum" | "Cabo" | "WiFi";
 
+export type InterfaceKind = "Ethernet" | "WiFi";
+
+export interface NetworkInterfaceDto {
+  name: string;
+  kind: InterfaceKind;
+  up: boolean;
+  /** "" when the interface is down. */
+  ip: string;
+}
+
+export interface PingResultDto {
+  ok: boolean;
+  ms: number;
+  host: string;
+}
+
 export interface NetworkStatusDto {
   link: NetworkLink;
   interface: string;
@@ -247,6 +263,17 @@ export interface NetworkStatusDto {
   ssid?: string;
   signalPercent?: number;
   staticIp: boolean;
+}
+
+/** Full wired-config payload the PUT /api/system/network endpoint requires (Admin only). */
+export interface ApplyNetworkRequest {
+  staticIp: boolean;
+  ip: string;
+  mask: string;
+  gateway: string;
+  dnsPrimary: string;
+  dnsSecondary: string;
+  preferredLink: NetworkLink;
 }
 
 export interface SystemStatusDto {
@@ -378,7 +405,8 @@ export const api = {
   diagnosticsOverview: (rank?: number) => request<unknown>(`/api/diagnostics/overview${qs({ rank })}`),
   readings: () => request<SensorReadingsDto>("/api/diagnostics/readings"),
   selfTest: (id: string) => request<unknown>("/api/diagnostics/self-test", { method: "POST", body: { id } }),
-  ping: (host: string) => request<{ ok: boolean; ms: number; host: string }>("/api/network/ping", { method: "POST", body: { host } }),
+  // Omit `port` => ICMP ping; a number 1..65535 => TCP connect test. `undefined` is dropped by JSON.stringify.
+  ping: (host: string, port?: number) => request<PingResultDto>("/api/network/ping", { method: "POST", body: { host, port } }),
 
   // calibration (technician only)
   getCalibration: () => request<unknown>("/api/calibration"),
@@ -404,6 +432,12 @@ export const api = {
   systemStatus: () => request<SystemStatusDto>("/api/system/status"),
   getUpdateStatus: () => request<UpdateStatusDto>("/api/system/update"),
   applyUpdate: () => request<void>("/api/system/update", { method: "POST" }),
+
+  // system / network
+  systemInterfaces: () => request<NetworkInterfaceDto[]>("/api/system/interfaces"),
+  setPriorityInterface: (interfaceName: string) => request<void>("/api/system/interfaces/priority", { method: "POST", body: { interfaceName } }),
+  getNetwork: () => request<NetworkStatusDto>("/api/system/network"),
+  updateNetwork: (body: ApplyNetworkRequest) => request<void>("/api/system/network", { method: "PUT", body }),
 };
 
 export interface BoardDto {
