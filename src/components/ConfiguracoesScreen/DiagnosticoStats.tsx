@@ -3,10 +3,9 @@
 import { clsx } from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
-import { useAllPrograms } from "@/hooks/useAllPrograms";
 import { useStore } from "@/hooks/useStore";
 import { api } from "@/lib/api";
-import { programStats, topProgramsByRuns, topUsersByLogins, userStats } from "@/lib/diagnostics";
+import { topUsersByLogins, userStats } from "@/lib/diagnostics";
 import { DIAG_RANK_DEFAULT, DIAG_RANK_MAX, DIAG_RANK_MIN } from "@/lib/limits";
 import type { ErrorSeverity } from "@/lib/reports";
 import { usersStore } from "@/lib/users";
@@ -107,7 +106,6 @@ function RankCard({
 /** Diagnóstico statistics: overview counts, faults by type, and the two adjustable rankings. */
 export function DiagnosticoStats() {
   const users = useStore(usersStore);
-  const programs = useAllPrograms();
   const [userN, setUserN] = useState(DIAG_RANK_DEFAULT);
   const [progN, setProgN] = useState(DIAG_RANK_DEFAULT);
   const [ov, setOv] = useState<Overview | null>(null);
@@ -121,10 +119,11 @@ export function DiagnosticoStats() {
   }, []);
 
   const us = useMemo(() => userStats(users), [users]);
-  const ps = useMemo(() => programStats(programs), [programs]);
 
-  const programsCount = ov?.stats.programs ?? ps.total;
-  const executions = ov?.stats.executions ?? ps.totalRuns;
+  // Programs/executions are catalog-wide stats: the programs store is now page-scoped (server-side
+  // pagination), so these come from the API overview only — never derived from the visible page.
+  const programsCount = ov?.stats.programs ?? 0;
+  const executions = ov?.stats.executions ?? 0;
   const activeUsers = ov?.stats.activeUsers ?? us.active;
   const inactiveUsers = ov?.stats.inactiveUsers ?? us.inactive;
   const admins = ov?.stats.admins ?? us.admins;
@@ -133,7 +132,7 @@ export function DiagnosticoStats() {
   const totalFaults = ov?.stats.failures ?? faults.reduce((sum, f) => sum + f.count, 0);
   const maxFault = Math.max(1, ...faults.map((f) => f.count));
   const topUsers = (ov?.topUsers ?? topUsersByLogins(users, DIAG_RANK_MAX)).slice(0, userN);
-  const topProgs = (ov?.topPrograms ?? topProgramsByRuns(programs, DIAG_RANK_MAX)).slice(0, progN);
+  const topProgs = (ov?.topPrograms ?? []).slice(0, progN);
 
   return (
     <section className='flex flex-col gap-4'>

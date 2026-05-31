@@ -63,6 +63,10 @@ export const EMAIL_MAX_LENGTH = 254;
 // --- API paging (list fetch sizes) ----------------------------------------------------
 /** Programs — page size when loading the full catalog into the client cache. */
 export const PROGRAM_LIST_PAGE_SIZE = 100;
+/** Programs — backend caps a programs page at 100 (DomainConstants.ProgramPageSizeMax). */
+export const PROGRAM_PAGE_SIZE_MAX = 100;
+/** Programs — debounce the Programas search box (ms). */
+export const PROGRAM_SEARCH_DEBOUNCE_MS = 300;
 /** Reports — page size when fetching execution/change/error lists for the tables. */
 export const REPORT_PAGE_SIZE = 200;
 /** System log — page size when fetching entries for the modal. */

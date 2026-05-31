@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramCard } from "@/components/ProgramCard";
 import { RunModal } from "@/components/RunModal";
-import { useAllPrograms } from "@/hooks/useAllPrograms";
+import { useProgramPage } from "@/hooks/useProgramPage";
+import { PROGRAM_PAGE_SIZE_MAX } from "@/lib/limits";
+import { loadPrograms } from "@/lib/programStore";
 import type { Program } from "@/lib/programs";
 
 // Minimum comfortable card size; drives how many fit per page.
@@ -18,9 +20,10 @@ const GAP = 16;
  * Responsive, paginated grid of program cards. It measures the available area and shows
  * as many cards as fit (more columns when wider, more rows when taller); the rest are
  * reached with the prev/next arrows. No scrollbar — overflow becomes pages. At 1024×600
- * exactly one card fits, so it behaves like the original single-chart carousel.
+ * exactly one card fits, so it behaves like the original single-chart carousel. Pages are
+ * fetched from the backend on demand (server-side pagination).
  */
-export function ProgramGallery({ programs }: { programs: Program[] }) {
+export function ProgramGallery() {
   const ref = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
   const [page, setPage] = useState(0);
@@ -37,14 +40,24 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
     return () => ro.disconnect();
   }, []);
 
-  const allPrograms = useAllPrograms(programs);
+  const { items, total } = useProgramPage();
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));
-  const perPage = cols * rows;
-  const pages = Math.max(1, Math.ceil(allPrograms.length / perPage));
+  const perPage = w > 0 && h > 0 ? cols * rows : 0;
+  // The backend clamps pageSize to [1, PROGRAM_PAGE_SIZE_MAX]; clamp here too so the pager math
+  // matches what the server actually returns.
+  const effectivePerPage = perPage > 0 ? Math.min(perPage, PROGRAM_PAGE_SIZE_MAX) : 0;
+  const pages = Math.max(1, Math.ceil(total / Math.max(1, effectivePerPage)));
+  // Clamp the requested page into range so a smaller page count (e.g. a larger grid fitting more
+  // cards per page) can't leave us past the end; the fetch below keys off this clamped value.
   const activePage = Math.min(Math.max(page, 0), pages - 1);
-  const shown = allPrograms.slice(activePage * perPage, activePage * perPage + perPage);
+
+  // Fetch the current page once the grid is measured. `activePage` is 0-based here; the API is 1-based.
+  useEffect(() => {
+    if (effectivePerPage <= 0) return;
+    void loadPrograms({ filter: "all", sort: "default", page: activePage + 1, pageSize: effectivePerPage });
+  }, [activePage, effectivePerPage]);
 
   return (
     <div className='relative h-full w-full'>
@@ -54,7 +67,7 @@ export function ProgramGallery({ programs }: { programs: Program[] }) {
         className='grid h-full w-full px-16'
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: "1fr", gap: `${GAP}px` }}
       >
-        {shown.map((program) => (
+        {items.map((program) => (
           <ProgramCard key={program.id} program={program} onStart={() => setRunProgram(program)} />
         ))}
       </div>

@@ -1,19 +1,32 @@
 /**
- * Client-side cache of programs, backed by the backend API (replaces the old localStorage mock).
- * Exposes a subscribe/snapshot surface for `useSyncExternalStore` plus async mutations that call
- * the API and refresh the cache. Snapshots keep a stable reference until the data actually changes.
+ * Query-driven cache of the *current page* of programs, backed by the backend API. Pagination,
+ * search, filtering and sorting all happen server-side (`GET /api/programs?...`); this module just
+ * caches the page the screen is currently showing plus the total match count. Exposes a
+ * subscribe/snapshot surface for `useSyncExternalStore` plus async mutations that call the API and
+ * refresh the same page. Snapshots keep a stable reference until the data actually changes.
  */
-import { api, type ProgramDto, type SaveProgramRequest } from "./api";
+import { api, type ProgramDto, type ProgramListQuery, type SaveProgramRequest } from "./api";
 import { PROGRAM_LIST_PAGE_SIZE } from "./limits";
+import { logger } from "./logger";
 import type { Program } from "./programs";
 
 const EMPTY_PROGRAMS: Program[] = [];
 const EMPTY_IDS: string[] = [];
 
+/** The query used when a passive consumer (no screen driving paging) triggers the first load. */
+const DEFAULT_QUERY: ProgramListQuery = { filter: "all", sort: "default", page: 1, pageSize: PROGRAM_LIST_PAGE_SIZE };
+
 let programs: Program[] = EMPTY_PROGRAMS;
 let favoriteIds: string[] = EMPTY_IDS;
+let total = 0;
 let loaded = false;
 let loading = false;
+let currentQuery: ProgramListQuery = DEFAULT_QUERY;
+
+/** Monotonic request id: the latest fetch wins so a slow earlier response can't clobber it. */
+let requestSeq = 0;
+/** The shape of the last query (everything except `page`); a change clears the stale page/total. */
+let lastKey = "";
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
@@ -39,25 +52,49 @@ export const toProgram = (dto: ProgramDto): Program => ({
   segments: dto.segments ?? undefined,
 });
 
-/** Fetch the full program list (catalog + user programs) and refresh the cache. */
-export async function reloadPrograms(): Promise<void> {
+/** Fetch one page (with the given search/filter/sort/page/pageSize) and refresh the cache. */
+export async function loadPrograms(query: ProgramListQuery): Promise<void> {
+  // A change to anything but `page` (search/filter/sort/pageSize — including switching between the
+  // two screens, which use different pageSizes) means the cached page/total are stale and belong to
+  // a different result set: clear them so the UI doesn't briefly show the wrong list. A plain page
+  // change keeps the prior page visible for smooth paging.
+  const key = `${query.search ?? ""}|${query.filter ?? ""}|${query.sort ?? ""}|${query.pageSize ?? ""}`;
+  if (key !== lastKey) {
+    programs = EMPTY_PROGRAMS;
+    favoriteIds = EMPTY_IDS;
+    total = 0;
+    loaded = false;
+    lastKey = key;
+  }
+  currentQuery = query;
   loading = true;
+  notify();
+  const seq = ++requestSeq;
   try {
-    const res = await api.listPrograms({ filter: "all", sort: "default", page: 1, pageSize: PROGRAM_LIST_PAGE_SIZE });
+    const res = await api.listPrograms(query);
+    // A newer request started while we awaited — discard this stale response entirely.
+    if (seq !== requestSeq) return;
     programs = res.items.map(toProgram);
     favoriteIds = res.items.filter((p) => p.favorite).map((p) => p.id);
+    total = res.total;
     loaded = true;
-    notify();
+  } catch (e) {
+    // Keep the previously-loaded page on error so the UI doesn't blank out; the screen surfaces
+    // the failure via its own toast paths. `loaded` stays as-is so a retry is still possible.
+    if (seq === requestSeq) logger.error("programStore", "Falha ao carregar programas", e);
   } finally {
-    loading = false;
+    // Only the latest request flips loading off / notifies; a superseded one stays quiet so it can't
+    // hide the spinner (or paint) while the newest fetch is still in flight.
+    if (seq === requestSeq) {
+      loading = false;
+      notify();
+    }
   }
 }
 
 const ensureLoaded = (): void => {
   if (typeof window === "undefined" || loaded || loading) return;
-  void reloadPrograms().catch(() => {
-    // Leave `loaded` false so a later subscribe retries; `loading` guards against a refetch loop.
-  });
+  void loadPrograms(DEFAULT_QUERY);
 };
 
 export const subscribeStoredPrograms = (cb: () => void): (() => void) => {
@@ -70,27 +107,28 @@ export const getStoredProgramsSnapshot = (): Program[] => programs;
 export const getStoredProgramsServerSnapshot = (): Program[] => EMPTY_PROGRAMS;
 export const getFavoriteIdsSnapshot = (): string[] => favoriteIds;
 export const getFavoriteIdsServerSnapshot = (): string[] => EMPTY_IDS;
+export const getProgramsTotalSnapshot = (): number => total;
+export const getProgramsTotalServerSnapshot = (): number => 0;
+export const getProgramsLoadingSnapshot = (): boolean => loading;
+export const getProgramsLoadingServerSnapshot = (): boolean => false;
+export const getProgramsLoadedSnapshot = (): boolean => loaded;
+export const getProgramsLoadedServerSnapshot = (): boolean => false;
 
 export async function toggleFavorite(id: string): Promise<void> {
   await api.toggleFavorite(id);
-  await reloadPrograms();
+  await loadPrograms(currentQuery);
 }
 
 export async function deleteProgram(id: string): Promise<void> {
   await api.deleteProgram(id);
-  await reloadPrograms();
+  await loadPrograms(currentQuery);
 }
 
-/** Create (no id) or update (existing id) a program from the editor, then refresh the cache. */
+/** Create (no id) or update (existing id) a program from the editor, then refresh the current page. */
 export async function saveProgram(req: SaveProgramRequest, id?: string): Promise<void> {
   // Trust the id (an existing program) rather than the cache: opening the editor directly by URL
   // never populates the cache, so a cache check would wrongly create a duplicate instead of updating.
   if (id) await api.updateProgram(id, req);
   else await api.createProgram(req);
-  await reloadPrograms();
-}
-
-/** Kept for the (still-mock) maintenance factory-reset flow; the real reset is the API's job (TODO). */
-export function resetPrograms(_programs?: Program[]): void {
-  void reloadPrograms();
+  await loadPrograms(currentQuery);
 }

@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { ProgramListCard } from "@/components/ProgramListCard";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
-import { useAllPrograms } from "@/hooks/useAllPrograms";
-import { useFavoriteIds } from "@/hooks/useFavoriteIds";
+import { useProgramPage } from "@/hooks/useProgramPage";
 import { useSession } from "@/hooks/useSession";
 import { canManagePrograms } from "@/lib/auth";
-import type { Program } from "@/lib/programs";
+import { PROGRAM_PAGE_SIZE_MAX, PROGRAM_SEARCH_DEBOUNCE_MS } from "@/lib/limits";
+import { loadPrograms } from "@/lib/programStore";
 
 const CARD_MIN_W = 320;
 const CARD_MIN_H = 190;
@@ -35,18 +35,10 @@ const SORT_OPTIONS: ISelectOption<SortMode>[] = [
   { value: "duration", label: "Tempo total", icon: "timer" },
 ];
 
-const peakTemp = (p: Program) => Math.max(...p.profile.map((pt) => pt.temp));
-const totalTime = (p: Program) => p.profile.at(-1)?.t ?? 0;
-
-/** Parse "dd/mm/aaaa" to a timestamp; "Nunca" (or anything unparseable) sorts oldest. */
-function lastUsedTime(value: string): number {
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
-  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])).getTime() : 0;
-}
-
-/** Programas screen: search/filter/sort over a paginated grid of program management cards. */
-export function ProgramasScreen({ programs }: { programs: Program[] }) {
+/** Programas screen: server-paginated grid of program management cards (search/filter/sort). */
+export function ProgramasScreen() {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [sortMode, setSortMode] = useState<SortMode>("default");
   const [page, setPage] = useState(0);
@@ -64,53 +56,46 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
     return () => ro.disconnect();
   }, []);
 
-  const allPrograms = useAllPrograms(programs);
-  const favoriteIds = useFavoriteIds();
+  // Debounce the search box so typing doesn't fire a request per keystroke; jump back to the first
+  // page once the debounced term settles (a new search makes the old page index meaningless).
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(0);
+    }, PROGRAM_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  const { items, total, loading, loaded } = useProgramPage();
   const canManage = canManagePrograms(useSession()?.role ?? "Regular");
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const favorites = new Set(favoriteIds);
-    return allPrograms.filter((p) => {
-      if (filterMode === "favorites" && !favorites.has(p.id)) return false;
-      if (filterMode === "unused" && p.runCount > 0) return false;
-      if (filterMode === "used" && p.runCount === 0) return false;
-      return q ? p.name.toLowerCase().includes(q) : true;
-    });
-  }, [allPrograms, query, filterMode, favoriteIds]);
-
-  const sorted = useMemo(() => {
-    if (sortMode === "default") return filtered;
-    const arr = [...filtered];
-    switch (sortMode) {
-      case "recent":
-        arr.sort((a, b) => lastUsedTime(b.lastUsed) - lastUsedTime(a.lastUsed));
-        break;
-      case "most-used":
-        arr.sort((a, b) => b.runCount - a.runCount);
-        break;
-      case "name":
-        arr.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-        break;
-      case "temp":
-        arr.sort((a, b) => peakTemp(b) - peakTemp(a));
-        break;
-      case "duration":
-        arr.sort((a, b) => totalTime(b) - totalTime(a));
-        break;
-    }
-    return arr;
-  }, [filtered, sortMode]);
 
   const cols = Math.max(1, Math.floor((w + GAP) / (CARD_MIN_W + GAP)));
   const rows = Math.max(1, Math.floor((h + GAP) / (CARD_MIN_H + GAP)));
   // Fixed row height (the height a full page uses) so the last page keeps the same card size
   // as earlier pages instead of stretching a lone row to fill the grid.
   const rowHeight = h > 0 ? (h - (rows - 1) * GAP) / rows : CARD_MIN_H;
-  const perPage = cols * rows;
-  const pages = Math.max(1, Math.ceil(sorted.length / perPage));
+  const perPage = w > 0 && h > 0 ? cols * rows : 0;
+  // The backend clamps pageSize to [1, PROGRAM_PAGE_SIZE_MAX]; clamp here too so the pager math
+  // matches what the server actually returns (otherwise a huge grid would over-count the pages).
+  const effectivePerPage = perPage > 0 ? Math.min(perPage, PROGRAM_PAGE_SIZE_MAX) : 0;
+  const pages = Math.max(1, Math.ceil(total / Math.max(1, effectivePerPage)));
+  // Clamp the requested page into range so a smaller page count (fewer matches, or a larger grid)
+  // can't leave us past the end; the fetch below keys off this clamped value. The page is reset to 0
+  // on a filter/sort change in the controls' onChange handlers and on a new search in the debounce.
   const activePage = Math.min(page, pages - 1);
-  const shown = sorted.slice(activePage * perPage, activePage * perPage + perPage);
+
+  // Fetch the current page from the backend. Guard against firing before the grid is measured
+  // (effectivePerPage 0 would request pageSize 0). `activePage` is 0-based here; the API is 1-based.
+  useEffect(() => {
+    if (effectivePerPage <= 0) return;
+    void loadPrograms({
+      search: debouncedQuery || undefined,
+      filter: filterMode,
+      sort: sortMode,
+      page: activePage + 1,
+      pageSize: effectivePerPage,
+    });
+  }, [debouncedQuery, filterMode, sortMode, activePage, effectivePerPage]);
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
@@ -131,10 +116,7 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
           <input
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder='Pesquisar programa...'
             className='w-full bg-transparent outline-none placeholder:opacity-60'
           />
@@ -167,15 +149,16 @@ export function ProgramasScreen({ programs }: { programs: Program[] }) {
         className='grid min-h-0 flex-1 content-start'
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: `${rowHeight}px`, gap: `${GAP}px` }}
       >
-        {shown.map((program) => (
+        {items.map((program) => (
           <ProgramListCard key={program.id} program={program} />
         ))}
-        {sorted.length === 0 && <p className='opacity-60'>Nenhum programa encontrado.</p>}
+        {(!loaded || loading || effectivePerPage <= 0) && total === 0 && <p className='opacity-60'>Carregando...</p>}
+        {loaded && !loading && total === 0 && <p className='opacity-60'>Nenhum programa encontrado.</p>}
       </div>
 
       {/* Footer: pagination centered, new program on the right */}
       <footer className='grid grid-cols-[1fr_auto_1fr] items-center gap-4'>
-        <span className='text-sm opacity-70'>{`${sorted.length} programa${sorted.length === 1 ? "" : "s"}`}</span>
+        <span className='text-sm opacity-70'>{`${total} programa${total === 1 ? "" : "s"}`}</span>
         <Pagination pages={pages} active={activePage} onChange={setPage} />
         {canManage ? (
           <Link href='/programas/novo' className='btn-action flex cursor-pointer items-center gap-2 justify-self-end rounded-xl px-4 py-2.5 font-semibold'>
