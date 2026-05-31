@@ -5,8 +5,25 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 ## Próximas
 
-- [ ] **Alterações (auditoria)** — diff detalhado de programa no overlay (o backend grava um diff simplificado; o overlay mostra listas adicionado/removido).
-- [ ] Persistir o **tema** escolhido (hoje só na sessão).
+### Em andamento
+- [ ] **Programas — paginação no servidor** — `programStore` virou cache por página (search/filter/sort/page/pageSize via `GET /api/programs`, conta pelo `total`). _(em revisão/commit)_
+
+### Prontas no backend — falta só o front consumir
+> A auditoria da integração mostrou que vários itens que pareciam "faltar no backend" **já estão implementados** lá; aqui é trabalho de front.
+- [ ] **Alterações — gráfico anterior × atual a partir do diff de pontos** — o `GET /api/changes/{id}` já devolve o diff **completo** por ponto: `role` (`added`/`removed`/`changed`/**`unchanged`**) + valores atuais (`Temp/TimeSec/Ramp`) e, nos `changed`, os anteriores (`PrevTemp/PrevTimeSec/PrevRamp`). Reconstruir os dois perfis no front e desenhar:
+  - **anterior** = pontos `unchanged`/`removed` (valores atuais) + `changed` (valores `Prev*`); ignora `added`.
+  - **atual** = pontos `unchanged`/`added` (valores atuais) + `changed` (valores atuais); ignora `removed`.
+  - Mapear `role`/`Prev*` no `reportsClient.ts` e alimentar o gráfico antes×depois. **Não precisa mexer no backend.** _(corrige a nota antiga que dizia "diff simplificado")_
+- [ ] **Sino/Notificações reais** — trocar o mock de `notifications.ts` pelo feed real: `GET /api/notifications`, `GET /api/notifications/unread-count`, `POST /{id}/read`, `POST /read-all`, `DELETE /api/notifications`.
+- [ ] **Card "atualização disponível" real** — trocar a simulação por `GET /api/system/update` (+ botão chamando `POST /api/system/update`).
+- [ ] **Ícone Wi-Fi × cabo** na TopBar — a partir de `GET /api/system/network` (`medium` = `wifi`/`ethernet`).
+- [ ] **Ícone do globo (servidor central)** — a partir de `GET /api/system/connectivity` (ou `status.centralServerOnline`).
+
+### Dependem de backend novo (ver `../reflow-oven-backend/TODO.md`)
+- [ ] **Relatórios — paginação no servidor** — o backend já tem `page/pageSize/search/from/to`, mas o dropdown "Filtrar por…" (status/ação/severidade) e o nível do Log do Sistema **não têm parâmetro** — precisa do item **F** antes, senão a paginação filtraria só a página atual.
+- [ ] **Persistir tema + séries do gráfico por usuário** — precisa de preferências por usuário no backend (item **A**); hoje o tema só vive na sessão.
+- [ ] **Aba Rede** — listar interfaces, escolher interface prioritária e **porta** no teste de ping (item **B**); migrar a config para `/api/system/*`.
+- [ ] **Gráfico do relatório de execução multi-sinal** (corrente/tensão/RPM/temp. dissipador) — precisa do trace persistido por execução (item **C**).
 
 ## Feito
 
@@ -79,3 +96,7 @@ Ao acessar a pagina de programas tbm
 - Além disso em informações talvez, se houver uma atualizaão nova do programa deve aparecer ali a nova versão e o botão pra atualizar, podemos simular depois
 
 - O do sino com um numero 3 em cima é referente à notificações não vizualizadas. Então o usuário deve ir até a tela de Notificações para ver o que há la, pode ser atualização nova disponivel, Algum erro que ocorreu. E quando houver nova notificação teve ter o toast
+
+- Quando tiver pouco espaço no HD, informar ao cliente por email e algum aviso na tela para ele apagar relatorios antigos.
+
+-Cade o log pea quando usa set,update. Além disso queria colocar as informações do get e do set. Tipo que dado retornou, que dado setou...
