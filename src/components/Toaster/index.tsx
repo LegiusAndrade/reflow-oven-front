@@ -7,7 +7,7 @@ import { dismissToast, getToastsServerSnapshot, getToastsSnapshot, subscribeToas
 
 const STYLES: Record<Toast["type"], { icon: string; accent: string }> = {
   success: { icon: "check_circle", accent: "text-emerald-700 dark:text-emerald-400" },
-  error: { icon: "error", accent: "text-red-700 dark:text-red-400" },
+  error: { icon: "cancel", accent: "text-red-700 dark:text-red-400" },
   info: { icon: "info", accent: "text-[var(--brand)]" },
 };
 

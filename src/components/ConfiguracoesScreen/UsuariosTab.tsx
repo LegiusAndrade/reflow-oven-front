@@ -237,7 +237,7 @@ export function UsuariosTab() {
               await removeUser(deleteUser.id);
               showToast("Usuário removido");
             } catch (e) {
-              showToast(e instanceof ApiError ? e.message : "Falha ao remover usuário");
+              showToast(e instanceof ApiError ? e.message : "Falha ao remover usuário", "error");
             }
           }
           setDeleteOpen(false);

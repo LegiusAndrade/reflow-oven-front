@@ -36,7 +36,7 @@ export function CalibracaoTab() {
         setCal(loaded);
         setBase(loaded);
       })
-      .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar a calibração"));
+      .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar a calibração", "error"));
   }, []);
 
   return (
@@ -112,7 +112,7 @@ export function CalibracaoTab() {
             setBase(cal);
             showToast("Calibração salva");
           } catch (e) {
-            showToast(e instanceof ApiError ? e.message : "Falha ao salvar a calibração");
+            showToast(e instanceof ApiError ? e.message : "Falha ao salvar a calibração", "error");
           }
         }}
       />

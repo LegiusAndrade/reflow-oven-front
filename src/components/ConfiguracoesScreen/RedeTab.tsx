@@ -99,7 +99,7 @@ export function RedeTab() {
       setActiveInterface(name);
       showToast("Interface prioritária definida");
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha ao definir interface");
+      showToast(e instanceof ApiError ? e.message : "Falha ao definir interface", "error");
     } finally {
       setSettingPriority(null);
     }
@@ -119,7 +119,7 @@ export function RedeTab() {
       setBase(form);
       showToast("Configurações de rede salvas");
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha ao salvar");
+      showToast(e instanceof ApiError ? e.message : "Falha ao salvar", "error");
     }
   };
 
@@ -139,7 +139,7 @@ export function RedeTab() {
       );
     } catch (e) {
       setPingResult({ ok: false, lines: [e instanceof ApiError ? e.message : `Falha ao testar ${host}`] });
-      if (e instanceof ApiError) showToast(e.message);
+      if (e instanceof ApiError) showToast(e.message, "error");
     } finally {
       setPinging(false);
     }

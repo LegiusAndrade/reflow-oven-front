@@ -98,7 +98,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
       })
       .catch((e) => {
         if (cancelled) return;
-        showToast(e instanceof ApiError ? e.message : "Falha ao iniciar a execução");
+        showToast(e instanceof ApiError ? e.message : "Falha ao iniciar a execução", "error");
         onClose();
       });
     return () => {
@@ -320,7 +320,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
               showToast("Execução interrompida");
             })
             .catch((e) => {
-              showToast(e instanceof ApiError ? e.message : "Falha ao interromper a execução");
+              showToast(e instanceof ApiError ? e.message : "Falha ao interromper a execução", "error");
             });
         }}
         onCancel={() => setConfirmAbort(false)}

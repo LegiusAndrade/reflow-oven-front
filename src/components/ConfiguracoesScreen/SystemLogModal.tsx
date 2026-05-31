@@ -46,7 +46,7 @@ export function SystemLogModal({ open, onClose }: { open: boolean; onClose: () =
       .then((res) => {
         setBase(res.items.map((l) => ({ at: fmtLog(l.at), level: l.level, message: l.message })));
       })
-      .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar o log do sistema"));
+      .catch((e) => showToast(e instanceof ApiError ? e.message : "Falha ao carregar o log do sistema", "error"));
   }, [open, filter]);
 
   const logs = base;

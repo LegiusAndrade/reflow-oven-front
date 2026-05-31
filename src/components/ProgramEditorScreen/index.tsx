@@ -156,7 +156,7 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
       showToast(initialProgram ? "Programa atualizado" : "Programa criado");
       router.push("/programas");
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha ao salvar o programa");
+      showToast(e instanceof ApiError ? e.message : "Falha ao salvar o programa", "error");
     } finally {
       setSaving(false);
     }

@@ -37,7 +37,7 @@ export function ProgramListCard({ program }: { program: Program }) {
         <h3 className='truncate text-lg font-semibold'>{program.name}</h3>
         <button
           type='button'
-          onClick={() => toggleFavorite(program.id).catch((err) => showToast(err instanceof ApiError ? err.message : "Falha ao atualizar o favorito"))}
+          onClick={() => toggleFavorite(program.id).catch((err) => showToast(err instanceof ApiError ? err.message : "Falha ao atualizar o favorito", "error"))}
           aria-pressed={isFavorite}
           aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           className={clsx("btn-press shrink-0 cursor-pointer text-[var(--brand)]", !isFavorite && "opacity-50 hover:opacity-100")}
@@ -100,7 +100,7 @@ export function ProgramListCard({ program }: { program: Program }) {
             await deleteProgram(program.id);
             showToast("Programa deletado");
           } catch (e) {
-            showToast(e instanceof ApiError ? e.message : "Falha ao deletar o programa");
+            showToast(e instanceof ApiError ? e.message : "Falha ao deletar o programa", "error");
           }
           setConfirmDeleteOpen(false);
         }}

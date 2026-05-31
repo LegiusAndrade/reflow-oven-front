@@ -25,7 +25,7 @@ export function ProgramEditorLoader({ programId }: { programId: string }) {
         if (e instanceof ApiError && e.status === 404) {
           setState({ status: "notfound" });
         } else {
-          showToast(e instanceof ApiError ? e.message : "Falha ao carregar o programa");
+          showToast(e instanceof ApiError ? e.message : "Falha ao carregar o programa", "error");
           setState({ status: "error" });
         }
       });

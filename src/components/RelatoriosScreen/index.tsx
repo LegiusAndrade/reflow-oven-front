@@ -183,7 +183,7 @@ export function RelatoriosScreen() {
           }
         }
       } catch (e) {
-        if (!cancelled) showToast(e instanceof ApiError ? e.message : "Falha ao carregar os relatórios");
+        if (!cancelled) showToast(e instanceof ApiError ? e.message : "Falha ao carregar os relatórios", "error");
       }
     };
     void run();

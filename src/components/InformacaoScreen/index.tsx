@@ -92,7 +92,7 @@ export function InformacaoScreen() {
       const s = await api.getUpdateStatus().catch(() => null);
       if (s) setUpdate(s);
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha ao atualizar.");
+      showToast(e instanceof ApiError ? e.message : "Falha ao atualizar.", "error");
     } finally {
       setApplying(false);
     }

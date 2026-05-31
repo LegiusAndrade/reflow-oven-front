@@ -58,7 +58,7 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
       await performCleanup(chosen);
       showToast(`Limpeza concluída — ${totalRecords} ${totalRecords === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha na limpeza do banco");
+      showToast(e instanceof ApiError ? e.message : "Falha na limpeza do banco", "error");
     }
     setConfirming(false);
     onClose();

@@ -41,7 +41,7 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
       onClose();
       router.replace("/login");
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha no reset de fábrica");
+      showToast(e instanceof ApiError ? e.message : "Falha no reset de fábrica", "error");
       setPending(false);
     }
   };

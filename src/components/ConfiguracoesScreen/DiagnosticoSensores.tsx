@@ -33,7 +33,7 @@ export function DiagnosticoSensores() {
       .then((res) => setTests((t) => ({ ...t, [id]: (res as { state?: string }).state === "ok" ? "ok" : "fail" })))
       .catch((e) => {
         setTests((t) => ({ ...t, [id]: "fail" }));
-        showToast(e instanceof ApiError ? e.message : "Falha ao executar o teste");
+        showToast(e instanceof ApiError ? e.message : "Falha ao executar o teste", "error");
       });
   };
   const runAll = () => TESTS.forEach((t) => runTest(t.id));

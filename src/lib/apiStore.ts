@@ -49,7 +49,7 @@ export function createApiStore<T>(opts: ApiStoreOptions<T>): JsonStore<T> {
         // leaving the UI showing settings the server never accepted (data-loss on reload).
         value = prev;
         notify();
-        showToast("Falha ao salvar. As alterações foram revertidas.");
+        showToast("Falha ao salvar. As alterações foram revertidas.", "error");
       });
   };
 

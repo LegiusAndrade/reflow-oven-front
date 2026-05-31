@@ -66,7 +66,7 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
       showToast("Usuário criado");
       onClose();
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha ao criar usuário");
+      showToast(e instanceof ApiError ? e.message : "Falha ao criar usuário", "error");
     }
   };
 

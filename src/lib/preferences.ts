@@ -121,7 +121,7 @@ async function persist(prev: UserPreferencesDto, next: UserPreferencesDto): Prom
     if (seq !== writeSeq) return; // a newer write supersedes this one — don't clobber it on rollback
     preferencesStore.set(prev);
     applyTheme(prev.theme); // re-sync the DOM with the rolled-back theme
-    showToast("Falha ao salvar. As alterações foram revertidas.");
+    showToast("Falha ao salvar. As alterações foram revertidas.", "error");
   }
 }
 
