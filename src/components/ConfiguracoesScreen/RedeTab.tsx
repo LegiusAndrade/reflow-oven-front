@@ -251,7 +251,10 @@ export function RedeTab() {
 
         <section className='flex flex-col gap-2 border-t border-[var(--border)] pt-4'>
           <h3 className='font-semibold'>Teste de Ping</h3>
-          <div className='flex flex-wrap items-end gap-3'>
+          {/* items-start so the two field labels (and their inputs) line up; the Porta field's
+              Mín/Máx hint then hangs below without shoving its input up. The Testar button gets a
+              top margin matching the label row (text-sm + gap-1 ≈ 1.625rem) so it sits on the input line. */}
+          <div className='flex flex-wrap items-start gap-3'>
             <TextLine
               label='Host / IP'
               value={pingHost}
@@ -273,7 +276,7 @@ export function RedeTab() {
               type='button'
               onClick={runPing}
               disabled={pinging || !isAdmin}
-              className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-50'
+              className='btn-action mt-[1.625rem] flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-50'
             >
               <IconGeneral icon={pinging ? "progress_activity" : "network_ping"} fill={0} className={clsx("[--icon-size:1.25rem]", pinging && "animate-spin")} />
               {pinging ? "Testando..." : "Testar"}
