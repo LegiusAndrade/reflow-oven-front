@@ -5,12 +5,11 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
-import { api, getToken } from "@/lib/api";
+import { useStore } from "@/hooks/useStore";
+import { api, ApiError, getToken, type UpdateStatusDto } from "@/lib/api";
+import { sessionStore } from "@/lib/auth";
 import { DEVICE_INFO, REPO_URL, type BoardInfo, type DeviceInfo } from "@/lib/deviceInfo";
 import { showToast } from "@/lib/toast";
-
-/** Simulated "latest available" HTML version (there is no update server yet). */
-const SIMULATED_NEW_VERSION = "1.4.0";
 
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
@@ -53,16 +52,29 @@ function BoardCard({ icon, title, board }: { icon: string; title: string; board:
 /** Informação screen: device versions/serials + Pandewilly logo and a QR code to the repository. */
 export function InformacaoScreen() {
   const [d, setD] = useState<DeviceInfo>(DEVICE_INFO);
-  const [updateState, setUpdateState] = useState<"available" | "updating" | "done">("available");
+  const [update, setUpdate] = useState<UpdateStatusDto | null>(null);
+  const [applying, setApplying] = useState(false);
+  const session = useStore(sessionStore);
+  const isAdmin = session?.role === "Admin";
 
-  const runUpdate = () => {
-    setUpdateState("updating");
-    // Simulated update (placeholder): a real one would trigger the backend/OTA flow.
-    window.setTimeout(() => {
-      setUpdateState("done");
-      showToast("Atualização concluída. Reinicie o dispositivo para aplicar.");
-    }, 2500);
+  const runUpdate = async () => {
+    setApplying(true);
+    try {
+      await api.applyUpdate();
+      showToast("Atualização iniciada. O dispositivo pode reiniciar.");
+      const s = await api.getUpdateStatus().catch(() => null);
+      if (s) setUpdate(s);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : "Falha ao atualizar.");
+    } finally {
+      setApplying(false);
+    }
   };
+
+  useEffect(() => {
+    if (!getToken()) return;
+    api.getUpdateStatus().then(setUpdate).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!getToken()) return;
@@ -112,26 +124,28 @@ export function InformacaoScreen() {
 
         {/* System info + per-board blocks, each in a matching card (top-aligned so nothing is clipped at 1024×600) */}
         <div className='flex min-w-0 flex-1 flex-col gap-4'>
-          {updateState !== "done" && (
+          {update?.updateAvailable === true && (
             <div className='flex flex-col gap-3 rounded-xl border border-[var(--brand)] p-4 sm:flex-row sm:items-center sm:justify-between'>
               <div className='flex items-center gap-3'>
                 <IconGeneral icon='system_update' fill={1} className='shrink-0 text-[var(--brand)] [--icon-size:1.75rem]' />
                 <div>
                   <p className='font-semibold'>Atualização disponível</p>
                   <p className='text-sm opacity-70'>
-                    Nova versão {SIMULATED_NEW_VERSION} (atual: {d.htmlVersion}).
+                    Nova versão {update.availableVersion} (atual: {update.currentVersion}).
                   </p>
                 </div>
               </div>
-              <button
-                type='button'
-                onClick={runUpdate}
-                disabled={updateState === "updating"}
-                className='btn-action flex shrink-0 cursor-pointer items-center gap-2 self-start rounded-xl px-5 py-2.5 font-semibold disabled:opacity-60 sm:self-auto'
-              >
-                <IconGeneral icon={updateState === "updating" ? "progress_activity" : "download"} fill={0} className={`[--icon-size:1.25rem]${updateState === "updating" ? " animate-spin" : ""}`} />
-                {updateState === "updating" ? "Atualizando…" : "Atualizar"}
-              </button>
+              {isAdmin && (
+                <button
+                  type='button'
+                  onClick={runUpdate}
+                  disabled={applying}
+                  className='btn-action flex shrink-0 cursor-pointer items-center gap-2 self-start rounded-xl px-5 py-2.5 font-semibold disabled:opacity-60 sm:self-auto'
+                >
+                  <IconGeneral icon={applying ? "progress_activity" : "download"} fill={0} className={`[--icon-size:1.25rem]${applying ? " animate-spin" : ""}`} />
+                  {applying ? "Atualizando…" : "Atualizar"}
+                </button>
+              )}
             </div>
           )}
           <InfoCard icon='dashboard' title='Sistema'>

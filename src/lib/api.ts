@@ -213,6 +213,12 @@ export interface RunStatusDto {
   last?: TraceSampleDto | null;
 }
 
+export interface UpdateStatusDto {
+  currentVersion: string;
+  availableVersion?: string | null;
+  updateAvailable: boolean;
+}
+
 // --- Endpoints ---------------------------------------------------------------------------
 
 export const api = {
@@ -277,6 +283,10 @@ export const api = {
 
   // device
   device: () => request<DeviceInfoDto>("/api/device"),
+
+  // system / OTA
+  getUpdateStatus: () => request<UpdateStatusDto>("/api/system/update"),
+  applyUpdate: () => request<void>("/api/system/update", { method: "POST" }),
 };
 
 export interface BoardDto {
