@@ -297,6 +297,21 @@ export interface SystemStatusDto {
   centralServerOnline: boolean;
 }
 
+/** Live OS metrics (Informação → Sistema). cpuLoadPercent is the OrangePi cores' load average. */
+export interface SystemMetricsDto {
+  hostname: string;
+  os: string;
+  kernel: string;
+  uptimeSeconds: number;
+  cpuLoadPercent: number;
+  /** °C, or null when the platform exposes no CPU thermal sensor. */
+  cpuTempC?: number | null;
+  memoryUsedMB: number;
+  memoryTotalMB: number;
+  diskFreeGB: number;
+  diskTotalGB: number;
+}
+
 // --- Reports (filter + paging) ----------------------------------------------------------
 // Filter values are the backend enum MEMBER NAMES (accent-free), which is what ASP.NET's
 // query-string enum binding parses — distinct from the accented JSON response values
@@ -452,6 +467,7 @@ export const api = {
 
   // system / OTA
   systemStatus: () => request<SystemStatusDto>("/api/system/status"),
+  systemMetrics: () => request<SystemMetricsDto>("/api/system/metrics"),
   getUpdateStatus: () => request<UpdateStatusDto>("/api/system/update"),
   applyUpdate: () => request<void>("/api/system/update", { method: "POST" }),
 

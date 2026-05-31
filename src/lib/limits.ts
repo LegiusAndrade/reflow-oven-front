@@ -87,6 +87,8 @@ export const APP_BOOT_TIMEOUT_MS = 12000;
 export const NOTIFICATION_POLL_MS = 30000;
 /** Intervalo entre buscas do status do sistema (rede / servidor central) na TopBar. */
 export const SYSTEM_STATUS_POLL_MS = 20000;
+/** Intervalo entre buscas das métricas do SO (carga da CPU) na tela Informação — polling leve. */
+export const SYSTEM_METRICS_POLL_MS = 5000;
 
 // --- Logger ---------------------------------------------------------------------------
 /** Máximo de entradas mantidas no buffer em memória do logger (console + visualizador futuro). */
