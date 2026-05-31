@@ -3,11 +3,14 @@
 import { clsx } from "clsx";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { useSession } from "@/hooks/useSession";
+import { isMaster } from "@/lib/auth";
+import { DiagnosticoLog } from "./DiagnosticoLog";
 import { DiagnosticoSensores } from "./DiagnosticoSensores";
 import { DiagnosticoStats } from "./DiagnosticoStats";
 import { ManutencaoTab } from "./ManutencaoTab";
 
-type SubTab = "stats" | "sensores" | "manutencao";
+type SubTab = "stats" | "sensores" | "manutencao" | "log";
 
 const SUBTABS: { id: SubTab; label: string; icon: string }[] = [
   { id: "stats", label: "Estatísticas", icon: "leaderboard" },
@@ -15,14 +18,19 @@ const SUBTABS: { id: SubTab; label: string; icon: string }[] = [
   { id: "manutencao", label: "Manutenção", icon: "build" },
 ];
 
-/** Diagnóstico tab: a secondary tab bar over Estatísticas / Sensores / Manutenção. */
+/** The Log sub-tab is reserved for the Master (dev) session. */
+const LOG_SUBTAB: { id: SubTab; label: string; icon: string } = { id: "log", label: "Log", icon: "terminal" };
+
+/** Diagnóstico tab: a secondary tab bar over Estatísticas / Sensores / Manutenção (+ Log for Master). */
 export function DiagnosticoTab() {
   const [sub, setSub] = useState<SubTab>("stats");
+  const master = isMaster(useSession()?.role ?? "Regular");
+  const subtabs = master ? [...SUBTABS, LOG_SUBTAB] : SUBTABS;
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-4'>
       <nav className='flex shrink-0 flex-wrap gap-2'>
-        {SUBTABS.map((t) => (
+        {subtabs.map((t) => (
           <button
             key={t.id}
             type='button'
@@ -43,6 +51,7 @@ export function DiagnosticoTab() {
         {sub === "stats" && <DiagnosticoStats />}
         {sub === "sensores" && <DiagnosticoSensores />}
         {sub === "manutencao" && <ManutencaoTab />}
+        {sub === "log" && master && <DiagnosticoLog />}
       </div>
     </div>
   );

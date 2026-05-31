@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useStore } from "@/hooks/useStore";
 import { api, ApiError, getToken, type SystemMetricsDto, type UpdateStatusDto } from "@/lib/api";
-import { sessionStore } from "@/lib/auth";
+import { canAdminister, sessionStore } from "@/lib/auth";
 import { DEVICE_INFO, REPO_URL, type BoardInfo, type DeviceInfo } from "@/lib/deviceInfo";
 import { SYSTEM_METRICS_POLL_MS } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
@@ -82,7 +82,7 @@ export function InformacaoScreen() {
   const [update, setUpdate] = useState<UpdateStatusDto | null>(null);
   const [applying, setApplying] = useState(false);
   const session = useStore(sessionStore);
-  const isAdmin = session?.role === "Admin";
+  const isAdmin = canAdminister(session?.role ?? "Regular");
 
   const runUpdate = async () => {
     setApplying(true);

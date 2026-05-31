@@ -104,7 +104,9 @@ const qs = (params: object): string => {
 
 // --- Wire types (mirror the backend DTOs) -----------------------------------------------
 
-export type Role = "Admin" | "Regular";
+/** "Master" is the single dev/superuser account (created in the DB; full Admin powers + the
+ *  Diagnóstico → Log tab). Regular users are never this; it is not a creatable user type. */
+export type Role = "Admin" | "Regular" | "Master";
 export type RampShape = "Linear" | "Fixo" | "Parábola positiva" | "Parábola negativa";
 export type RunStatusKind = "running" | "done" | "aborted";
 export type RunPhase = "Aquecimento" | "Patamar" | "Pico" | "Resfriamento";
@@ -192,7 +194,9 @@ export interface UserDto {
   id: string;
   name: string;
   email: string;
-  type: Role;
+  // A managed user is only Admin/Regular — "Master" is the single seeded dev account (a session
+  // role), never listed or created through the Usuários CRUD.
+  type: "Admin" | "Regular";
   status: "Ativo" | "Inativo";
   /** ISO 8601 */
   createdAt: string;

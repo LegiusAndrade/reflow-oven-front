@@ -92,6 +92,9 @@ export const NOTIFICATION_POLL_MS = 30000;
 export const SYSTEM_STATUS_POLL_MS = 20000;
 /** Intervalo entre buscas das métricas do SO (carga da CPU) na tela Informação — polling leve. */
 export const SYSTEM_METRICS_POLL_MS = 5000;
+/** Intervalo de atualização do "Log do Sistema" ao vivo (Diagnóstico → Log, fonte Sistema) enquanto
+ *  o backend não expõe um hub SignalR de push; ~quase-tempo-real via polling do GET /api/system-log. */
+export const SYSTEM_LOG_POLL_MS = 2000;
 /** Janela em que um toast idêntico (mesmo tipo+mensagem) é suprimido — evita que vários pollers
  *  empilhem o mesmo erro "offline" a cada tick quando o servidor cai. Abaixo de todos os intervalos
  *  de polling acima, então ticks consecutivos nunca disparam o mesmo toast duas vezes. */

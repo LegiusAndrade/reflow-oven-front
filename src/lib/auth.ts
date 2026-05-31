@@ -2,7 +2,7 @@ import { api, ApiError, getToken, setToken, type Role, type Theme, type RunSerie
 import { createJsonStore } from "./localStore";
 import { showToast } from "./toast";
 
-export type { Role, Theme, RunSeriesDto }; // "Admin" | "Regular"
+export type { Role, Theme, RunSeriesDto }; // "Admin" | "Regular" | "Master"
 
 // `theme` is always present on a real session (defaults "system"); `chartSeries` is omitted for the
 // technician/calibration session. login()/refreshSession() store the SessionDto verbatim, so both
@@ -54,16 +54,27 @@ export async function refreshSession(): Promise<void> {
   }
 }
 
+/** Admin-level privileges. Master is the dev superuser — a superset of Admin — so it passes
+ *  every Admin gate. Use this instead of `role === "Admin"` so Master is never locked out. */
+export function canAdminister(role: Role): boolean {
+  return role === "Admin" || role === "Master";
+}
+
+/** The Master (single dev/superuser account) — unlocks the Diagnóstico → Log tab. */
+export function isMaster(role: Role): boolean {
+  return role === "Master";
+}
+
 /**
- * Route access by role. Admin reaches everything; a Regular user may only reach the home page
+ * Route access by role. Admin/Master reach everything; a Regular user may only reach the home page
  * and Programas (and its sub-routes). `/login` is never gated (handled outside the shell).
  */
 export function canAccess(role: Role, pathname: string): boolean {
-  if (role === "Admin") return true;
+  if (canAdminister(role)) return true;
   return pathname === "/" || pathname === "/programas" || pathname === "/notificacoes";
 }
 
-/** Only Admin may create/edit/delete programs; Regular is view-only. */
+/** Only Admin/Master may create/edit/delete programs; Regular is view-only. */
 export function canManagePrograms(role: Role): boolean {
-  return role === "Admin";
+  return canAdminister(role);
 }

@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
+import { canAdminister } from "@/lib/auth";
 import { ApiError, api, type NetworkInterfaceDto, type NetworkLink } from "@/lib/api";
 import { NETWORK_FIELD_MAX_LENGTH, PING_PORT_MAX, PING_PORT_MIN } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
@@ -33,7 +34,7 @@ const EMPTY_FORM: WiredForm = {
 
 /** Rede tab: list interfaces + set priority, ping test (host + optional port), wired IP config. */
 export function RedeTab() {
-  const isAdmin = useSession()?.role === "Admin";
+  const isAdmin = canAdminister(useSession()?.role ?? "Regular");
 
   // --- Interfaces ---------------------------------------------------------------------
   const [interfaces, setInterfaces] = useState<NetworkInterfaceDto[]>([]);

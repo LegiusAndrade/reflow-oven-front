@@ -50,4 +50,9 @@ export const logger = {
     listeners.add(cb);
     return () => void listeners.delete(cb);
   },
+  /** Drop every buffered entry (the live log viewer's "Limpar"). */
+  clear: (): void => {
+    ring.length = 0;
+    listeners.forEach((l) => l());
+  },
 };
