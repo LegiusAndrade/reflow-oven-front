@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useStore } from "@/hooks/useStore";
+import { clampToRange, parseClampedPaste } from "@/lib/numericInput";
 import { type Settings, settingsStore } from "@/lib/settings";
 
 const INPUT_CLS = "w-full rounded-xl border border-[var(--border)] bg-transparent px-3 py-2.5 outline-none transition-colors focus:border-[var(--brand)]";
@@ -43,10 +44,15 @@ export function NumberField({ label, value, onChange, min, max, step = 1, unit, 
           max={max}
           step={step}
           onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          onPaste={(e) => {
+            // Clamp on paste so CTRL+V can't drop an out-of-range value into the field.
+            const v = parseClampedPaste(e.clipboardData.getData("text"), min ?? -Infinity, max ?? Infinity);
+            e.preventDefault();
+            if (v !== null) onChange(v);
+          }}
           onBlur={(e) => {
-            // Snap the typed/pasted value into [min, max] when the field loses focus.
-            const n = e.target.value === "" ? (min ?? 0) : Number(e.target.value);
-            const clamped = Math.min(max ?? n, Math.max(min ?? n, n));
+            // Snap the typed value into [min, max] when the field loses focus.
+            const clamped = clampToRange(e.target.value === "" ? (min ?? 0) : Number(e.target.value), min ?? -Infinity, max ?? Infinity);
             if (clamped !== value) onChange(clamped);
           }}
           className={clsx(INPUT_CLS, "tabular-nums", unit && "pr-12")}
