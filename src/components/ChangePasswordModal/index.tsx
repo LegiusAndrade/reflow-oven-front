@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PasswordLine } from "@/components/ConfiguracoesScreen/fields";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
@@ -29,9 +29,12 @@ export function ChangePasswordModal({ open, onClose, forced = false }: IChangePa
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
 
-  // Reset the form whenever the modal (re)opens so a previous attempt never leaks in.
-  useEffect(() => {
+  // Reset the form whenever the modal (re)opens so a previous attempt never leaks in. Render-time
+  // adjustment (the codebase pattern, cf. UserCreateModal) — avoids the set-state-in-effect lint rule.
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setCurrent("");
       setNext("");
@@ -39,7 +42,7 @@ export function ChangePasswordModal({ open, onClose, forced = false }: IChangePa
       setError(null);
       setSubmitting(false);
     }
-  }, [open]);
+  }
 
   const tooShort = next.length > 0 && next.length < PASSWORD_MIN_LENGTH;
   const mismatch = confirm.length > 0 && next !== confirm;
