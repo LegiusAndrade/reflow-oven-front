@@ -13,17 +13,20 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 ### UI / toasts
 
-1. [~] **Toasts de erro com ícone errado** — todo erro mostrava o "check" verde; deve ser um **X**
-   vermelho. _Correção aplicada:_ as 22 chamadas `showToast(...)` de falha passaram a usar `"error"`
-   e o ícone do tipo `error` no `Toaster` virou `cancel` (círculo com X). _Validar na tela._
-2. [ ] **Spam do toast "Não foi possível conectar ao servidor"** — com o servidor fora, várias
-   chamadas (status / notificações / programas) disparam o mesmo toast repetido (ver logs colados).
-   Agrupar/limitar: um único toast enquanto estiver offline (dedupe por mensagem numa janela de tempo).
-   Idealmente a mensagem deveria trazer também **possíveis soluções**.
-3. [ ] **CTRL+F5 na tela de Programas → vários toasts "Execução abortada"** — disparo em massa ao
-   recarregar; provavelmente o hub de telemetria reemite eventos antigos ao reconectar. Suprimir.
-4. [ ] **SignalR: "The connection was stopped during negotiation"** — ocorre ao logar e ao acessar
-   Programas. Investigar o ciclo de vida da conexão (`realtime.ts`) vs. troca de rota/token.
+1. [x] **Toasts de erro com ícone errado** — todo erro mostrava o "check" verde; deve ser um **X**
+   vermelho. _Feito (`5224f0f`):_ as 22 chamadas `showToast(...)` de falha passaram a usar `"error"`
+   e o ícone do tipo `error` no `Toaster` virou `cancel` (círculo com X).
+2. [~] **Spam do toast "Não foi possível conectar ao servidor"** — _Feito (`b9824fb`):_ dedupe por
+   `${type}:${message}` numa janela de `TOAST_DEDUPE_MS` (5 s) — toasts idênticos não repetem.
+   _Pendente (enhancement):_ a mensagem trazer também **possíveis soluções** (texto de ajuda).
+3. [~] **CTRL+F5 na tela de Programas → vários toasts "Execução abortada"** — _Investigado:_ não existe
+   toast "Execução abortada" no código atual (o `RunModal` só faz toast em "concluída"/erro; `onStatus`
+   "aborted" não dispara toast). O dedupe do #2 já barra repetições. Revalidar no device — se ainda
+   ocorrer, é replay de evento do hub ao reconectar (suprimir por timestamp da conexão).
+4. [x] **SignalR: "The connection was stopped during negotiation"** — _Feito (`6a6c5cb`):_ `realtime.ts`
+   ganhou guarda de ciclo de vida (cleanup roda uma vez; pula `SubscribeRun` se cancelou durante a
+   negociação; `stop()` com `.catch` que engole o erro de negociação interrompida) + backoff fixo
+   `SIGNALR_RECONNECT_DELAYS_MS`.
 
 ### Relatórios
 
@@ -45,10 +48,15 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 ### Configurações / TopBar
 
-8. [ ] **Ping: campo HOST/IP desalinhado com o campo Porta.** (`2026-05-31_15-08.png`) — aba Rede.
-9. [ ] **Ícone de WiFi "zoado".** (`2026-05-31_15-11.png`)
-10. [ ] **Botão de notificação (sino):** ao clicar, levar à tela de Notificações (atualização nova,
-    erros, etc.); o badge "3" são as não vistas. Definir/concluir o comportamento do clique.
+8. [x] **Ping: campo HOST/IP desalinhado com o campo Porta.** (`2026-05-31_15-08.png`) — aba Rede.
+   _Feito (`6c42b97`):_ a linha virou `items-start` e o botão Testar ganhou `mt-[1.625rem]` (altura do label).
+9. [~] **Ícone de WiFi "zoado".** (`2026-05-31_15-11.png`) — _Investigado:_ a captura era a ligadura
+   `signal_wifi_3_bar` desenhada como TEXTO (fonte offline) — já resolvido pela fonte self-hospedada
+   (`7118783`); hoje o `IconWifi` é glyph. A tentativa de igualar o `--icon-size` dos vizinhos foi
+   revertida (o `IconWifi` não aceita `className`); refazer dando suporte a `className` se ainda destoar.
+10. [x] **Botão de notificação (sino):** ao clicar, levar à tela de Notificações (atualização nova,
+    erros, etc.); o badge "3" são as não vistas. _Feito (`e47b591`):_ o sino virou `Link` para
+    `/notificacoes` (`btn-press`); o badge de não vistas continua.
 
 ### Programas / execução
 
@@ -56,8 +64,10 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
     está reenviando/recarregando o programa inteiro. Deve haver um **POST dedicado de favoritar/
     desfavoritar por id** (idem para deletar por id), sem refetch da lista inteira. _(Pode ter parte
     no backend; ver TODO do backend.)_
-12. [ ] **Editar programa + Salvar não sai da tela** — apenas desabilita o botão; deveria navegar de
-    volta para a lista após salvar (como no "Criar"). _(Pode ter regressado com a checagem `totalSec > 0`.)_
+12. [~] **Editar programa + Salvar não sai da tela** — _Investigado:_ o `handleSave` é compartilhado e já
+    chama `router.push("/programas")` tanto ao criar quanto ao editar; o palpite de "faltou await" estava
+    errado (`router.push` é void no Next 16). Não reproduz por leitura de código — revalidar no device
+    (precisa do backend para o save concluir).
 13. [ ] **Usuário `vanessa` (Regular) recebe 403 ao iniciar programa** (`POST /api/runs/start` → 403).
     Definir se Regular pode executar; se sim, é permissão no backend; se não, esconder/bloquear no front.
 14. [ ] **Criação de usuário com problemas** — (a) o erro "usuário já existe" aparece no campo **antes**
@@ -66,19 +76,26 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 ### Diversos
 
-15. [ ] **Firefox: ao usar a senha salva, o fundo do campo fica branco.** (`2026-05-31_15-31.png`)
-    Estilizar o estado `:-webkit-autofill`/autofill para respeitar o tema.
-16. [ ] **Modais limitam largura em telas grandes sem necessidade** (`2026-05-31_15-55.png`) — na
-    execução e provavelmente em todos os modais; soltar o `max-w` quando a tela é maior.
-17. [ ] **Tela de login não deveria ter o botão de trocar tema** — não faz sentido ali.
-18. [ ] **Limitar escrita e colagem pelos `min`/`max` do campo** — campos numéricos só aceitam números
-    (inclusive via CTRL+V). Auditar os inputs (centralizar em um helper/limites de `lib/limits.ts`).
-19. [ ] **Casas decimais** — confirmar que a BottomBar/sidebar mostra **1 casa** para temperatura/
-    tensão/corrente e **0** para RPM (relatos antigos; validar se ainda ocorre).
-20. [ ] **Nova aba "Log" em Diagnóstico (somente login dev)** — quadro com log em tempo real no browser
-    (ex.: "Front pediu status → Servidor respondeu ..."), só visível no browser (some ao fechar) ou com
-    teto de ~1000 linhas. Visível para o usuário dev (`dev.pandewilly` / `pandewilly`). _(Há `logger.ts`;
-    falta a aba/visualizador.)_
+15. [x] **Firefox: ao usar a senha salva, o fundo do campo fica branco.** (`2026-05-31_15-31.png`)
+    _Feito (`1f75882`):_ `:-webkit-autofill` + `:autofill` com box-shadow inset em `--card-bg` e
+    `-webkit-text-fill-color: var(--fg)` (globals.css) — o autofill respeita o tema.
+16. [x] **Modais limitam largura em telas grandes sem necessidade** (`2026-05-31_15-55.png`) —
+    _Feito (`8781c1e`):_ o `Modal` usa `w-[min(90vw,80rem)]` e o `RunModal` `w-[min(96vw,90rem)]`
+    (crescem em telas grandes; mantêm o baseline 1024×600).
+17. [x] **Tela de login não deveria ter o botão de trocar tema** — _Feito (`db0b0b3`):_ o `ThemeToggle`
+    no TopBar agora é gated por usuário logado (`{user && …}`), some no /login.
+18. [~] **Limitar escrita e colagem pelos `min`/`max` do campo** — _Feito (`ef42aa9`):_ o `NumberField`
+    (campos de Configurações) ganhou `onPaste` que faz clamp do CTRL+V, via helper `clampToRange`/
+    `parseClampedPaste` (`lib/numericInput.ts`). _Pendente:_ porta do ping (RedeTab) e auditar os demais;
+    os inputs do editor de programa já fazem clamp no `onChange`.
+19. [x] **Casas decimais** — _Verificado:_ `formatReading` (`lib/sensors.ts`) já faz RPM com 0 casas
+    (`Math.round`) e °C/V/A com 1 casa (`toFixed(1)`); BottomBar e Diagnóstico usam essa função.
+20. [x] **Nova aba "Log" em Diagnóstico (somente login dev)** — _Feito (`6de510b`):_ aba **Log** só
+    para o papel **Master** (`isMaster`), com dois fontes via `Segmented`: **Navegador** (lê `logger`
+    ao vivo, pausar/limpar, teto `LOG_RING_MAX`=500, some ao recarregar) e **Sistema** (faz polling de
+    `GET /api/system-log` a cada `SYSTEM_LOG_POLL_MS`=2 s, filtro por nível). Verificado headless
+    (role Master → aba presente; Navegador `1/500 linhas`; Sistema 45 linhas). _Backend: criar o
+    usuário Master no BD + claim de papel — ver TODO do backend; o hub de push do system-log é opcional._
 
 ## Pendências de backend (validar quando publicar)
 
@@ -137,3 +154,24 @@ Itens a escrever/validar no `../reflow-oven-backend/TODO.md` (descrever o que se
 - [x] **INICIAR** — execução ao vivo com 3 gráficos sincronizados, crosshair compartilhado, fase/tempo/progresso.
 - [x] **Calibração** — aba em Configurações (login técnico), assistente de calibração da saída.
 </content>
+
+
+## 🟢 Backend pronto (2026-05-31) — consumir no front
+
+O backend implementou os 6 itens da Validação 2026-05-31 + o programa-teste (ver `../reflow-oven-backend/TODO.md`, banner "Implementado no backend"). Build + 78 testes verdes. O que o front precisa fazer:
+
+1. **Regular inicia/para execução (item 1):** `POST /api/runs/start` e `/stop` agora aceitam o papel **Regular** (não dá mais 403). Nada a mudar no contrato — só conferir que o fluxo de INICIAR/PARAR funciona para o operador.
+
+2. **Cadastro de usuário = senha por e-mail + vencimento (item 2):**
+   - `POST /api/users` **não recebe mais `password`** — remover os campos *Senha/Confirmar senha* do `UserCreateModal`, a obrigatoriedade em `users.ts` e o `password` de `api.createUser`/`upsertUser`. Avisar "a senha será enviada por e-mail".
+   - **Senha provisória vencida:** se o login devolver `{ ok:false, error:"Sua senha provisória expirou. Enviamos uma nova senha para o seu e-mail." }`, o front deve **mostrar essa mensagem** e orientar o usuário a consultar o e-mail (o backend já reenviou uma nova senha, throttle 1×/dia). Hoje `auth.ts login()` já repassa `result.error` verbatim — basta garantir que esse caso fique claro na UI (ex.: destaque/realce, não um toast genérico).
+   - (Opcional) tratar `session.mustChangePassword` no login abrindo o modal de troca (`POST /api/auth/change-password` já existe).
+
+3. **Status "Abortado" (item 3):** `ExecutionStatusWire`/`ExecutionStatus` ganham `"Abortado"`; `StatusBadge` vira mapa por status (`Concluído`→verde, `Falha`→vermelho, `Abortado`→âmbar `stop_circle`); adicionar a opção de filtro `Abortado` em Relatórios → Execuções.
+
+4. **Motivo da falha + link (item 4):** `ExecutionDetailDto` traz `failureReason`/`errorCode`/`linkedErrorId` (nuláveis). Mostrar o motivo no detalhe e, quando `linkedErrorId != null`, botão "Ver no Relatório de Erros" → `setTab("erros")` + abrir `GET /api/errors/{id}`.
+
+5. **Favoritar sem flicker (item 5):** `POST /api/programs/{id}/favorite` aceita corpo `{ favorite: bool }` (set idempotente). Fazer **update otimista local** em `programStore.toggleFavorite`/`deleteProgram` (alternar a flag/filtrar a lista + `notify()`, **sem** `loadPrograms`), revertendo em erro. Resposta `{ favorite }` inalterada.
+
+6. **Diff estruturado da Alteração (item 6):** `GET /api/changes/{id}` traz `diff { summary, points[] }` (1 linha/índice, `status` ∈ `unchanged|changed|added|removed`, `changedFields` ∈ `temp|timeSec|ramp`) + `beforeCurve`/`afterCurve`. `GET /api/changes?before=<ISO>` lista só edições estritamente anteriores. Refazer o gráfico antes×depois (único, aberta contínua/demais tracejadas), consumir `diff` no lugar do particionamento por `role`, e usar `before=change.at` no `EditionCompare`. `at` continua ISO (formatar só na exibição).
+
