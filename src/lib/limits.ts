@@ -100,6 +100,9 @@ export const SYSTEM_LOG_POLL_MS = 2000;
  *  de polling acima, então ticks consecutivos nunca disparam o mesmo toast duas vezes. */
 export const TOAST_DEDUPE_MS = 5000;
 
+/** Atrasos (ms) do reconnect automático do SignalR: [0, 0, 2 s, 5 s, 10 s], depois desiste. */
+export const SIGNALR_RECONNECT_DELAYS_MS = [0, 0, 2000, 5000, 10000];
+
 // --- Logger ---------------------------------------------------------------------------
 /** Máximo de entradas mantidas no buffer em memória do logger (console + visualizador futuro). */
 export const LOG_RING_MAX = 500;
