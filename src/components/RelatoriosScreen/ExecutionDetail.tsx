@@ -1,5 +1,6 @@
 "use client";
 
+import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import type { ExecutionReport } from "@/lib/reports";
 import { StatusBadge } from "./badges";
@@ -7,11 +8,43 @@ import { DetailShell, EventList, Field, SectionTitle } from "./detailParts";
 import { SnapshotChart } from "./SnapshotChart";
 
 /** Full detail of a past run (Figma "Report Detail Exec"): profile chart, key figures,
- *  the programmed-vs-measured comparison, and the run's event timeline. */
-export function ExecutionDetail({ exec, onClose }: { exec: ExecutionReport; onClose: () => void }) {
+ *  the programmed-vs-measured comparison, and the run's event timeline. `onOpenError` (when
+ *  given) jumps from a failed run to its linked entry in the Erros report. */
+export function ExecutionDetail({
+  exec,
+  onClose,
+  onOpenError,
+}: {
+  exec: ExecutionReport;
+  onClose: () => void;
+  onOpenError?: (_errorId: string) => void;
+}) {
   return (
     <DetailShell title={exec.programName} onClose={onClose}>
       <div className='flex flex-col gap-6'>
+        {/* Failure context (failed/aborted runs): reason, optional code, and the link to the Erros report */}
+        {exec.failureReason && (
+          <section className='rounded-xl border border-red-500/40 bg-red-500/10 p-[clamp(0.75rem,2vw,1rem)]'>
+            <div className='flex items-start gap-2'>
+              <IconGeneral icon='error' fill={1} className='mt-0.5 shrink-0 text-red-700 [--icon-size:1.5rem] dark:text-red-400' />
+              <div className='flex min-w-0 flex-col gap-1'>
+                <p className='text-sm font-semibold tracking-wide text-red-700 uppercase dark:text-red-400'>Motivo da falha</p>
+                <p className='font-medium'>{exec.failureReason}</p>
+                {exec.errorCode && <p className='text-sm opacity-60'>Código: {exec.errorCode}</p>}
+              </div>
+            </div>
+            {exec.linkedErrorId && onOpenError && (
+              <button
+                type='button'
+                onClick={() => onOpenError(exec.linkedErrorId!)}
+                className='btn-action mt-3 inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 font-semibold'
+              >
+                <IconGeneral icon='error' fill={0} className='[--icon-size:1.25rem]' />
+                Ver no Relatório de Erros
+              </button>
+            )}
+          </section>
+        )}
         {/* Profile chart: programmed (dashed) vs real (solid), with the fault flagged */}
         <div>
           <div className='h-[clamp(170px,30vh,300px)] rounded-xl border border-[var(--border)] p-2'>

@@ -4,12 +4,18 @@ import { clsx } from "clsx";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import type { ChangeAction, ErrorSeverity, ExecutionStatus } from "@/lib/reports";
 
-/** Execution status pill (Concluído / Falha), used in the table and the detail view. */
+const STATUS_STYLE: Record<ExecutionStatus, { icon: string; cls: string }> = {
+  Concluído: { icon: "check_circle", cls: "text-emerald-700 dark:text-emerald-400" },
+  Falha: { icon: "cancel", cls: "text-red-700 dark:text-red-400" },
+  Abortado: { icon: "stop_circle", cls: "text-amber-700 dark:text-amber-400" },
+};
+
+/** Execution status pill (Concluído / Falha / Abortado), used in the table and the detail view. */
 export function StatusBadge({ status }: { status: ExecutionStatus }) {
-  const ok = status === "Concluído";
+  const style = STATUS_STYLE[status];
   return (
-    <span className={clsx("inline-flex items-center gap-1.5 font-medium", ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400")}>
-      <IconGeneral icon={ok ? "check_circle" : "cancel"} fill={1} className='[--icon-size:1.25rem]' />
+    <span className={clsx("inline-flex items-center gap-1.5 font-medium", style.cls)}>
+      <IconGeneral icon={style.icon} fill={1} className='[--icon-size:1.25rem]' />
       {status}
     </span>
   );

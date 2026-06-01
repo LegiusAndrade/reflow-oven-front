@@ -45,6 +45,7 @@ const FILTERS: Record<Tab, ISelectOption<string>[]> = {
     { value: FILTER_ALL, label: "Todos os status", icon: "list" },
     { value: "Concluido", label: "Concluído", icon: "check_circle" },
     { value: "Falha", label: "Falha", icon: "cancel" },
+    { value: "Abortado", label: "Abortado", icon: "stop_circle" },
   ],
   alteracoes: [
     { value: FILTER_ALL, label: "Todas as ações", icon: "list" },
@@ -113,6 +114,14 @@ export function RelatoriosScreen() {
     void fetchErrorDetail(err.id)
       .then((full) => setDetail({ kind: "error", data: full }))
       .catch(() => setDetail({ kind: "error", data: err }));
+  // Jump from a failed execution's detail to its linked fault: switch the underlying tab to Erros
+  // (so closing the overlay lands on that report) and swap the overlay to the fetched error detail.
+  const openErrorById = (errorId: string) => {
+    switchTab("erros");
+    void fetchErrorDetail(errorId)
+      .then((full) => setDetail({ kind: "error", data: full }))
+      .catch(() => showToast("Falha ao abrir o erro vinculado", "error"));
+  };
 
   // Measure the table area so we can paginate by the number of rows that fit (no scrollbar),
   // mirroring how the program gallery/cards fill their space.
@@ -296,7 +305,7 @@ export function RelatoriosScreen() {
       {detail && (
         <div className='card absolute inset-0 z-20 flex flex-col rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
           {detail.kind === "exec" ? (
-            <ExecutionDetail exec={detail.data} onClose={() => setDetail(null)} />
+            <ExecutionDetail exec={detail.data} onClose={() => setDetail(null)} onOpenError={openErrorById} />
           ) : (
             <ErrorDetail err={detail.data} onClose={() => setDetail(null)} />
           )}
