@@ -131,6 +131,9 @@ export interface SessionDto {
   /** epoch ms */
   loginAt: number;
   calibration?: boolean;
+  // True (omitted otherwise) while the user is still on the system-issued provisional password, so
+  // the UI can force a change. Carried on both the login session and GET /api/auth/me.
+  mustChangePassword?: boolean;
   // Per-user preferences hydrated from the DB. `theme` is always present (defaults "system");
   // `chartSeries` is omitted for the technician/calibration session.
   theme: Theme;
@@ -401,6 +404,9 @@ export const api = {
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<SessionDto>("/api/auth/me"),
   forgotPassword: (email: string) => request<{ ok: boolean }>("/api/auth/forgot-password", { method: "POST", body: { email }, auth: false }),
+  // Authenticated self-service password change (also used to clear a forced provisional-password change).
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ ok: boolean }>("/api/auth/change-password", { method: "POST", body: { currentPassword, newPassword } }),
 
   // per-user preferences (theme + execution-chart series). PUT is full-replace — always send the
   // complete object. The technician/calibration session returns 403 (preferences in-session only).
@@ -418,7 +424,8 @@ export const api = {
   // users
   listUsers: () => request<UserDto[]>("/api/users"),
   getUser: (id: string) => request<UserDto>(`/api/users/${encodeURIComponent(id)}`),
-  createUser: (body: { name: string; email: string; password: string; type: Role; status: "Ativo" | "Inativo" }) =>
+  // MODEL B: the server generates the initial password and emails it — no password is sent on create.
+  createUser: (body: { name: string; email: string; type: Role; status: "Ativo" | "Inativo" }) =>
     request<UserDto>("/api/users", { method: "POST", body }),
   updateUser: (id: string, body: { email: string; type: Role; status: "Ativo" | "Inativo"; password?: string }) =>
     request<UserDto>(`/api/users/${encodeURIComponent(id)}`, { method: "PUT", body }),

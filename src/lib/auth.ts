@@ -5,9 +5,19 @@ import { showToast } from "./toast";
 export type { Role, Theme, RunSeriesDto }; // "Admin" | "Regular" | "Master"
 
 // `theme` is always present on a real session (defaults "system"); `chartSeries` is omitted for the
-// technician/calibration session. login()/refreshSession() store the SessionDto verbatim, so both
-// hydrate the per-user prefs for free.
-export type Session = { id: string; name: string; role: Role; loginAt: number; calibration?: boolean; theme?: Theme; chartSeries?: RunSeriesDto };
+// technician/calibration session. `mustChangePassword` is true while the user is still on the
+// system-issued provisional password (so the UI can force a change). login()/refreshSession() store
+// the SessionDto verbatim, so both hydrate the per-user prefs and this flag for free.
+export type Session = {
+  id: string;
+  name: string;
+  role: Role;
+  loginAt: number;
+  calibration?: boolean;
+  mustChangePassword?: boolean;
+  theme?: Theme;
+  chartSeries?: RunSeriesDto;
+};
 
 /** Logged-in session, cached in localStorage. The source of truth is the JWT (see api.ts). */
 export const sessionStore = createJsonStore<Session | null>("reflow:session:v1", null);

@@ -112,7 +112,9 @@ export function usernameExists(name: string): boolean {
   return users.some((u) => u.name.toLowerCase() === key);
 }
 
-/** Create (unknown id) or update (existing id) a user via the API, then refresh the cache. */
+/** Create (unknown id) or update (existing id) a user via the API, then refresh the cache.
+ *  On create the server generates the initial password and emails it (MODEL B), so no password is
+ *  sent. On edit an admin may optionally reset the password (still supported by the backend). */
 export async function upsertUser(user: User & { password?: string }): Promise<void> {
   if (users.some((u) => u.id === user.id)) {
     await api.updateUser(user.id, {
@@ -122,13 +124,9 @@ export async function upsertUser(user: User & { password?: string }): Promise<vo
       ...(user.password ? { password: user.password } : {}),
     });
   } else {
-    // The create form always collects a password; never fall back to a shared default — a known
-    // password on any account is a foot-gun (and would also break programmatic creates silently).
-    if (!user.password) throw new Error("Senha obrigatória para criar um usuário.");
     await api.createUser({
       name: user.name,
       email: user.email,
-      password: user.password,
       type: user.type,
       status: user.status,
     });
