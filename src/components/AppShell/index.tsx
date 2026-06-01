@@ -37,6 +37,7 @@ export interface IAppShellProps {
  */
 export function AppShell({ children }: IAppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [changePwOpen, setChangePwOpen] = useState(false);
   const liveReadings = useLiveReadings(MOCK_READINGS);
   const drawerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -181,7 +182,7 @@ export function AppShell({ children }: IAppShellProps) {
             Only when logged in — the login screen has no nav. */}
         {session && (
           <aside className='hidden h-full shrink-0 dock:block'>
-            <Sidebar />
+            <Sidebar onTrocarSenha={() => setChangePwOpen(true)} />
           </aside>
         )}
 
@@ -209,7 +210,7 @@ export function AppShell({ children }: IAppShellProps) {
                 drawerOpen ? "translate-x-0" : "-translate-x-full"
               )}
             >
-              <Sidebar className='rounded-xl' />
+              <Sidebar className='rounded-xl' onTrocarSenha={() => { setDrawerOpen(false); setChangePwOpen(true); }} />
             </div>
           </>
         )}
@@ -225,6 +226,10 @@ export function AppShell({ children }: IAppShellProps) {
           before doing anything else. Non-dismissable (forced) and cleared once refreshSession()
           returns a session with mustChangePassword no longer set. */}
       <ChangePasswordModal open={Boolean(session?.mustChangePassword)} onClose={() => {}} forced />
+
+      {/* Self-service change-password (triggered from the Sidebar "Trocar senha"). Mounted here at the
+          shell root so it overlays the whole viewport, not trapped inside the transformed drawer. */}
+      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} />
     </div>
   );
 }

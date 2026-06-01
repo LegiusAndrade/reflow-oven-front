@@ -3,8 +3,6 @@
 import { clsx } from "clsx";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
 import { canAccess, logout } from "@/lib/auth";
@@ -20,11 +18,10 @@ const NAV_ITEMS = [
 
 // Fills the drawer's height and sizes its width to the content (≈ the Figma 187px),
 // growing a little on large screens via min-w. items-stretch equalizes button widths.
-export function Sidebar({ className }: { className?: string }) {
+export function Sidebar({ className, onTrocarSenha }: { className?: string; onTrocarSenha?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const session = useSession();
-  const [pwdOpen, setPwdOpen] = useState(false);
   // Regular users only see the routes their role can reach (Início + Programas); logged out → no nav.
   const items = session ? NAV_ITEMS.filter((item) => canAccess(session.role, item.href)) : [];
 
@@ -56,7 +53,7 @@ export function Sidebar({ className }: { className?: string }) {
             <div className='sidebar-separator h-0.5 rounded-full blur-[2px]' />
             <button
               type='button'
-              onClick={() => setPwdOpen(true)}
+              onClick={() => onTrocarSenha?.()}
               className='btn-link flex cursor-pointer items-center justify-start gap-3 px-4 py-3 text-base leading-tight select-none [--icon-size:clamp(1.375rem,1.1rem+0.45vw,1.625rem)]'
             >
               <IconGeneral icon='key' fill={1} />
@@ -73,8 +70,6 @@ export function Sidebar({ className }: { className?: string }) {
           </div>
         </>
       )}
-
-      <ChangePasswordModal open={pwdOpen} onClose={() => setPwdOpen(false)} />
     </aside>
   );
 }
