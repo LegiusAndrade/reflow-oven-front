@@ -52,7 +52,8 @@ export default function TopBar({ network, connectedServer, statusNotification, u
           <Link href='/notificacoes' aria-label='Notificações' className='btn-press inline-flex cursor-pointer'>
             <IconNotification status={statusNotification.status} amount={statusNotification.amount} />
           </Link>
-          <ThemeToggle />
+          {/* No tema de login (sem usuário) o toggle não faz sentido — só aparece autenticado. */}
+          {user && <ThemeToggle />}
         </div>
         <span className='tabular-nums sm:text-2xl'>{"12:20 09/05/25"}</span>
       </div>
