@@ -156,9 +156,33 @@ Itens a escrever/validar no `../reflow-oven-backend/TODO.md` (descrever o que se
 </content>
 
 
-## 🟢 Backend pronto (2026-05-31) — consumir no front
+## ✅ Bloco A (consumir backend) — FEITO no front (2026-05-31, noite)
 
-O backend implementou os 6 itens da Validação 2026-05-31 + o programa-teste (ver `../reflow-oven-backend/TODO.md`, banner "Implementado no backend"). Build + 78 testes verdes. O que o front precisa fazer:
+Os 6 itens abaixo foram implementados e commitados (`tsc`/`lint` limpos, review adversarial, verificados
+no 1024×600 onde havia dado). Resumo:
+
+1. **Regular inicia/para (item 1) — `fix` (#13):** nada a mudar; iniciar/parar já estava liberado pro Regular
+   (só criar/editar/excluir é admin). Confirmado por leitura + execução.
+2. **Cadastro sem senha + Trocar senha (item 2 / #14) — `31c1c4d` `4af1b26` `e4ba6e9` `1b71ab9`:** removidos os
+   campos Senha/Confirmar (servidor envia por e-mail, com nota no modal); `api.changePassword` + `mustChangePassword`;
+   **"Trocar senha"** self-service no menu lateral pra **todos os papéis** (modal na raiz do AppShell — não preso ao drawer);
+   fluxo forçado quando a sessão vem com `mustChangePassword`.
+3. **Status "Abortado" (item 3 / #5) — `4e07551` `a52f87a`:** `ExecutionStatus(+Wire)` ganhou `"Abortado"`; `StatusBadge`
+   virou mapa (verde/vermelho/âmbar `stop_circle`) + opção de filtro em Relatórios → Execuções. ✔ verificado.
+4. **Motivo + link (item 4 / #6) — `4e07551` `a52f87a`:** `ExecutionDetailDto` traz `failureReason`/`errorCode`/
+   `linkedErrorId`; detalhe mostra o motivo + botão "Ver no Relatório de Erros". _A seção só aparece quando o backend
+   popula esses campos (registro de falha precisa tê-los)._
+5. **Favoritar/deletar otimista (item 5 / #11) — `7156602`:** `programStore` faz update otimista (sem `loadPrograms`,
+   sem flicker), revertendo em erro; `api.toggleFavorite(id, favorite?)` manda `{ favorite }` (set idempotente).
+6. **Diff estruturado + gráfico antes×depois (item 6 / #7) — `1fe0fee` `84cb025`:** tipos do diff + curvas + `?before=`;
+   `ChangeDetail` virou **um gráfico só** (aberta contínua / antes+outras tracejadas, edições filtradas por data),
+   tabela diff destaca célula a célula por `changedFields` (igual ao Figma "Example Change Program").
+   - ⚠️ **DEPENDE DE DEPLOY DO BACKEND:** a instância rodando devolve `diff`/`beforeCurve`/`afterCurve` = **null** e
+     **ignora `?before=`** (ver `../reflow-oven-backend/TODO.md`, seção "DEPLOY/DADOS"). O front **não regride** (curva
+     reconstruída dos pontos; tabelas no formato antigo; lista de edições degrada p/ "todas menos a atual"). O destaque
+     por `changedFields`, o antes×depois real e o filtro por data **acendem sozinhos** quando o backend servir os campos.
+
+### (Especificação original do backend pronto, p/ referência)
 
 1. **Regular inicia/para execução (item 1):** `POST /api/runs/start` e `/stop` agora aceitam o papel **Regular** (não dá mais 403). Nada a mudar no contrato — só conferir que o fluxo de INICIAR/PARAR funciona para o operador.
 
