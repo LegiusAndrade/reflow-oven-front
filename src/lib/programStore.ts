@@ -114,14 +114,56 @@ export const getProgramsLoadingServerSnapshot = (): boolean => false;
 export const getProgramsLoadedSnapshot = (): boolean => loaded;
 export const getProgramsLoadedServerSnapshot = (): boolean => false;
 
+/**
+ * Flip the favorite flag on the cached entry and notify immediately (no refetch → no flicker), then
+ * persist the new state via the API as an idempotent set (`{ favorite }`). On error, restore the
+ * previous favorite snapshot and re-throw so the caller surfaces its toast. We don't drop the row
+ * even under the "favorites" filter so the optimistic flip can't yank the card out mid-tap; the next
+ * `loadPrograms` (paging/refresh) reconciles the list with the server.
+ */
 export async function toggleFavorite(id: string): Promise<void> {
-  await api.toggleFavorite(id);
-  await loadPrograms(currentQuery);
+  const wasFavorite = favoriteIds.includes(id);
+  const nextFavorite = !wasFavorite;
+  const prevFavoriteIds = favoriteIds;
+  // New array reference (add/remove the id) so the favorites snapshot's identity changes.
+  favoriteIds = nextFavorite ? [...favoriteIds, id] : favoriteIds.filter((fid) => fid !== id);
+  notify();
+  try {
+    await api.toggleFavorite(id, nextFavorite);
+  } catch (e) {
+    // Revert to the exact pre-mutation reference and re-notify so subscribers re-render the old state.
+    favoriteIds = prevFavoriteIds;
+    notify();
+    throw e;
+  }
 }
 
+/**
+ * Remove the program from the cached page (and its favorite id) and notify immediately (no refetch →
+ * no flicker), decrementing the match total, then call the API. On error, restore the previous cache
+ * and re-throw so the caller surfaces its toast. The next `loadPrograms` reconciles paging.
+ */
 export async function deleteProgram(id: string): Promise<void> {
-  await api.deleteProgram(id);
-  await loadPrograms(currentQuery);
+  const prevPrograms = programs;
+  const prevFavoriteIds = favoriteIds;
+  const prevTotal = total;
+  const existed = programs.some((p) => p.id === id);
+  // New array references so the programs/favorites snapshots' identity changes.
+  programs = programs.filter((p) => p.id !== id);
+  favoriteIds = favoriteIds.filter((fid) => fid !== id);
+  // Only adjust the match total if the row was actually present in this page's cache.
+  if (existed) total = Math.max(0, total - 1);
+  notify();
+  try {
+    await api.deleteProgram(id);
+  } catch (e) {
+    // Restore the exact pre-mutation references/total and re-notify so the row comes back.
+    programs = prevPrograms;
+    favoriteIds = prevFavoriteIds;
+    total = prevTotal;
+    notify();
+    throw e;
+  }
 }
 
 /** Create (no id) or update (existing id) a program from the editor, then refresh the current page. */
