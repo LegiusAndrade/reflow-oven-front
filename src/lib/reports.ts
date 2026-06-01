@@ -191,24 +191,38 @@ export type ChangePointRow = {
   ramp: string;
 };
 
+/** Which point fields a `changed` diff row flagged as differing (subset of temp/timeSec/ramp).
+ *  Mirrors the backend ChangeDiffFieldWire — lets the diff table highlight the exact cells. */
+export type ChangeDiffField = "temp" | "timeSec" | "ramp";
+
+/** One `changed` diff row: the point before and after the edit, plus which fields differ. */
+export type ChangedPointDiff = {
+  before: ChangePointRow;
+  after: ChangePointRow;
+  /** Fields that actually changed (non-empty); empty array if the backend omitted it. */
+  changedFields: ChangeDiffField[];
+};
+
 /** Detail payload for a change: either a settings change (bullets) or a program change. The
- *  program fields are tailored to the action — a creation has only the new curve/points, a
- *  removal only the old ones, an edit shows both (before/after). */
+ *  program fields are derived from the backend's structured diff (`diff.points` split by status)
+ *  plus the full before/after setpoint curves (`beforeCurve`/`afterCurve`). A creation surfaces
+ *  the new curve and its points as `added`; a removal the old curve as `removed`; an edit both
+ *  curves with the per-point `added`/`changed`/`removed` split. */
 export type ChangeDetail =
   | { kind: "config"; bullets: string[] }
   | {
       kind: "program";
       /** Id of the program this change targets — lets the detail load the program's edit history. */
       programId?: string;
-      /** Setpoint curve after a creation/edit (absent for a removal). */
+      /** Full setpoint curve after a creation/edit (from `afterCurve`; absent for a removal). */
       afterProfile?: ProfilePoint[];
-      /** Setpoint curve before an edit/removal (absent for a creation). */
+      /** Full setpoint curve before an edit/removal (from `beforeCurve`; absent for a creation). */
       beforeProfile?: ProfilePoint[];
-      /** Points listed by a creation, or added by an edit. */
+      /** Points added — every point of a creation, or the `status: "added"` rows of an edit. */
       added?: ChangePointRow[];
-      /** Points changed by an edit (before → after). */
-      changed?: { before: ChangePointRow; after: ChangePointRow }[];
-      /** Points listed by a removal. */
+      /** Points changed by an edit (`status: "changed"`), with before → after and the changed fields. */
+      changed?: ChangedPointDiff[];
+      /** Points removed — every point of a removal, or the `status: "removed"` rows of an edit. */
       removed?: ChangePointRow[];
     };
 
@@ -217,6 +231,8 @@ export type ChangeLogEntry = {
   id: string;
   /** Already formatted, e.g. "09/05/25 - 14:30:12" */
   at: string;
+  /** Raw ISO 8601 timestamp (unformatted) — used as the `before` cursor when listing editions. */
+  atIso?: string;
   action: ChangeAction;
   /** What was changed (e.g. a program name or a setting group). */
   target: string;
@@ -269,8 +285,8 @@ function genProgramDetail(action: ChangeAction, seed: number): Extract<ChangeDet
     afterProfile,
     added: [mk(8, 150, 60, "Linear"), mk(9, 220, 10, "Fixo")],
     changed: [
-      { before: mk(2, 200, 20, RAMPS[seed % RAMPS.length]), after: mk(2, 100, 100, "Fixo") },
-      { before: mk(3, 260, 30, "Linear"), after: mk(4, 200, 50, "Linear") },
+      { before: mk(2, 200, 20, RAMPS[seed % RAMPS.length]), after: mk(2, 100, 100, "Fixo"), changedFields: ["temp", "timeSec", "ramp"] },
+      { before: mk(3, 260, 30, "Linear"), after: mk(4, 200, 50, "Linear"), changedFields: ["temp", "timeSec"] },
     ],
   };
 }
@@ -288,6 +304,7 @@ export const MOCK_CHANGES: ChangeLogEntry[] = Array.from({ length: 14 }, (_, i) 
   return {
     id: `chg-${i + 1}`,
     at: `${day}/05/25 - ${hour}:${min}:${sec}`,
+    atIso: `2025-05-${day}T${hour}:${min}:${sec}`,
     action,
     target: isConfig ? "Configuração do sistema" : PROGRAM_NAMES[i % PROGRAM_NAMES.length],
     user: USERS[i % USERS.length],

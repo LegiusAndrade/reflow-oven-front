@@ -3,9 +3,30 @@
  * types. Lists return summaries (enough for the tables); full detail is fetched by id when an
  * overlay opens. Timestamps are formatted to the "dd/mm/aa - HH:MM:SS" the UI expects.
  */
-import { api, type ChangeReportQuery, type ErrorReportQuery, type ExecutionReportQuery } from "./api";
+import {
+  api,
+  type ChangeDetailDto,
+  type ChangeDiffPointDto,
+  type ChangePointValueDto,
+  type ChangeReportQuery,
+  type ErrorReportQuery,
+  type ExecutionReportQuery,
+  type ProfilePointDto,
+} from "./api";
 import type { ProfilePoint } from "./programs";
-import type { ChangeAction, ChangeDetail, ChangeLogEntry, ChangePointRow, ErrorLogEntry, ErrorSeverity, ExecutionReport, ExecutionStatus, LogEvent, LogEventKind } from "./reports";
+import type {
+  ChangeAction,
+  ChangeDetail,
+  ChangedPointDiff,
+  ChangeLogEntry,
+  ChangePointRow,
+  ErrorLogEntry,
+  ErrorSeverity,
+  ExecutionReport,
+  ExecutionStatus,
+  LogEvent,
+  LogEventKind,
+} from "./reports";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -40,8 +61,6 @@ interface LogEventDto { at: string; kind: LogEventKind; message: string }
 interface ExecDetailDto extends ExecSummaryDto { faultAtT?: number | null; faultAtTemp?: number | null; points: ProfilePtDto[]; comparison: CompRowDto[]; events: LogEventDto[]; trace: { durationSec: number; series: SnapSeriesDto[] }; failureReason?: string | null; errorCode?: string | null; linkedErrorId?: string | null }
 
 interface ChangeSummaryDto { id: string; at: string; action: ChangeAction; target: string; userName?: string | null; detailKind: "config" | "program" }
-interface ChangePtDto { index: number; temp: number; timeSec: number; ramp: string; role: "added" | "removed" | "changed-before" | "changed-after" }
-interface ChangeDetailDto extends ChangeSummaryDto { programId?: string | null; configBullets?: string[] | null; points: ChangePtDto[] }
 
 interface ErrSummaryDto { id: string; at: string; faultTypeCode: string; severity: ErrorSeverity; message: string; userName?: string | null; programName?: string | null }
 interface SnapSeriesDto { name: string; unit: string; color: string; values: number[] }
@@ -94,6 +113,8 @@ export async function fetchExecutionDetail(id: string): Promise<ExecutionReport>
 }
 
 // --- Changes ----------------------------------------------------------------------------
+/** Fetch a page of change-log summaries. `q` may carry `before` (an ISO, strictly-earlier cursor)
+ *  for the editions-comparison overlay — it is forwarded verbatim to the list call as `?before=`. */
 export async function fetchChanges(q: ChangeReportQuery): Promise<{ items: ChangeLogEntry[]; total: number }> {
   const res = (await api.changes(q)) as Paged<ChangeSummaryDto>;
   return { items: res.items.map(changeFromSummary), total: res.total };
@@ -102,47 +123,93 @@ export async function fetchChanges(q: ChangeReportQuery): Promise<{ items: Chang
 const changeFromSummary = (c: ChangeSummaryDto): ChangeLogEntry => ({
   id: c.id,
   at: fmtStamp(c.at),
+  atIso: c.at,
   action: c.action,
   target: c.target,
   user: c.userName ?? "—",
   detail: c.detailKind === "config" ? { kind: "config", bullets: [] } : { kind: "program" },
 });
 
-/** Build a setpoint curve from change points: sorted by index, timeSec used directly as `t`
- *  (it is cumulative — equals the profile point's t), with an origin prepended so the curve has
- *  >= 2 points (matches the genRunProfile origin). Empty input yields an empty curve. */
-function pointsToProfile(rows: ChangePtDto[]): ProfilePoint[] {
-  if (rows.length === 0) return [];
+/** Convert a backend setpoint curve ({ t, temp }) into the frontend ProfilePoint[] charted in the
+ *  detail view. The backend already ships the full curve (origin included), so this is a 1:1 copy;
+ *  a missing/empty curve yields undefined so the chart section can be skipped. */
+function curveToProfile(curve?: ProfilePointDto[] | null): ProfilePoint[] | undefined {
+  if (!curve || curve.length === 0) return undefined;
+  return curve.map((p) => ({ t: p.t, temp: p.temp }));
+}
+
+/** Map one side of a per-point diff (before/after) into a ChangePointRow. The diff value carries no
+ *  index of its own (the parent ChangeDiffPointDto does), so the index is threaded in. */
+const rowFromValue = (index: number, v: ChangePointValueDto): ChangePointRow => ({ index, temp: v.temp, timeSec: v.timeSec, ramp: v.ramp });
+
+/** Map a point from the flat point list (used as a fallback when the structured diff is absent). */
+const rowFromPoint = (p: { index: number; temp: number; timeSec: number; ramp: string }): ChangePointRow => ({
+  index: p.index,
+  temp: p.temp,
+  timeSec: p.timeSec,
+  ramp: p.ramp,
+});
+
+/** Reconstruct a setpoint curve from change-point rows — the fallback for an older backend that
+ *  omits the full beforeCurve/afterCurve: a {t:0} origin at the ambient start temp (25 °C, as in the
+ *  editor) then each row at its timeSec. Empty rows → undefined (no curve to draw). */
+function profileFromRows(rows: ChangePointRow[]): ProfilePoint[] | undefined {
+  if (rows.length === 0) return undefined;
   const sorted = [...rows].sort((a, b) => a.index - b.index);
-  return [{ t: 0, temp: 25 }, ...sorted.map((p) => ({ t: p.timeSec, temp: p.temp }))];
+  return [{ t: 0, temp: 25 }, ...sorted.map((r) => ({ t: r.timeSec, temp: r.temp }))];
+}
+
+/** Split the structured diff's consolidated rows (one per index) by status into the UI tables.
+ *  `unchanged` rows are dropped — they only exist to keep the curve complete, not for the tables. */
+function splitDiffPoints(points: ChangeDiffPointDto[]): { added: ChangePointRow[]; changed: ChangedPointDiff[]; removed: ChangePointRow[] } {
+  const added: ChangePointRow[] = [];
+  const changed: ChangedPointDiff[] = [];
+  const removed: ChangePointRow[] = [];
+  for (const p of points) {
+    if (p.status === "added" && p.after) {
+      added.push(rowFromValue(p.index, p.after));
+    } else if (p.status === "removed" && p.before) {
+      removed.push(rowFromValue(p.index, p.before));
+    } else if (p.status === "changed" && p.before && p.after) {
+      changed.push({
+        before: rowFromValue(p.index, p.before),
+        after: rowFromValue(p.index, p.after),
+        changedFields: p.changedFields ?? [],
+      });
+    }
+  }
+  return { added, changed, removed };
 }
 
 export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
   const c = (await api.change(id)) as ChangeDetailDto;
-  const mapRow = (p: ChangePtDto): ChangePointRow => ({ index: p.index, temp: p.temp, timeSec: p.timeSec, ramp: p.ramp });
   let detail: ChangeDetail;
   if (c.detailKind === "config") {
     detail = { kind: "config", bullets: c.configBullets ?? [] };
   } else {
-    // The backend stamps a single uniform role on all points of a change, so each change carries
-    // exactly one curve: Criado → added, Editado → changed-after, Removido → removed.
-    const added = c.points.filter((p) => p.role === "added");
-    const removed = c.points.filter((p) => p.role === "removed");
-    const changedAfter = c.points.filter((p) => p.role === "changed-after");
-    const changedBefore = c.points.filter((p) => p.role === "changed-before");
-    let afterProfile: ProfilePoint[] | undefined;
-    let beforeProfile: ProfilePoint[] | undefined;
-    if (added.length > 0) afterProfile = pointsToProfile(added);
-    if (removed.length > 0) beforeProfile = pointsToProfile(removed);
-    if (changedAfter.length > 0) afterProfile = pointsToProfile(changedAfter);
-    if (changedBefore.length > 0) beforeProfile = pointsToProfile(changedBefore);
+    // Prefer the structured diff (the canonical source). Fall back to the flat point list only if
+    // the backend omitted `diff` (a create/remove, or a backend build that predates the diff).
+    let split: { added: ChangePointRow[]; changed: ChangedPointDiff[]; removed: ChangePointRow[] };
+    if (c.diff) {
+      split = splitDiffPoints(c.diff.points);
+    } else if (c.action === "Removido") {
+      split = { added: [], changed: [], removed: (c.points ?? []).map(rowFromPoint) };
+    } else {
+      // Criado (or an edit with no diff): treat every point as a plain added row.
+      split = { added: (c.points ?? []).map(rowFromPoint), changed: [], removed: [] };
+    }
+    // Chart curves come from the backend's full beforeCurve/afterCurve when present; otherwise (older
+    // backend without the curves) reconstruct them from the resulting rows so the chart still renders.
+    const afterProfile = curveToProfile(c.afterCurve) ?? profileFromRows([...split.added, ...split.changed.map((d) => d.after)]);
+    const beforeProfile = curveToProfile(c.beforeCurve) ?? profileFromRows([...split.removed, ...split.changed.map((d) => d.before)]);
     detail = {
       kind: "program",
       programId: c.programId ?? undefined,
       afterProfile,
       beforeProfile,
-      added: c.points.filter((p) => p.role === "added" || p.role === "changed-after").map(mapRow),
-      removed: c.points.filter((p) => p.role === "removed" || p.role === "changed-before").map(mapRow),
+      added: split.added,
+      changed: split.changed,
+      removed: split.removed,
     };
   }
   return { ...changeFromSummary(c), detail };

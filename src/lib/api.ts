@@ -353,6 +353,9 @@ export interface ChangeReportQuery extends ReportQuery {
   action?: ChangeActionWire;
   /** Restrict to one program's change log (the edit-history overlay) — bound to ReportQuery.ProgramId. */
   programId?: string;
+  /** ISO 8601 strictly-earlier cursor (exclusive): list only changes with `at < before`, for the
+   *  editions comparison. Distinct from `to` (inclusive end-of-day) — bound to ReportQuery.Before. */
+  before?: string;
 }
 
 export interface ErrorReportQuery extends ReportQuery {
@@ -448,6 +451,84 @@ export interface ChangeSummaryRow {
   target: string;
   userName?: string | null;
   detailKind: "config" | "program";
+}
+
+// --- Change detail (GET /api/changes/{id}) ----------------------------------------------
+// Mirrors the backend ChangeDetailDto + ChangeDiffDto (Application/Dtos/ReportDtos.cs:82-131).
+// A program edit now ships a structured per-point diff plus the full before/after setpoint
+// curves so the detail screen can render the change visually.
+
+/** One row of the flat program point list (ChangePointRowDto, ReportDtos.cs:82). `role` carries
+ *  the legacy per-point role wire literal; the consolidated diff lives in `ChangeDiffPointDto`. */
+export interface ChangePointRowDto {
+  index: number;
+  temp: number;
+  timeSec: number;
+  ramp: RampShape;
+  role: "added" | "removed" | "changed-before" | "changed-after" | "unchanged";
+}
+
+/** One side (before or after the edit) of a per-point diff. Null when the point exists on only
+ *  one side (added → before null, removed → after null). Backend ChangePointValueDto (ReportDtos.cs:85). */
+export interface ChangePointValueDto {
+  temp: number;
+  timeSec: number;
+  ramp: RampShape;
+}
+
+/** Which point fields the backend flagged as changed (only populated for `status: "changed"`). */
+export type ChangeDiffFieldWire = "temp" | "timeSec" | "ramp";
+
+/** Status wire literals emitted by ReportService (ReportService.cs:143-145): `changed` when the
+ *  before/after values differ, `added`/`removed` when the point exists on only one side, and
+ *  `unchanged` for an identical point (emitted so the curve stays complete). */
+export type ChangeDiffStatusWire = "unchanged" | "changed" | "added" | "removed";
+
+/** Consolidated per-point diff row — exactly one row per index. Backend ChangePointDiffDto
+ *  (ReportDtos.cs:92-97). `before`/`after` are null on the side a point is missing from. */
+export interface ChangeDiffPointDto {
+  index: number;
+  status: ChangeDiffStatusWire;
+  before?: ChangePointValueDto | null;
+  after?: ChangePointValueDto | null;
+  /** Subset of "temp" | "timeSec" | "ramp"; non-empty only when `status === "changed"`. */
+  changedFields: ChangeDiffFieldWire[];
+}
+
+/** Roll-up counts for the diff. `changedFields` maps each field wire literal to how many points
+ *  changed it. Backend ChangeDiffSummaryDto (ReportDtos.cs:99-105). */
+export interface ChangeDiffSummaryDto {
+  totalChanges: number;
+  added: number;
+  removed: number;
+  changed: number;
+  unchanged: number;
+  changedFields: Partial<Record<ChangeDiffFieldWire, number>>;
+}
+
+/** Structured program-edit diff: summary counts + one consolidated row per point.
+ *  Backend ChangeDiffDto (ReportDtos.cs:107-109). */
+export interface ChangeDiffDto {
+  summary: ChangeDiffSummaryDto;
+  points: ChangeDiffPointDto[];
+}
+
+/** GET /api/changes/{id}. Backend ChangeDetailDto (ReportDtos.cs:119-131). `diff`, `beforeCurve`
+ *  and `afterCurve` are populated only for a program edit (null for config changes / create+remove);
+ *  `beforeCurve`/`afterCurve` are the full setpoint curves charted before and after this change. */
+export interface ChangeDetailDto {
+  id: string;
+  at: string;
+  action: ChangeAction;
+  target: string;
+  userName?: string | null;
+  programId?: string | null;
+  detailKind: "config" | "program";
+  configBullets?: string[] | null;
+  points: ChangePointRowDto[];
+  diff?: ChangeDiffDto | null;
+  beforeCurve?: ProfilePointDto[] | null;
+  afterCurve?: ProfilePointDto[] | null;
 }
 
 export interface ErrorSummaryRow {
