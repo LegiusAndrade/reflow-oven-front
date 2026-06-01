@@ -43,7 +43,9 @@ export type LogEvent = {
 
 // --- Execuções (run history) -------------------------------------------------------------
 
-export type ExecutionStatus = "Concluído" | "Falha";
+// "Abortado" = manual stop (distinct from "Falha"); accent-free, so the response wire and the
+// ?status= filter literal coincide — see backend Domain/Enums/Enums.cs ExecutionStatus.
+export type ExecutionStatus = "Concluído" | "Falha" | "Abortado";
 
 /** One row of the per-stage comparison table (programmed vs. measured). */
 export type ProfileComparisonRow = {
@@ -85,6 +87,13 @@ export type ExecutionReport = {
   /** Multi-signal trace captured during the run (voltages/current/temps/RPMs), charted in the
    *  detail view. Present only on a fetched detail; a run with no signals has an empty series. */
   trace?: FailureSnapshot;
+  // --- Failure context (Bloco A #6): populated only on a failed/aborted run ---
+  /** Human-readable reason the run failed/aborted (pt-BR), shown in the detail view. */
+  failureReason?: string;
+  /** Short fault code associated with the failure, e.g. "E-110" (muted, optional). */
+  errorCode?: string;
+  /** Id of the linked entry in the Erros report — opens that fault's detail when present. */
+  linkedErrorId?: string;
 };
 
 const PROGRAM_NAMES = [

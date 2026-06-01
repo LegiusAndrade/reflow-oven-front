@@ -37,7 +37,7 @@ interface ExecSummaryDto { id: string; programId?: string | null; programName: s
 interface ProfilePtDto { t: number; temp: number; kind: "programmed" | "measured" }
 interface CompRowDto { tempProg: number; tempReal: number; timeProgSeconds: number; timeRealSeconds: number; stageIndex: number }
 interface LogEventDto { at: string; kind: LogEventKind; message: string }
-interface ExecDetailDto extends ExecSummaryDto { faultAtT?: number | null; faultAtTemp?: number | null; points: ProfilePtDto[]; comparison: CompRowDto[]; events: LogEventDto[]; trace: { durationSec: number; series: SnapSeriesDto[] } }
+interface ExecDetailDto extends ExecSummaryDto { faultAtT?: number | null; faultAtTemp?: number | null; points: ProfilePtDto[]; comparison: CompRowDto[]; events: LogEventDto[]; trace: { durationSec: number; series: SnapSeriesDto[] }; failureReason?: string | null; errorCode?: string | null; linkedErrorId?: string | null }
 
 interface ChangeSummaryDto { id: string; at: string; action: ChangeAction; target: string; userName?: string | null; detailKind: "config" | "program" }
 interface ChangePtDto { index: number; temp: number; timeSec: number; ramp: string; role: "added" | "removed" | "changed-before" | "changed-after" }
@@ -79,6 +79,9 @@ export async function fetchExecutionDetail(id: string): Promise<ExecutionReport>
     realProfile: e.points.filter((p) => p.kind === "measured").map((p) => ({ t: p.t, temp: p.temp })),
     faultAt: e.faultAtT != null && e.faultAtTemp != null ? { t: e.faultAtT, temp: e.faultAtTemp } : undefined,
     trace: e.trace,
+    failureReason: e.failureReason ?? undefined,
+    errorCode: e.errorCode ?? undefined,
+    linkedErrorId: e.linkedErrorId ?? undefined,
     comparison: e.comparison.map((c) => ({
       tempProg: c.tempProg,
       tempReal: c.tempReal,

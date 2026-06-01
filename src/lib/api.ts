@@ -178,6 +178,11 @@ export interface SaveProgramRequest {
   profile?: ProfilePointDto[] | null;
 }
 
+/** Response of POST /api/programs/{id}/favorite — the resulting favorite state (backend FavoriteResult). */
+export interface FavoriteResultDto {
+  favorite: boolean;
+}
+
 export interface ProgramListQuery {
   search?: string;
   filter?: "all" | "favorites" | "unused" | "used";
@@ -323,7 +328,8 @@ export interface SystemMetricsDto {
 // Filter values are the backend enum MEMBER NAMES (accent-free), which is what ASP.NET's
 // query-string enum binding parses — distinct from the accented JSON response values
 // (e.g. response "Concluído"/"Crítico" vs. filter "Concluido"/"Critico").
-export type ExecutionStatusWire = "Concluido" | "Falha";
+// "Abortado" (manual stop) is accent-free, so it is identical as a response value AND as a ?status= filter.
+export type ExecutionStatusWire = "Concluido" | "Falha" | "Abortado";
 export type ChangeActionWire = "Criado" | "Editado" | "Removido";
 export type ErrorSeverityWire = "Critico" | "Alerta" | "Aviso";
 /** system-log level is a raw string (no backend enum). */
@@ -369,6 +375,70 @@ export interface ExecutionSummaryRow {
   status: ExecutionStatus;
   peakTemp: number;
   peakCurrent: number;
+}
+
+// --- Execution detail (GET /api/executions/{id}) ----------------------------------------
+// Mirrors the backend ExecutionDetailDto (Application/Dtos/ReportDtos.cs). Nested rows match
+// LogEventDto / ExecProfilePointDto / ProfileComparisonRowDto / FailureSnapshotDto.
+
+/** A timeline line on the execution detail (informational / warning / fault). */
+export interface ExecLogEventDto {
+  /** ISO 8601 */
+  at: string;
+  kind: "info" | "alerta" | "falha";
+  message: string;
+}
+
+/** One execution-curve point; `kind` flags the programmed setpoint vs. the measured value. */
+export interface ExecProfilePointDto {
+  t: number;
+  temp: number;
+  kind: "programmed" | "measured";
+}
+
+/** One row of the per-stage programmed-vs-measured comparison table. */
+export interface ProfileComparisonRowDto {
+  tempProg: number;
+  tempReal: number;
+  timeProgSeconds: number;
+  timeRealSeconds: number;
+  stageIndex: number;
+}
+
+export interface SnapshotSeriesDto {
+  name: string;
+  unit: string;
+  color: string;
+  values: number[];
+}
+
+export interface FailureSnapshotDto {
+  durationSec: number;
+  series: SnapshotSeriesDto[];
+}
+
+export interface ExecutionDetailDto {
+  id: string;
+  programId?: string | null;
+  programName: string;
+  userId?: string | null;
+  userName?: string | null;
+  startedAt: string;
+  durationSeconds: number;
+  status: ExecutionStatus;
+  peakTemp: number;
+  peakCurrent: number;
+  faultAtT?: number | null;
+  faultAtTemp?: number | null;
+  points: ExecProfilePointDto[];
+  comparison: ProfileComparisonRowDto[];
+  events: ExecLogEventDto[];
+  trace: FailureSnapshotDto;
+  // Failure context (Bloco A #6): populated only on a failed/aborted run, null otherwise.
+  failureReason?: string | null;
+  errorCode?: string | null;
+  /** GUID of the linked entry in the Erros report, when the failure was logged there. */
+  linkedErrorId?: string | null;
 }
 
 export interface ChangeSummaryRow {
@@ -419,7 +489,14 @@ export const api = {
   createProgram: (body: SaveProgramRequest) => request<ProgramDto>("/api/programs", { method: "POST", body }),
   updateProgram: (id: string, body: SaveProgramRequest) => request<ProgramDto>(`/api/programs/${encodeURIComponent(id)}`, { method: "PUT", body }),
   deleteProgram: (id: string) => request<void>(`/api/programs/${encodeURIComponent(id)}`, { method: "DELETE" }),
-  toggleFavorite: (id: string) => request<{ favorite: boolean }>(`/api/programs/${encodeURIComponent(id)}/favorite`, { method: "POST" }),
+  // POST /api/programs/{id}/favorite. Pass `favorite` for an idempotent set (favorite: boolean);
+  // omit it to toggle (the backend treats an absent/null body as a toggle). Returns the resulting
+  // state as { favorite } (backend FavoriteResult).
+  toggleFavorite: (id: string, favorite?: boolean) =>
+    request<FavoriteResultDto>(`/api/programs/${encodeURIComponent(id)}/favorite`, {
+      method: "POST",
+      body: favorite === undefined ? undefined : { favorite },
+    }),
 
   // users
   listUsers: () => request<UserDto[]>("/api/users"),
@@ -443,7 +520,7 @@ export const api = {
   // reports (read-only — paged + filtered server-side). The backend serves these at the bare
   // /api/{executions,changes,errors,system-log} routes (no "reports" prefix) — see ReportControllers.cs.
   executions: (q: ExecutionReportQuery) => request<PagedResult<ExecutionSummaryRow>>(`/api/executions${qs(q)}`),
-  execution: (id: string) => request<unknown>(`/api/executions/${encodeURIComponent(id)}`),
+  execution: (id: string) => request<ExecutionDetailDto>(`/api/executions/${encodeURIComponent(id)}`),
   errors: (q: ErrorReportQuery) => request<PagedResult<ErrorSummaryRow>>(`/api/errors${qs(q)}`),
   error: (id: string) => request<unknown>(`/api/errors/${encodeURIComponent(id)}`),
   changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/changes${qs(q)}`),
