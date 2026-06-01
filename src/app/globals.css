@@ -550,3 +550,19 @@
   background: var(--surface-2);
   color: var(--fg);
 }
+
+/* Autofill (Chrome/Firefox/Safari): o browser pinta um fundo claro que ignora o tema. Os inputs são
+   bg-transparent sobre um .card, então o box-shadow inset cobre esse fundo com --card-bg, sem mexer no
+   layout; -webkit-text-fill-color mantém o texto legível. Cobre :-webkit-autofill e o :autofill padrão
+   (Firefox); a transição longa adia o paint nativo do fundo. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+input:autofill {
+  -webkit-box-shadow: inset 0 0 0 9999px var(--card-bg) !important;
+  box-shadow: inset 0 0 0 9999px var(--card-bg) !important;
+  -webkit-text-fill-color: var(--fg) !important;
+  caret-color: var(--fg);
+  transition: background-color 9999s ease-in-out 0s;
+}
