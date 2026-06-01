@@ -3,6 +3,8 @@
 import { clsx } from "clsx";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
 import { canAccess, logout } from "@/lib/auth";
@@ -22,6 +24,7 @@ export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const session = useSession();
+  const [pwdOpen, setPwdOpen] = useState(false);
   // Regular users only see the routes their role can reach (Início + Programas); logged out → no nav.
   const items = session ? NAV_ITEMS.filter((item) => canAccess(session.role, item.href)) : [];
 
@@ -47,9 +50,18 @@ export function Sidebar({ className }: { className?: string }) {
             ))}
           </nav>
 
-          {/* Logout pinned to the bottom (user + theme moved to the TopBar to save sidebar space) */}
+          {/* Account self-service (Trocar senha) + Logout pinned to the bottom (user + theme moved
+              to the TopBar to save sidebar space). "Trocar senha" shows for ALL roles — no canAccess gate. */}
           <div className='mt-auto flex flex-col gap-2'>
             <div className='sidebar-separator h-0.5 rounded-full blur-[2px]' />
+            <button
+              type='button'
+              onClick={() => setPwdOpen(true)}
+              className='btn-link flex cursor-pointer items-center justify-start gap-3 px-4 py-3 text-base leading-tight select-none [--icon-size:clamp(1.375rem,1.1rem+0.45vw,1.625rem)]'
+            >
+              <IconGeneral icon='key' fill={1} />
+              <span>Trocar senha</span>
+            </button>
             <button
               type='button'
               onClick={handleLogout}
@@ -61,6 +73,8 @@ export function Sidebar({ className }: { className?: string }) {
           </div>
         </>
       )}
+
+      <ChangePasswordModal open={pwdOpen} onClose={() => setPwdOpen(false)} />
     </aside>
   );
 }

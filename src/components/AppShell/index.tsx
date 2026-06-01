@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import BottomBar from "@/components/BottomBar";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Sidebar } from "@/components/Sidebar";
 import { Toaster } from "@/components/Toaster";
@@ -219,6 +220,11 @@ export function AppShell({ children }: IAppShellProps) {
       <BottomBar readings={liveReadings} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} showMenu={Boolean(session)} />
 
       <VirtualKeyboard />
+
+      {/* Forced change: a user still on the system-issued provisional password must set a new one
+          before doing anything else. Non-dismissable (forced) and cleared once refreshSession()
+          returns a session with mustChangePassword no longer set. */}
+      <ChangePasswordModal open={Boolean(session?.mustChangePassword)} onClose={() => {}} forced />
     </div>
   );
 }
