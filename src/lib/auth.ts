@@ -33,7 +33,16 @@ export async function login(name: string, password: string): Promise<{ ok: boole
     sessionStore.set(result.session);
     return { ok: true, redirect: "/" };
   } catch (e) {
-    return { ok: false, error: e instanceof ApiError ? e.message : "Não foi possível conectar ao servidor." };
+    // A connection failure (status 0) carries a long, multi-sentence guidance message that the
+    // inline error row on the login form clips ("...por causa do tamanho"). Surface it as a toast
+    // (room to wrap) using the same dedupe key as refreshSession, and keep a short label inline so
+    // there's still feedback when the toast is deduped on a quick retry. Credential errors (401) are
+    // short and stay inline next to the password field.
+    if (e instanceof ApiError && e.status === 0) {
+      showToast(e.message, "error");
+      return { ok: false, error: "Sem conexão com o servidor." };
+    }
+    return { ok: false, error: e instanceof ApiError ? e.message : "Falha no login." };
   }
 }
 
