@@ -55,7 +55,7 @@ export function Modal({ open, title, onClose, children, panelClassName }: IModal
         className={clsx(
           "card relative z-10 flex flex-col rounded-2xl border border-[var(--border)] transition-all duration-200",
           open ? "scale-100 opacity-100" : "scale-95 opacity-0",
-          panelClassName ?? "h-[85vh] w-[90vw] max-w-5xl"
+          panelClassName ?? "h-[85vh] w-[min(90vw,80rem)]"
         )}
       >
         {title !== undefined && (

@@ -199,7 +199,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
 
   return (
     <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
-      <div className='card flex h-[min(96vh,44rem)] w-[min(96vw,64rem)] flex-col gap-3 rounded-2xl border border-[var(--border)] p-4'>
+      <div className='card flex h-[min(96vh,44rem)] w-[min(96vw,90rem)] flex-col gap-3 rounded-2xl border border-[var(--border)] p-4'>
         {/* Header */}
         <header className='flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
           <div className='flex min-w-0 items-center gap-3'>
