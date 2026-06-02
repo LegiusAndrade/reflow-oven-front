@@ -88,8 +88,10 @@ export const CHANGE_RETENTION_PER_PROGRAM_MAX = 10;
 export const API_TIMEOUT_MS = 12000;
 /** Tempo que o app espera no carregamento (validação de sessão) antes de mostrar erro de conexão. */
 export const APP_BOOT_TIMEOUT_MS = 12000;
-/** Intervalo entre buscas do feed de notificações no servidor (REST polling — sem SignalR). */
-export const NOTIFICATION_POLL_MS = 30000;
+/** Intervalo do polling do feed de notificações (REST — é o fallback; o feed também é re-buscado na
+ *  hora ao terminar uma execução, p/ o badge da TopBar não esperar um tick). TODO(backend): push via
+ *  SignalR (/hubs/notifications) p/ atualização em tempo real de qualquer origem. */
+export const NOTIFICATION_POLL_MS = 15000;
 /** Intervalo entre buscas do status do sistema (rede / servidor central) na TopBar. */
 export const SYSTEM_STATUS_POLL_MS = 20000;
 /** Intervalo entre buscas das métricas do SO (carga da CPU) na tela Informação — polling leve. */

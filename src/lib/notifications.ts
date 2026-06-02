@@ -67,8 +67,10 @@ export function unreadCount(list: AppNotification[]): number {
   return list.reduce((n, x) => n + (x.read ? 0 : 1), 0);
 }
 
-/** Fetch the feed from the backend and update the store. Keeps the prior list on failure. */
-export async function refreshNotifications(): Promise<void> {
+/** Fetch the feed from the backend and update the store. Keeps the prior list on failure. `silent`
+ *  skips the per-new-item toast — used when the caller already shows its own feedback (e.g. RunModal's
+ *  "Execução interrompida"), so a run-triggered refresh doesn't double up with the notification toast. */
+export async function refreshNotifications(silent = false): Promise<void> {
   let dtos: NotificationDto[];
   try {
     dtos = await api.listNotifications(NOTIFICATION_MAX_ITEMS);
@@ -80,9 +82,12 @@ export async function refreshNotifications(): Promise<void> {
   const seen = new Set(current.map((n) => n.id));
   const next = dtos.map(mapNotification);
 
-  // Surface any not-previously-seen unread item as a toast.
-  for (const n of next) {
-    if (!n.read && !seen.has(n.id)) showToast(n.title, n.kind === "error" ? "error" : "info");
+  // Surface any not-previously-seen unread item as a toast (unless the caller asked to stay silent).
+  // Adding it to the store below marks it "seen", so a later poll won't re-toast it either.
+  if (!silent) {
+    for (const n of next) {
+      if (!n.read && !seen.has(n.id)) showToast(n.title, n.kind === "error" ? "error" : "info");
+    }
   }
 
   // Skip the emit (and the re-render of every consumer) when the feed is unchanged — this polls

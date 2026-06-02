@@ -8,6 +8,7 @@ import { type Axis, MultiAxisChart, type Series } from "@/components/MultiAxisCh
 import { useStore } from "@/hooks/useStore";
 import { RUN_MEASURED_MAX_POINTS } from "@/lib/limits";
 import { api, ApiError } from "@/lib/api";
+import { refreshNotifications } from "@/lib/notifications";
 import type { Program } from "@/lib/programs";
 import { connectRunTelemetry } from "@/lib/realtime";
 import { DEFAULT_RUN_SERIES, mmss, phaseAt, RUN_SIGNALS, type RunSignalId, totalTime } from "@/lib/run";
@@ -66,6 +67,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
           terminated.current = true;
           stopTelemetry.current?.();
           stopTelemetry.current = null;
+          // A finished/aborted run creates a backend notification — refresh now so the TopBar badge
+          // updates immediately instead of waiting for the next poll tick.
+          void refreshNotifications(true);
         };
         stopTelemetry.current = connectRunTelemetry(run.runId, {
           onTrace: (s) => {
@@ -323,6 +327,8 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
               // Not a success: an interrupted run reads as the amber "Abortado" state (stop_circle),
               // matching the Relatórios status badge — not the green check.
               showToast("Execução interrompida", "warning", 3000, "stop_circle");
+              // Refresh the feed now so the TopBar badge picks up the "Execução abortada" notification.
+              void refreshNotifications(true);
             })
             .catch((e) => {
               showToast(e instanceof ApiError ? e.message : "Falha ao interromper a execução", "error");
