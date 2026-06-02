@@ -151,12 +151,12 @@ const rowFromPoint = (p: { index: number; temp: number; timeSec: number; ramp: s
 });
 
 /** Reconstruct a setpoint curve from change-point rows — the fallback for an older backend that
- *  omits the full beforeCurve/afterCurve: a {t:0} origin at the ambient start temp (25 °C, as in the
+ *  omits the full beforeCurve/afterCurve: a {t:0} origin at the baseline start temp (0 °C, as in the
  *  editor) then each row at its timeSec. Empty rows → undefined (no curve to draw). */
 function profileFromRows(rows: ChangePointRow[]): ProfilePoint[] | undefined {
   if (rows.length === 0) return undefined;
   const sorted = [...rows].sort((a, b) => a.index - b.index);
-  return [{ t: 0, temp: 25 }, ...sorted.map((r) => ({ t: r.timeSec, temp: r.temp }))];
+  return [{ t: 0, temp: 0 }, ...sorted.map((r) => ({ t: r.timeSec, temp: r.temp }))];
 }
 
 /** Split the structured diff's consolidated rows (one per index) by status into the UI tables.
