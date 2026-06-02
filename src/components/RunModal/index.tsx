@@ -136,6 +136,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
 
   // Chart 1 — temperatures (shared °C axis) with the full expected profile faded behind.
   const tempSeries: Series[] = [];
+  // Alvo (setpoint) as a live line with its value at the tip — drawn first so the measured Grelha
+  // line sits on top of it; the full programmed profile still shows faded behind (tempBg) as context.
+  if (enabled.alvo) tempSeries.push(mkSeries("alvo", (s) => Math.round(s.alvo)));
   if (enabled.oven) tempSeries.push(mkSeries("oven", (s) => Math.round(s.oven)));
   if (enabled.board) tempSeries.push(mkSeries("board", (s) => Math.round(s.board)));
   const tempBg = enabled.alvo ? { color: SIG.alvo.color, points: profile.map((p) => ({ t: p.t, v: p.temp })) } : undefined;
