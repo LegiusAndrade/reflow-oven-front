@@ -15,7 +15,7 @@ export const PROGRAM_DESCRIPTION_MAX_LENGTH = 120;
 export const PROFILE_MAX_POINTS = 100;
 
 /** Per-point target temperature (°C). POINT_TEMP_MIN is the minimum a user may enter for a profile
- *  point; the fixed t=0 ambient start (25 °C) is prepended automatically and is exempt from this floor.
+ *  point; the fixed t=0 baseline start (0 °C) is prepended automatically and is exempt from this floor.
  *  Mirrors the backend `DomainConstants.PointTempMin`/`PointTempMax`. */
 export const POINT_TEMP_MIN = 50;
 export const POINT_TEMP_MAX = 500;

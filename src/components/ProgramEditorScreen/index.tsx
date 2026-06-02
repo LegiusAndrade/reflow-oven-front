@@ -33,7 +33,10 @@ const makeSegment = (temp: number, durationSec: number, ramp: Ramp): Segment => 
 
 const DEFAULT_SEGMENTS: Segment[] = [makeSegment(150, 60, "Linear"), makeSegment(180, 30, "Fixo"), makeSegment(260, 30, "Linear")];
 
-const START_TEMP = 25;
+// Temperature the first ramp starts from — the profile's baseline at t=0. 0 °C is a clean zero
+// baseline, so a "50 °C Linear" first point draws a ramp 0→50 (not 25→50). This preview must match
+// how the backend derives the curve from the segments (see backend TODO: prepend 0, not 25).
+const START_TEMP = 0;
 
 /** Keep a numeric input within [min, max]; empty/NaN falls back to min. */
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
