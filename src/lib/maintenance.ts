@@ -1,18 +1,16 @@
 /**
  * Database maintenance (mock stage): clearing historical records and a factory reset.
  *
- * Inactive-user removal hits the real `usersStore`. The log/record categories are mock
- * constants (MOCK_EXECUTIONS/CHANGES/ERRORS/LOGS), so "clearing" them flags the category in
- * this store and the screens that show those records (Relatórios, the system-log modal)
- * honor the flag — they then render empty. TODO(backend): actually delete the records on the
- * board/server instead of flagging them client-side.
+ * Inactive-user removal hits the real `usersStore`. The log/record categories use mock placeholder
+ * counts (MOCK_RECORD_COUNTS), so "clearing" them flags the category in this store and the screens
+ * that show those records (Relatórios, the system-log modal) honor the flag — they then render empty.
+ * TODO(backend): real per-category counts via GET /api/maintenance/overview + actual server-side
+ * deletion (see the backend TODO) — then drop the mock counts and the local flag.
  */
 
 import { api, setToken } from "./api";
 import { sessionStore } from "./auth";
 import { createJsonStore } from "./localStore";
-import { MOCK_LOGS } from "./logs";
-import { MOCK_CHANGES, MOCK_ERRORS, MOCK_EXECUTIONS } from "./reports";
 import { type User, usersStore } from "./users";
 
 /** Clearable record categories. "inativos" is a real user removal; the rest are log/record flags. */
@@ -47,20 +45,21 @@ const DB_BASE_BYTES = 384 * 1024;
 
 const ALL_CLEANUP_IDS: CleanupId[] = ["execucoes", "alteracoes", "falhas", "logs", "inativos"];
 
+/** Mock placeholder record counts for the log/record categories — the Limpeza is mock-stage; real
+ *  per-category counts come from the backend once GET /api/maintenance/overview is implemented (see the
+ *  backend TODO). Only the count drives the modal, so the elaborate mock records that produced these
+ *  were removed. */
+const MOCK_RECORD_COUNTS: Record<Exclude<CleanupId, "inativos">, number> = {
+  execucoes: 18,
+  alteracoes: 14,
+  falhas: 12,
+  logs: 40,
+};
+
 /** How many records a category currently holds (a cleared log category reports 0). */
 export function recordCount(id: CleanupId, state: CleanupState, users: User[]): number {
-  switch (id) {
-    case "execucoes":
-      return state.execucoes ? 0 : MOCK_EXECUTIONS.length;
-    case "alteracoes":
-      return state.alteracoes ? 0 : MOCK_CHANGES.length;
-    case "falhas":
-      return state.falhas ? 0 : MOCK_ERRORS.length;
-    case "logs":
-      return state.logs ? 0 : MOCK_LOGS.length;
-    case "inativos":
-      return users.filter((u) => u.status === "Inativo").length;
-  }
+  if (id === "inativos") return users.filter((u) => u.status === "Inativo").length;
+  return state[id] ? 0 : MOCK_RECORD_COUNTS[id];
 }
 
 /** Estimated stored size of a category, in bytes (mock). */
