@@ -3,6 +3,24 @@
 Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` no código
 (`grep -rn "TODO(backend)" src/`). Tarefas que dependem do backend vão para `../reflow-oven-backend/TODO.md`.
 
+## ⏭️ Ao retomar (próxima sessão) — 2026-06-01
+
+Front e backend estavam **parados** ao encerrar. Ao subir os dois (`yarn dev` + backend):
+
+1. **Re-confirmar ao vivo o #9** (alinhamento do backend): o editor barra ponto **< 50 °C** (clampa pra 50) e o
+   **eixo do gráfico de perfil começa em 0**. Já confirmado por código + print; falta só o check ao vivo.
+2. **Executar as tarefas do backend** conforme chegarem. O `../reflow-oven-backend/TODO.md` mapeia o que cada
+   entrega do backend destrava no front:
+   - Endpoints `/deleted` · `/restore` · `/purge` (MasterOnly) → montar a **tela Lixeira** (aba própria de
+     Configurações, só-Master). Métodos no `api.ts` já existem (`listDeleted*`/`restore*`/`purge*`).
+   - `comparison` real nas execuções → a tabela **"Comparativo do Perfil"** volta a aparecer (front já trata vazio).
+   - `diff` / `beforeCurve` / `afterCurve` / `?before=` nas Alterações → destaque por célula + curva antes×depois
+     + filtro por data (front já tem fallback; "acende sozinho").
+   - Notificações: backend emitir `warning` na execução **abortada** (front já renderiza âmbar), criar notificação
+     das **falhas da placa** e do **OTA**.
+   - **Limpeza** real: `GET /api/maintenance/overview` (contagens reais) + deleção server-side → trocar
+     `MOCK_RECORD_COUNTS` (em `maintenance.ts`) por contagens reais e dropar a flag local `cleanupStore`.
+
 > **Status (2026-05-31):** base pronta (monitoramento, programas, relatórios, configurações,
 > login/perfis) e integrada ao backend real (.NET + SignalR, JWT). Em andamento: o lote de
 > **Bugs — Validação 2026-05-31** abaixo. As capturas referenciadas estão em `~/Pictures/`.
