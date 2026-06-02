@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
+import { AppShell } from "@/components/AppShell";
 import "react-simple-keyboard/build/css/index.css";
 import "./globals.css";
 
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             kiosk; preload acelera o 1º paint dos ícones. */}
         <link rel='preload' href='/fonts/MaterialSymbolsRounded.woff2' as='font' type='font/woff2' crossOrigin='anonymous' />
       </head>
-      <body className='antialiased bg-app'>{children}</body>
+      <body className='antialiased bg-app'>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }
