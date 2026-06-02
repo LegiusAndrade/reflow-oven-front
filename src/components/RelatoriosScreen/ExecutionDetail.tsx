@@ -101,32 +101,48 @@ export function ExecutionDetail({
         {/* Programmed vs measured */}
         <section>
           <SectionTitle>Comparativo do Perfil</SectionTitle>
-          <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
-            <table className='w-full border-collapse text-left'>
-              <thead className='text-sm'>
-                <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold'>
-                  <th className='w-12'>#</th>
-                  <th>Temp. Progr.</th>
-                  <th>Temp. Real</th>
-                  <th>Tempo Prog.</th>
-                  <th>Tempo Real</th>
-                  <th>Desvio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exec.comparison.map((row, i) => (
-                  <tr key={i} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
-                    <td className='tabular-nums opacity-70'>{i + 1}</td>
-                    <td className='tabular-nums'>{row.tempProg}°C</td>
-                    <td className='tabular-nums'>{row.tempReal}°C</td>
-                    <td className='tabular-nums opacity-80'>{row.timeProg}</td>
-                    <td className='tabular-nums opacity-80'>{row.timeReal}</td>
-                    <td className='tabular-nums opacity-80'>{row.deviation}</td>
+          {exec.comparison.length === 0 ? (
+            <div className='flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-3 text-sm opacity-70'>
+              {exec.status === "Concluído" ? (
+                <>
+                  <IconGeneral icon='check_circle' fill={1} className='shrink-0 text-emerald-700 dark:text-emerald-400 [--icon-size:1.25rem]' />
+                  Não houve desvio.
+                </>
+              ) : (
+                <>
+                  <IconGeneral icon='do_not_disturb_on' fill={0} className='shrink-0 opacity-60 [--icon-size:1.25rem]' />
+                  Sem dados de comparação.
+                </>
+              )}
+            </div>
+          ) : (
+            <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
+              <table className='w-full border-collapse text-left'>
+                <thead className='text-sm'>
+                  <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold'>
+                    <th className='w-12'>#</th>
+                    <th>Temp. Progr.</th>
+                    <th>Temp. Real</th>
+                    <th>Tempo Prog.</th>
+                    <th>Tempo Real</th>
+                    <th>Desvio</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {exec.comparison.map((row, i) => (
+                    <tr key={i} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
+                      <td className='tabular-nums opacity-70'>{i + 1}</td>
+                      <td className='tabular-nums'>{row.tempProg}°C</td>
+                      <td className='tabular-nums'>{row.tempReal}°C</td>
+                      <td className='tabular-nums opacity-80'>{row.timeProg}</td>
+                      <td className='tabular-nums opacity-80'>{row.timeReal}</td>
+                      <td className='tabular-nums opacity-80'>{row.deviation}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* Events */}
