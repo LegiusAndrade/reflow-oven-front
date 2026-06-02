@@ -217,3 +217,16 @@ no 1024×600 onde havia dado). Resumo:
      rejeitado (o Master pode restaurá-lo depois) — manter a mensagem de conflito atual.
    - **Log de Alterações (auditoria) é protegido:** **remover a categoria "Alterações"** da Limpeza da
      Manutenção (não é mais apagável pela tela). As demais categorias da Limpeza seguem (Admin+Master).
+
+9. **Limites do perfil — backend alinhado (mín. ponto 50 °C / baseline 0 °C):** o backend agora **rejeita
+   ponto < 50 °C** (exceto o t=0) e toda curva **começa em 0 °C** (era 25 °C ambiente) — espelhando
+   `POINT_TEMP_MIN = 50` e `START_TEMP = 0` que já estão no front. Nada novo a implementar; só garantir que o
+   editor barre digitar < 50 e que o eixo do gráfico comece em 0. Os ~50 programas de fábrica re-semeados já
+   vêm com `(0, 0)` no início.
+   - Bônus (sem ação no front): o **snapshot da falha** (Relatórios → Erros) passou a ter **7 curvas distintas
+     por sinal** (temperatura S + pico, corrente com ripple, tensão com queda, ventoinhas que caem) com
+     assinatura de falha — o gráfico fica legível, não mais "todas as curvas iguais".
+
+10. **Contas Admin/Regular configuráveis (backend):** as contas iniciais de Admin e Regular agora vêm da
+    config (`Admin__*` / `Regular__*`, como o Master) — só relevante pro deploy/seed do backend; **sem impacto
+    no front** (o login segue igual). Registrado aqui só pra constar.
