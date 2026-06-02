@@ -9,6 +9,7 @@ const STYLES: Record<Toast["type"], { icon: string; accent: string }> = {
   success: { icon: "check_circle", accent: "text-emerald-700 dark:text-emerald-400" },
   error: { icon: "cancel", accent: "text-red-700 dark:text-red-400" },
   info: { icon: "info", accent: "text-[var(--brand)]" },
+  warning: { icon: "warning", accent: "text-amber-700 dark:text-amber-400" },
 };
 
 /** Renders active toasts at the bottom of the content area. Mounted once in AppShell. */
@@ -23,7 +24,7 @@ export function Toaster() {
         const style = STYLES[toast.type];
         return (
           <div key={toast.id} role='status' className='toast-item card pointer-events-auto flex items-center gap-3 rounded-xl border border-[var(--border)] py-3 pl-4 pr-3'>
-            <IconGeneral icon={style.icon} fill={1} className={clsx("shrink-0 [--icon-size:1.5rem]", style.accent)} />
+            <IconGeneral icon={toast.icon ?? style.icon} fill={1} className={clsx("shrink-0 [--icon-size:1.5rem]", style.accent)} />
             <span className='font-medium'>{toast.message}</span>
             <button
               type='button'

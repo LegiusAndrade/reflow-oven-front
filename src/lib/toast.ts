@@ -1,7 +1,9 @@
 import { TOAST_DEDUPE_MS } from "./limits";
 
-export type ToastType = "success" | "error" | "info";
-export type Toast = { id: string; message: string; type: ToastType };
+export type ToastType = "success" | "error" | "info" | "warning";
+/** `icon` overrides the type's default Material Symbols icon (e.g. a "warning" abort toast that wants
+ *  `stop_circle` to match the Abortado status badge). Color/accent still comes from `type`. */
+export type Toast = { id: string; message: string; type: ToastType; icon?: string };
 
 const EMPTY: Toast[] = [];
 let toasts: Toast[] = EMPTY;
@@ -39,14 +41,14 @@ export function getToastsServerSnapshot(): Toast[] {
  * API exists, fire them on the server response instead — success here, and
  * `showToast(message, "error")` in the failure path.
  */
-export function showToast(message: string, type: ToastType = "success", durationMs = 3000): string {
+export function showToast(message: string, type: ToastType = "success", durationMs = 3000, icon?: string): string {
   const key = `${type}:${message}`;
   const now = Date.now();
   const prev = lastShownAt.get(key);
   if (prev !== undefined && now - prev < TOAST_DEDUPE_MS) return ""; // identical toast still on screen
   lastShownAt.set(key, now);
   const id = crypto.randomUUID();
-  toasts = [...toasts, { id, message, type }];
+  toasts = [...toasts, { id, message, type, icon }];
   emit();
   if (typeof window !== "undefined" && durationMs > 0) {
     window.setTimeout(() => dismissToast(id), durationMs);

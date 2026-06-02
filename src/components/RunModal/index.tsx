@@ -320,7 +320,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
               stopTelemetry.current?.();
               stopTelemetry.current = null;
               setStatus("aborted");
-              showToast("Execução interrompida");
+              // Not a success: an interrupted run reads as the amber "Abortado" state (stop_circle),
+              // matching the Relatórios status badge — not the green check.
+              showToast("Execução interrompida", "warning", 3000, "stop_circle");
             })
             .catch((e) => {
               showToast(e instanceof ApiError ? e.message : "Falha ao interromper a execução", "error");
