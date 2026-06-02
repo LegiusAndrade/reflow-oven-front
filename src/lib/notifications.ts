@@ -108,6 +108,20 @@ export async function markAllRead(): Promise<void> {
   await refreshNotifications();
 }
 
+/** Delete every notification on the server ("Limpar tudo"), then empty the local feed. Keeps the
+ *  list on failure so a missing/failed endpoint doesn't silently drop the feed. */
+export async function clearAll(): Promise<void> {
+  if (current.length === 0) return;
+  try {
+    await api.clearNotifications();
+  } catch (e) {
+    logger.error("notifications", "Falha ao limpar notificações.", e);
+    showToast("Falha ao limpar notificações.", "error");
+    return;
+  }
+  setList(EMPTY);
+}
+
 /** Refresh now, then poll every {@link NOTIFICATION_POLL_MS}. Returns a stop function. */
 export function startNotificationsPolling(): () => void {
   void refreshNotifications();

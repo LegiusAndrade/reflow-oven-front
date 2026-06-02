@@ -635,6 +635,8 @@ export const api = {
   unreadNotificationCount: () => request<UnreadCountDto>("/api/notifications/unread-count"),
   markNotificationRead: (id: string) => request<void>(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "POST" }),
   markAllNotificationsRead: () => request<void>("/api/notifications/read-all", { method: "POST" }),
+  /** Delete every notification for the current user (the "Limpar tudo" action). Backend: DELETE /api/notifications → 204. */
+  clearNotifications: () => request<void>("/api/notifications", { method: "DELETE" }),
 
   // system / OTA
   systemStatus: () => request<SystemStatusDto>("/api/system/status"),
