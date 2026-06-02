@@ -1,5 +1,6 @@
 import { api, ApiError, getToken, setToken, type Role, type Theme, type RunSeriesDto } from "./api";
 import { createJsonStore } from "./localStore";
+import { logger } from "./logger";
 import { showToast } from "./toast";
 
 export type { Role, Theme, RunSeriesDto }; // "Admin" | "Regular" | "Master"
@@ -39,6 +40,7 @@ export async function login(name: string, password: string): Promise<{ ok: boole
     // there's still feedback when the toast is deduped on a quick retry. Credential errors (401) are
     // short and stay inline next to the password field.
     if (e instanceof ApiError && e.status === 0) {
+      logger.error("auth", "Falha de conexão no login", e);
       showToast(e.message, "error");
       return { ok: false, error: "Sem conexão com o servidor." };
     }
@@ -69,7 +71,10 @@ export async function refreshSession(): Promise<void> {
     // bounce the user to /login on every hiccup.
     if (e instanceof ApiError && (e.status === 401 || e.status === 403)) logout();
     // Use the ApiError's own message so every status-0 source shares one dedupe key (see showToast).
-    else if (e instanceof ApiError && e.status === 0) showToast(e.message, "error");
+    else if (e instanceof ApiError && e.status === 0) {
+      logger.error("auth", "Falha de conexão ao revalidar a sessão", e);
+      showToast(e.message, "error");
+    }
   }
 }
 
