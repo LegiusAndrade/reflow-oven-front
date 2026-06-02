@@ -11,9 +11,10 @@ import { cleanupStore, type CleanupId, formatBytes, performCleanup, recordCount,
 import { showToast } from "@/lib/toast";
 import { usersStore } from "@/lib/users";
 
+// "Registro de alterações" (audit log) is intentionally NOT here — it is protected from cleanup (#8);
+// the backend must also reject it server-side.
 const CATEGORIES: { id: CleanupId; label: string; hint: string; icon: string }[] = [
   { id: "execucoes", label: "Histórico de execuções", hint: "Relatórios de execuções concluídas e com falha", icon: "history" },
-  { id: "alteracoes", label: "Registro de alterações", hint: "Auditoria de programas e configurações (criação/edição/remoção)", icon: "edit_note" },
   { id: "falhas", label: "Registro de falhas", hint: "Eventos de falha registrados pela placa de potência", icon: "error" },
   { id: "logs", label: "Logs do sistema", hint: "Mensagens de INFO / Aviso / Erro do sistema", icon: "receipt_long" },
   { id: "inativos", label: "Usuários inativos", hint: "Remove permanentemente os usuários marcados como inativos", icon: "person_off" },

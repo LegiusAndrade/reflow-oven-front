@@ -266,6 +266,9 @@ export interface UnreadCountDto {
   count: number;
 }
 
+/** A soft-deleted record (#8 Master trash): the entity plus who/when it was deleted. */
+export type Deleted<T> = T & { deletedAt: string; deletedBy: string };
+
 export type NetworkLink = "Nenhum" | "Cabo" | "WiFi";
 
 export type InterfaceKind = "Ethernet" | "WiFi";
@@ -570,6 +573,10 @@ export const api = {
   createProgram: (body: SaveProgramRequest) => request<ProgramDto>("/api/programs", { method: "POST", body }),
   updateProgram: (id: string, body: SaveProgramRequest) => request<ProgramDto>(`/api/programs/${encodeURIComponent(id)}`, { method: "PUT", body }),
   deleteProgram: (id: string) => request<void>(`/api/programs/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  // #8 Master trash (MasterOnly endpoints — pending backend, see backend TODO). deleteProgram becomes a soft-delete.
+  listDeletedPrograms: () => request<Deleted<ProgramDto>[]>("/api/programs/deleted"),
+  restoreProgram: (id: string) => request<void>(`/api/programs/${encodeURIComponent(id)}/restore`, { method: "POST" }),
+  purgeProgram: (id: string) => request<void>(`/api/programs/${encodeURIComponent(id)}/purge`, { method: "DELETE" }),
   // POST /api/programs/{id}/favorite. Pass `favorite` for an idempotent set (favorite: boolean);
   // omit it to toggle (the backend treats an absent/null body as a toggle). Returns the resulting
   // state as { favorite } (backend FavoriteResult).
@@ -588,6 +595,10 @@ export const api = {
   updateUser: (id: string, body: { email: string; type: Role; status: "Ativo" | "Inativo"; password?: string }) =>
     request<UserDto>(`/api/users/${encodeURIComponent(id)}`, { method: "PUT", body }),
   deleteUser: (id: string) => request<void>(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  // #8 Master trash (MasterOnly — pending backend). deleteUser becomes a soft-delete; username stays unique vs deleted.
+  listDeletedUsers: () => request<Deleted<UserDto>[]>("/api/users/deleted"),
+  restoreUser: (id: string) => request<void>(`/api/users/${encodeURIComponent(id)}/restore`, { method: "POST" }),
+  purgeUser: (id: string) => request<void>(`/api/users/${encodeURIComponent(id)}/purge`, { method: "DELETE" }),
 
   // settings
   getSettings: () => request<unknown>("/api/settings"),
@@ -637,6 +648,10 @@ export const api = {
   markAllNotificationsRead: () => request<void>("/api/notifications/read-all", { method: "POST" }),
   /** Delete every notification for the current user (the "Limpar tudo" action). Backend: DELETE /api/notifications → 204. */
   clearNotifications: () => request<void>("/api/notifications", { method: "DELETE" }),
+  // #8 Master trash (MasterOnly — pending backend). Cleared/deleted notifications become recoverable.
+  listDeletedNotifications: () => request<Deleted<NotificationDto>[]>("/api/notifications/deleted"),
+  restoreNotification: (id: string) => request<void>(`/api/notifications/${encodeURIComponent(id)}/restore`, { method: "POST" }),
+  purgeNotification: (id: string) => request<void>(`/api/notifications/${encodeURIComponent(id)}/purge`, { method: "DELETE" }),
 
   // system / OTA
   systemStatus: () => request<SystemStatusDto>("/api/system/status"),
