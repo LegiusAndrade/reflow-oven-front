@@ -201,3 +201,19 @@ no 1024×600 onde havia dado). Resumo:
 
 
 7. **Usuário Master + aba Log (item 7):** o backend agora emite `role: "Master"` no login/`/api/auth/me` (o tipo `Role = "Admin"|"Regular"|"Master"` e `isMaster()` já existem no front), então a aba **Diagnóstico → Log** aparece sozinha para a conta Master. Login dev: `dev.pandewilly` / `pandewilly`. O Master herda todos os acessos de Admin e **não** aparece na grade de Usuários. Para o log em **tempo real** (fonte "Sistema"), trocar o polling de `GET /api/system-log` (2s) por uma assinatura SignalR: conectar em `/hubs/systemlog` (mesmo JWT via `?access_token=`, como telemetry/diagnostics) e ouvir o evento **`SystemLogLine`**, que entrega um `SystemLogDto` (`{ id, at, level, message }`) — o mesmo shape do polling — para prepender na lista. O polling pode ficar como fallback inicial/refresh.
+
+8. **Soft-delete + Lixeira do Master (não apagar dados de verdade):** o backend deixou de remover do banco —
+   **Usuários, Programas e Notificações** passam a *soft-delete* (`isDeleted` + `deletedAt` + `deletedBy`).
+   As listas normais já escondem os apagados (filtro no servidor), então **as telas comuns não mudam** (o
+   Admin continua "excluindo" igual; vira soft por baixo). O que adicionar, **somente para a conta Master**
+   (`isMaster()` já existe):
+   - Uma tela/aba **"Apagados" (Lixeira)** que consome endpoints **MasterOnly** (403 para Admin/Regular):
+     - `GET /api/users/deleted` · `GET /api/programs/deleted` · `GET /api/notifications/deleted` → só os
+       apagados, com `deletedAt`/`deletedBy` (quem apagou e quando);
+     - `POST /api/users/{id}/restore` (idem programs/notifications) → restaura;
+     - `DELETE /api/users/{id}/purge` (idem) → apaga **definitivo/irreversível** — confirmar com o usuário.
+   - **Só o Master** vê/restaura/expurga; Admin e Regular nem enxergam a Lixeira.
+   - **Nome de usuário segue único inclusive contra apagados:** recriar com o nome de um usuário apagado é
+     rejeitado (o Master pode restaurá-lo depois) — manter a mensagem de conflito atual.
+   - **Log de Alterações (auditoria) é protegido:** **remover a categoria "Alterações"** da Limpeza da
+     Manutenção (não é mais apagável pela tela). As demais categorias da Limpeza seguem (Admin+Master).
