@@ -10,7 +10,7 @@ import type { JsonStore } from "./localStore";
 import { logger } from "./logger";
 import { showToast } from "./toast";
 
-export type NotificationKind = "update" | "error" | "info";
+export type NotificationKind = "update" | "error" | "warning" | "info";
 
 export interface AppNotification {
   id: string;
@@ -86,7 +86,7 @@ export async function refreshNotifications(silent = false): Promise<void> {
   // Adding it to the store below marks it "seen", so a later poll won't re-toast it either.
   if (!silent) {
     for (const n of next) {
-      if (!n.read && !seen.has(n.id)) showToast(n.title, n.kind === "error" ? "error" : "info");
+      if (!n.read && !seen.has(n.id)) showToast(n.title, n.kind === "error" ? "error" : n.kind === "warning" ? "warning" : "info");
     }
   }
 

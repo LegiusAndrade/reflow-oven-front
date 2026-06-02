@@ -10,6 +10,7 @@ import { type AppNotification, clearAll, formatNotificationStamp, markAllRead, n
 const KIND_META: Record<AppNotification["kind"], { icon: string; cls: string }> = {
   update: { icon: "system_update", cls: "text-[var(--brand)]" },
   error: { icon: "error", cls: "text-red-700 dark:text-red-400" },
+  warning: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
   info: { icon: "info", cls: "text-[var(--brand)]" },
 };
 

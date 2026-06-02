@@ -254,7 +254,7 @@ export interface UpdateStatusDto {
 
 export interface NotificationDto {
   id: string;
-  kind: "info" | "error" | "update";
+  kind: "info" | "error" | "warning" | "update";
   /** ISO 8601 */
   at: string;
   title: string;
