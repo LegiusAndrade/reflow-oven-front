@@ -19,11 +19,16 @@ const EMPTY: SystemStatusSnapshot = {
   centralOnline: false,
 };
 
+// Last known status, cached at module scope so a remount starts from the previous reading instead of
+// EMPTY. AppShell is currently wrapped per page, so navigating re-mounts it; without this the TopBar
+// network/server icons flash "offline" on every navigation until the first poll returns.
+let cachedStatus: SystemStatusSnapshot = EMPTY;
+
 const sameStatus = (a: SystemStatusSnapshot, b: SystemStatusSnapshot): boolean =>
   a.link === b.link && a.connected === b.connected && a.signalPercent === b.signalPercent && a.centralOnline === b.centralOnline;
 
 export function useSystemStatus(enabled: boolean): SystemStatusSnapshot {
-  const [status, setStatus] = useState<SystemStatusSnapshot>(EMPTY);
+  const [status, setStatus] = useState<SystemStatusSnapshot>(cachedStatus);
 
   useEffect(() => {
     if (!enabled) return;
@@ -39,6 +44,7 @@ export function useSystemStatus(enabled: boolean): SystemStatusSnapshot {
           signalPercent: s.network.signalPercent,
           centralOnline: s.centralServerOnline,
         };
+        cachedStatus = next;
         // Keep the same reference when nothing changed so we don't re-render every poll (this runs
         // continuously on a low-power Pi).
         setStatus((prev) => (sameStatus(prev, next) ? prev : next));
@@ -46,10 +52,9 @@ export function useSystemStatus(enabled: boolean): SystemStatusSnapshot {
         if (!alive) return;
         logger.error("system", "failed to fetch status", e);
         // Treat a failed fetch as offline; keep the last signal reading.
-        setStatus((prev) => {
-          const next = { ...prev, link: "Nenhum" as NetworkLink, connected: false, centralOnline: false };
-          return sameStatus(prev, next) ? prev : next;
-        });
+        const next: SystemStatusSnapshot = { ...cachedStatus, link: "Nenhum", connected: false, centralOnline: false };
+        cachedStatus = next;
+        setStatus((prev) => (sameStatus(prev, next) ? prev : next));
       }
     }
 
