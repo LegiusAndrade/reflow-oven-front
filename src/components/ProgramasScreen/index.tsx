@@ -6,6 +6,7 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { ProgramListCard } from "@/components/ProgramListCard";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
+import { Skeleton } from "@/components/Skeleton";
 import { useProgramPage } from "@/hooks/useProgramPage";
 import { useSession } from "@/hooks/useSession";
 import { canManagePrograms } from "@/lib/auth";
@@ -152,7 +153,10 @@ export function ProgramasScreen() {
         {items.map((program) => (
           <ProgramListCard key={program.id} program={program} />
         ))}
-        {(!loaded || loading || effectivePerPage <= 0) && total === 0 && <p className='opacity-60'>Carregando...</p>}
+        {items.length === 0 &&
+          (loading || !loaded) &&
+          effectivePerPage > 0 &&
+          Array.from({ length: Math.min(effectivePerPage, 12) }).map((_, i) => <Skeleton key={`sk-${i}`} className='h-full w-full' />)}
         {loaded && !loading && total === 0 && <p className='opacity-60'>Nenhum programa encontrado.</p>}
       </div>
 
