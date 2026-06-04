@@ -108,8 +108,9 @@ function RankCard({
 /** Diagnóstico statistics: overview counts, faults by type, and the two adjustable rankings. */
 export function DiagnosticoStats() {
   const users = useStore(usersStore);
-  // "Usuários inativos" is the Master's (technician's) view — only the Master gets that card.
+  // The Master also gets a "Usuários deletados" (trash) card; its count comes from the MasterOnly endpoint.
   const master = isMaster(useSession()?.role ?? "Regular");
+  const [deletedUsers, setDeletedUsers] = useState(0);
   const [userN, setUserN] = useState(DIAG_RANK_DEFAULT);
   const [progN, setProgN] = useState(DIAG_RANK_DEFAULT);
   const [ov, setOv] = useState<Overview | null>(null);
@@ -121,6 +122,15 @@ export function DiagnosticoStats() {
       .then((d) => setOv(d as Overview))
       .catch(() => {});
   }, []);
+
+  // Deleted-users count for the Master's extra card (MasterOnly endpoint — only fetched as the Master).
+  useEffect(() => {
+    if (!master) return;
+    api
+      .listDeletedUsers()
+      .then((d) => setDeletedUsers(d.length))
+      .catch(() => {});
+  }, [master]);
 
   const us = useMemo(() => userStats(users), [users]);
 
@@ -148,7 +158,8 @@ export function DiagnosticoStats() {
         <StatCard icon='play_circle' label='Execuções totais' value={executions} />
         <StatCard icon='error' label='Falhas registradas' value={totalFaults} />
         <StatCard icon='person' label='Usuários ativos' value={activeUsers} />
-        {master && <StatCard icon='person_off' label='Usuários inativos' value={inactiveUsers} />}
+        <StatCard icon='person_off' label='Usuários inativos' value={inactiveUsers} />
+        {master && <StatCard icon='person_remove' label='Usuários deletados' value={deletedUsers} />}
         <StatCard icon='shield_person' label='Administradores' value={admins} />
       </div>
 
