@@ -51,7 +51,7 @@ let loading = false;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 
-async function reloadUsers(): Promise<void> {
+export async function reloadUsers(): Promise<void> {
   loading = true;
   try {
     users = (await api.listUsers()).map(toUser);

@@ -5,7 +5,10 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { TableScrollBox } from "@/components/TableScrollBox";
 import { api, ApiError, type Deleted, type NotificationDto, type ProgramDto, type UserDto } from "@/lib/api";
+import { refreshNotifications } from "@/lib/notifications";
+import { reloadPrograms } from "@/lib/programStore";
 import { showToast } from "@/lib/toast";
+import { reloadUsers } from "@/lib/users";
 import { Segmented } from "./fields";
 
 /**
@@ -55,9 +58,18 @@ export function LixeiraTab() {
 
   const restore = async (k: TrashKind, id: string, label: string) => {
     try {
-      if (k === "programas") await api.restoreProgram(id);
-      else if (k === "usuarios") await api.restoreUser(id);
-      else await api.restoreNotification(id);
+      // Restore on the server, then reload the main store the matching screen reads from, so the item
+      // reappears there (Usuários / galeria / sino) instead of just vanishing from the trash.
+      if (k === "programas") {
+        await api.restoreProgram(id);
+        await reloadPrograms();
+      } else if (k === "usuarios") {
+        await api.restoreUser(id);
+        await reloadUsers();
+      } else {
+        await api.restoreNotification(id);
+        await refreshNotifications(true);
+      }
       showToast(`"${label}" restaurado`);
       refresh();
     } catch (e) {

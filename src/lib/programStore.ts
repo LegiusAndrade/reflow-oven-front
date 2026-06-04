@@ -93,6 +93,11 @@ export async function loadPrograms(query: ProgramListQuery): Promise<void> {
   }
 }
 
+/** Re-fetch the current page (e.g. after a Master restores a program from the Lixeira). */
+export async function reloadPrograms(): Promise<void> {
+  await loadPrograms(currentQuery);
+}
+
 const ensureLoaded = (): void => {
   if (typeof window === "undefined" || loaded || loading) return;
   void loadPrograms(DEFAULT_QUERY);
