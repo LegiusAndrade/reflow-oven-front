@@ -7,8 +7,8 @@ Roadmap da interface. Notas técnicas pontuais usam o marcador `TODO(backend)` n
 
 Front e backend estavam **parados** ao encerrar. Ao subir os dois (`yarn dev` + backend):
 
-1. **Re-confirmar ao vivo o #9** (alinhamento do backend): o editor barra ponto **< 50 °C** (clampa pra 50) e o
-   **eixo do gráfico de perfil começa em 0**. Já confirmado por código + print; falta só o check ao vivo.
+1. [x] **#9 re-confirmado ao vivo (2026-06-03)** — com login real: o editor barra ponto **< 50 °C** (digitar 30
+   → vira 50; 75 passa) e o **eixo do gráfico de perfil começa em 0** (a rampa sai de (0,0)).
 2. **Executar as tarefas do backend** conforme chegarem. O `../reflow-oven-backend/TODO.md` mapeia o que cada
    entrega do backend destrava no front:
    - Endpoints `/deleted` · `/restore` · `/purge` (MasterOnly) → montar a **tela Lixeira** (aba própria de
@@ -18,8 +18,13 @@ Front e backend estavam **parados** ao encerrar. Ao subir os dois (`yarn dev` + 
      + filtro por data (front já tem fallback; "acende sozinho").
    - Notificações: backend emitir `warning` na execução **abortada** (front já renderiza âmbar), criar notificação
      das **falhas da placa** e do **OTA**.
-   - **Limpeza** real: `GET /api/maintenance/overview` (contagens reais) + deleção server-side → trocar
-     `MOCK_RECORD_COUNTS` (em `maintenance.ts`) por contagens reais e dropar a flag local `cleanupStore`.
+   - [x] **Limpeza real (front) — feito 2026-06-03** (commit `51f0268`): `maintenance.ts` consome
+     `GET /api/maintenance/overview` (contagens + tamanho do banco + HD + SO reais); `MOCK_RECORD_COUNTS` e a
+     flag local `cleanupStore` removidos. **⚠️ Testar ao vivo depois:** (a) rodar uma **limpeza destrutiva de
+     verdade** — só validei a leitura, não apaguei registros reais: conferir que deleta server-side, que o
+     toast traz o `deleted` real e que o overview recarrega; (b) as 2 categorias novas **Programas** e
+     **Usuários ativos** (hoje "vazio") **acendem e funcionam** quando o backend mandar as contagens — em
+     especial validar que o backend **poupa o usuário logado** em "Usuários ativos" (backend TODO #5).
 
 > **Status (2026-05-31):** base pronta (monitoramento, programas, relatórios, configurações,
 > login/perfis) e integrada ao backend real (.NET + SignalR, JWT). Em andamento: o lote de
