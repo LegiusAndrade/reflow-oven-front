@@ -3,8 +3,10 @@
 import { clsx } from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { useSession } from "@/hooks/useSession";
 import { useStore } from "@/hooks/useStore";
 import { api } from "@/lib/api";
+import { isMaster } from "@/lib/auth";
 import { topUsersByLogins, userStats } from "@/lib/diagnostics";
 import { DIAG_RANK_DEFAULT, DIAG_RANK_MAX, DIAG_RANK_MIN } from "@/lib/limits";
 import type { ErrorSeverity } from "@/lib/reports";
@@ -106,6 +108,8 @@ function RankCard({
 /** Diagnóstico statistics: overview counts, faults by type, and the two adjustable rankings. */
 export function DiagnosticoStats() {
   const users = useStore(usersStore);
+  // Inactive-user info is the Master's (technician's) view — the Admin doesn't see that count.
+  const master = isMaster(useSession()?.role ?? "Regular");
   const [userN, setUserN] = useState(DIAG_RANK_DEFAULT);
   const [progN, setProgN] = useState(DIAG_RANK_DEFAULT);
   const [ov, setOv] = useState<Overview | null>(null);
@@ -142,7 +146,7 @@ export function DiagnosticoStats() {
         <StatCard icon='play_circle' label='Execuções totais' value={executions} />
         <StatCard icon='error' label='Falhas registradas' value={totalFaults} />
         <StatCard icon='person' label='Usuários ativos' value={activeUsers} />
-        <StatCard icon='person_off' label='Usuários inativos' value={inactiveUsers} />
+        {master && <StatCard icon='person_off' label='Usuários inativos' value={inactiveUsers} />}
         <StatCard icon='shield_person' label='Administradores' value={admins} />
       </div>
 
