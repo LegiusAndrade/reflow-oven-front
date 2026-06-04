@@ -19,6 +19,7 @@ const CATEGORIES: { id: CleanupId; label: string; hint: string; icon: string }[]
   { id: "falhas", label: "Registro de falhas", hint: "Eventos de falha registrados pela placa de potência", icon: "error" },
   { id: "logs", label: "Logs do sistema", hint: "Mensagens de INFO / Aviso / Erro do sistema", icon: "receipt_long" },
   { id: "programas", label: "Programas salvos", hint: "Remove todos os perfis de temperatura salvos", icon: "article" },
+  { id: "programas_deletados", label: "Programas deletados", hint: "Expurga os programas na lixeira (já excluídos)", icon: "auto_delete" },
   { id: "inativos", label: "Usuários inativos", hint: "Remove permanentemente os usuários marcados como inativos", icon: "person_off" },
   { id: "usuarios", label: "Usuários ativos", hint: "Remove os usuários ativos, exceto o que está em uso agora", icon: "group" },
 ];
