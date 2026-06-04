@@ -7,8 +7,10 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
 import { TableScrollBox } from "@/components/TableScrollBox";
+import { useSession } from "@/hooks/useSession";
 import { useStore } from "@/hooks/useStore";
 import { ApiError } from "@/lib/api";
+import { isMaster } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 import { removeUser, type User, usersStore } from "@/lib/users";
 import { UserCreateModal } from "./UserCreateModal";
@@ -52,6 +54,9 @@ function inRange(formatted: string, start: string, end: string): boolean {
 /** Usuários tab: searchable/filterable, paginated user table with detail/edit/delete actions. */
 export function UsuariosTab() {
   const users = useStore(usersStore);
+  // Removing users is Admin-only (the backend uses an AdminStrict policy — the Master gets 403), so the
+  // Master doesn't get the Remover action. ("Only his own" needs a backend `createdBy` field — logged.)
+  const master = isMaster(useSession()?.role ?? "Regular");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [startDate, setStartDate] = useState("");
@@ -190,7 +195,7 @@ export function UsuariosTab() {
                     <div className='flex items-center justify-end gap-1 text-[var(--brand)]'>
                       <RowAction icon='visibility' label={`Detalhe de ${u.name}`} onClick={() => openDetail(u)} />
                       <RowAction icon='edit' label={`Editar ${u.name}`} onClick={() => openEdit(u)} />
-                      <RowAction icon='delete' label={`Remover ${u.name}`} onClick={() => openDelete(u)} danger />
+                      {!master && <RowAction icon='delete' label={`Remover ${u.name}`} onClick={() => openDelete(u)} danger />}
                     </div>
                   </td>
                 </tr>

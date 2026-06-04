@@ -10,7 +10,7 @@ import { TemperatureProfileChart } from "@/components/TemperatureProfileChart";
 import { useFavoriteIds } from "@/hooks/useFavoriteIds";
 import { useSession } from "@/hooks/useSession";
 import { ApiError } from "@/lib/api";
-import { canManagePrograms } from "@/lib/auth";
+import { canManagePrograms, isMaster } from "@/lib/auth";
 import type { Program } from "@/lib/programs";
 import { deleteProgram, toggleFavorite } from "@/lib/programStore";
 import { showToast } from "@/lib/toast";
@@ -26,7 +26,11 @@ export function ProgramListCard({ program }: { program: Program }) {
   const router = useRouter();
   const [chartOpen, setChartOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const canManage = canManagePrograms(useSession()?.role ?? "Regular");
+  const role = useSession()?.role ?? "Regular";
+  const canManage = canManagePrograms(role);
+  // The Master (technician) must not delete the customer's programs. "Only his own" needs a `createdBy`
+  // field the backend doesn't expose yet (logged), so for now the Master simply doesn't get Deletar.
+  const master = isMaster(role);
   const isFavorite = useFavoriteIds().includes(program.id);
   const peak = Math.max(...program.profile.map((p) => p.temp));
   const total = program.profile.at(-1)?.t ?? 0;
@@ -64,8 +68,12 @@ export function ProgramListCard({ program }: { program: Program }) {
           <>
             <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
             <CardAction icon='edit' label='Editar' onClick={() => router.push(`/programas/${encodeURIComponent(program.id)}/editar`)} />
-            <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
-            <CardAction icon='delete' label='Deletar' onClick={() => setConfirmDeleteOpen(true)} />
+            {!master && (
+              <>
+                <span className='h-5 w-px shrink-0 bg-current opacity-30' aria-hidden='true' />
+                <CardAction icon='delete' label='Deletar' onClick={() => setConfirmDeleteOpen(true)} />
+              </>
+            )}
           </>
         )}
       </div>
