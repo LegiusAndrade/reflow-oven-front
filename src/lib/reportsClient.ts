@@ -5,7 +5,6 @@
  */
 import {
   api,
-  type ChangeDetailDto,
   type ChangeDiffPointDto,
   type ChangePointValueDto,
   type ChangeReportQuery,
@@ -182,7 +181,7 @@ function splitDiffPoints(points: ChangeDiffPointDto[]): { added: ChangePointRow[
 }
 
 export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
-  const c = (await api.change(id)) as ChangeDetailDto;
+  const c = await api.change(id);
   let detail: ChangeDetail;
   if (c.detailKind === "config") {
     detail = { kind: "config", bullets: c.configBullets ?? [] };

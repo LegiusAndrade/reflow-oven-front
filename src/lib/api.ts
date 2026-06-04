@@ -635,7 +635,7 @@ export const api = {
   errors: (q: ErrorReportQuery) => request<PagedResult<ErrorSummaryRow>>(`/api/errors${qs(q)}`),
   error: (id: string) => request<unknown>(`/api/errors/${encodeURIComponent(id)}`),
   changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/changes${qs(q)}`),
-  change: (id: string) => request<unknown>(`/api/changes/${encodeURIComponent(id)}`),
+  change: (id: string) => request<ChangeDetailDto>(`/api/changes/${encodeURIComponent(id)}`),
   systemLog: (q: SystemLogQuery) => request<PagedResult<SystemLogRow>>(`/api/system-log${qs(q)}`),
   faultTypes: () => request<unknown[]>("/api/fault-types"),
 
