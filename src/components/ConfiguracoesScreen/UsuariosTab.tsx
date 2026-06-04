@@ -6,6 +6,7 @@ import { DatePicker } from "@/components/DatePicker";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
+import { SkeletonRows } from "@/components/Skeleton";
 import { TableScrollBox } from "@/components/TableScrollBox";
 import { useSession } from "@/hooks/useSession";
 import { useStore } from "@/hooks/useStore";
@@ -71,6 +72,7 @@ export function UsuariosTab() {
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const el = tableAreaRef.current;
@@ -86,7 +88,7 @@ export function UsuariosTab() {
   // Refetch on mount so the list (and each row's `canDelete` flag) is current — usersStore is a
   // load-once cache that could otherwise keep stale rows (e.g. missing canDelete) from an earlier session.
   useEffect(() => {
-    void reloadUsers();
+    void reloadUsers().finally(() => setLoaded(true));
   }, []);
 
   const filtered = useMemo(() => {
@@ -204,13 +206,16 @@ export function UsuariosTab() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className='px-4 py-6 text-center opacity-60'>
-                    Nenhum usuário encontrado.
-                  </td>
-                </tr>
-              )}
+              {filtered.length === 0 &&
+                (loaded ? (
+                  <tr>
+                    <td colSpan={6} className='px-4 py-6 text-center opacity-60'>
+                      Nenhum usuário encontrado.
+                    </td>
+                  </tr>
+                ) : (
+                  <SkeletonRows cols={6} />
+                ))}
             </tbody>
           </table>
         </TableScrollBox>

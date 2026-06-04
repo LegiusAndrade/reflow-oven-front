@@ -7,6 +7,7 @@ import { DatePicker } from "@/components/DatePicker";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { SelectMenu, type ISelectOption } from "@/components/SelectMenu";
+import { SkeletonRows } from "@/components/Skeleton";
 import { TableScrollBox } from "@/components/TableScrollBox";
 import type { ChangeLogEntry, ErrorLogEntry, ExecutionReport } from "@/lib/reports";
 import { ApiError, type ChangeActionWire, type ErrorSeverityWire, type ExecutionStatusWire } from "@/lib/api";
@@ -92,6 +93,7 @@ export function RelatoriosScreen() {
   const [changes, setChanges] = useState<ChangeLogEntry[]>([]);
   const [errors, setErrors] = useState<ErrorLogEntry[]>([]);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const tableAreaRef = useRef<HTMLDivElement>(null);
   const [areaH, setAreaH] = useState(0);
@@ -171,6 +173,7 @@ export function RelatoriosScreen() {
     };
     const filterValue = filter === FILTER_ALL ? undefined : filter;
     const run = async () => {
+      setLoading(true);
       try {
         if (tab === "execucoes") {
           const res = await fetchExecutions({ ...base, status: filterValue as ExecutionStatusWire | undefined });
@@ -193,6 +196,8 @@ export function RelatoriosScreen() {
         }
       } catch (e) {
         if (!cancelled) showToast(e instanceof ApiError ? e.message : "Falha ao carregar os relatórios", "error");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
     void run();
@@ -289,9 +294,9 @@ export function RelatoriosScreen() {
 
       {/* Content: one page of rows, sized to the measured area so it paginates instead of scrolling */}
       <div ref={tableAreaRef} className='min-h-0 flex-1'>
-        {tab === "execucoes" && <ExecutionsTable executions={executions} startIndex={start} onOpen={openExec} />}
-        {tab === "alteracoes" && <ChangesTable changes={changes} startIndex={start} onOpen={openChange} />}
-        {tab === "erros" && <ErrorsTable errors={errors} startIndex={start} onOpen={openError} />}
+        {tab === "execucoes" && <ExecutionsTable executions={executions} startIndex={start} onOpen={openExec} loading={loading} />}
+        {tab === "alteracoes" && <ChangesTable changes={changes} startIndex={start} onOpen={openChange} loading={loading} />}
+        {tab === "erros" && <ErrorsTable errors={errors} startIndex={start} onOpen={openError} loading={loading} />}
       </div>
 
       {/* Footer: record count on the left, pagination centered */}
@@ -341,10 +346,12 @@ function ExecutionsTable({
   executions,
   startIndex,
   onOpen,
+  loading,
 }: {
   executions: ExecutionReport[];
   startIndex: number;
   onOpen: (_exec: ExecutionReport) => void;
+  loading: boolean;
 }) {
   return (
     <TableShell>
@@ -380,13 +387,13 @@ function ExecutionsTable({
             </td>
           </tr>
         ))}
-        {executions.length === 0 && <EmptyRow colSpan={6} label='Nenhuma execução encontrada.' />}
+        {executions.length === 0 && (loading ? <SkeletonRows cols={6} /> : <EmptyRow colSpan={6} label='Nenhuma execução encontrada.' />)}
       </tbody>
     </TableShell>
   );
 }
 
-function ChangesTable({ changes, startIndex, onOpen }: { changes: ChangeLogEntry[]; startIndex: number; onOpen: (_change: ChangeLogEntry) => void }) {
+function ChangesTable({ changes, startIndex, onOpen, loading }: { changes: ChangeLogEntry[]; startIndex: number; onOpen: (_change: ChangeLogEntry) => void; loading: boolean }) {
   return (
     <TableShell>
       <thead className='sticky top-0 z-10 text-sm'>
@@ -414,13 +421,13 @@ function ChangesTable({ changes, startIndex, onOpen }: { changes: ChangeLogEntry
             </td>
           </tr>
         ))}
-        {changes.length === 0 && <EmptyRow colSpan={6} label='Nenhuma alteração encontrada.' />}
+        {changes.length === 0 && (loading ? <SkeletonRows cols={6} /> : <EmptyRow colSpan={6} label='Nenhuma alteração encontrada.' />)}
       </tbody>
     </TableShell>
   );
 }
 
-function ErrorsTable({ errors, startIndex, onOpen }: { errors: ErrorLogEntry[]; startIndex: number; onOpen: (_err: ErrorLogEntry) => void }) {
+function ErrorsTable({ errors, startIndex, onOpen, loading }: { errors: ErrorLogEntry[]; startIndex: number; onOpen: (_err: ErrorLogEntry) => void; loading: boolean }) {
   return (
     <TableShell>
       <thead className='sticky top-0 z-10 text-sm'>
@@ -448,7 +455,7 @@ function ErrorsTable({ errors, startIndex, onOpen }: { errors: ErrorLogEntry[]; 
             </td>
           </tr>
         ))}
-        {errors.length === 0 && <EmptyRow colSpan={6} label='Nenhum erro encontrado.' />}
+        {errors.length === 0 && (loading ? <SkeletonRows cols={6} /> : <EmptyRow colSpan={6} label='Nenhum erro encontrado.' />)}
       </tbody>
     </TableShell>
   );
