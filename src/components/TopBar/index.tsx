@@ -23,6 +23,9 @@ function percentToBucket(percent: number | undefined): IIconWifiProps["signal"] 
   return 4;
 }
 
+// One source of truth for the size of the status icons (Wi-Fi/cable, server) so they stay aligned.
+const STATUS_ICON_CLASS = "[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]";
+
 export default function TopBar({ network, connectedServer, statusNotification, user }: ITopBarProps) {
   return (
     <div className='top-bar flex items-center gap-4 rounded-b-xl px-6 py-3 select-none'>
@@ -41,13 +44,13 @@ export default function TopBar({ network, connectedServer, statusNotification, u
       <div className='flex shrink-0 items-center gap-4'>
         <div className='flex items-center gap-3'>
           {network.link === "WiFi" ? (
-            <IconWifi signal={network.connected ? percentToBucket(network.signalPercent) : "OFF"} />
+            <IconWifi className={STATUS_ICON_CLASS} signal={network.connected ? percentToBucket(network.signalPercent) : "OFF"} />
           ) : network.link === "Cabo" ? (
-            <IconGeneral className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]' icon='lan' fill={1} />
+            <IconGeneral className={STATUS_ICON_CLASS} icon='lan' fill={1} />
           ) : (
-            <IconWifi signal='OFF' />
+            <IconWifi className={STATUS_ICON_CLASS} signal='OFF' />
           )}
-          <IconGeneral className='[--icon-size:20px] lg:[--icon-size:24px] xl:[--icon-size:28px]' icon={connectedServer ? "public" : "public_off"} fill={1} />
+          <IconGeneral className={STATUS_ICON_CLASS} icon={connectedServer ? "public" : "public_off"} fill={1} />
           {/* The bell opens the notifications screen (route + store + mark-as-read already exist). */}
           <Link href='/notificacoes' aria-label='Notificações' className='btn-press inline-flex cursor-pointer'>
             <IconNotification status={statusNotification.status} amount={statusNotification.amount} />
