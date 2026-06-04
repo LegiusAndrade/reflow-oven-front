@@ -29,7 +29,7 @@ export function GeralTab() {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
-      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-3 scrollbar-gutter-stable'>
         <FieldGroup title='PID'>
           <NumberField label='P' value={draft.pid.p} onChange={(p) => setDraft({ ...draft, pid: { ...draft.pid, p } })} min={PID_MIN} max={PID_MAX} step={0.1} className='min-w-[6rem] flex-1' />
           <NumberField label='I' value={draft.pid.i} onChange={(i) => setDraft({ ...draft, pid: { ...draft.pid, i } })} min={PID_MIN} max={PID_MAX} step={0.1} className='min-w-[6rem] flex-1' />
@@ -96,7 +96,7 @@ export function GeralTab() {
             Quais sinais aparecem no gráfico ao iniciar um programa — salvo automaticamente, por usuário (não depende de SALVAR/Cancelar; a legenda ainda liga/desliga ao vivo).
           </p>
           {RUN_SIGNALS.map((sig) => (
-            <label key={sig.id} className='flex items-center gap-2.5 rounded-xl border border-[var(--border)] px-3 py-2'>
+            <label key={sig.id} className='flex items-center gap-2.5 rounded-xl border border-(--border) px-3 py-2'>
               <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: sig.color }} aria-hidden='true' />
               <span className='text-sm'>
                 {sig.name} <span className='opacity-50'>({sig.unit})</span>

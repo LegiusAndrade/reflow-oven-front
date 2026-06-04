@@ -34,7 +34,7 @@ export default function TopBar({ network, connectedServer, statusNotification, u
         {user && (
           <>
             <span className='truncate font-medium sm:text-xl'>{user.name}</span>
-            <span className='shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-xs'>{user.role}</span>
+            <span className='shrink-0 rounded-full bg-(--surface-2) px-2 py-0.5 text-xs'>{user.role}</span>
             <SessionTimer since={user.loginAt} />
           </>
         )}

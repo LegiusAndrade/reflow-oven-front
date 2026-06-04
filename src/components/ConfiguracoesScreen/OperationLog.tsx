@@ -112,7 +112,7 @@ export function OperationLog() {
             aria-current={category === c.value ? "page" : undefined}
             className={clsx(
               "btn-press flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors",
-              category === c.value ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "border border-[var(--border)] hover:bg-[var(--hover)]"
+              category === c.value ? "bg-(--brand)/15 text-(--brand)" : "border border-(--border) hover:bg-(--hover)"
             )}
           >
             <IconGeneral icon={c.icon} fill={category === c.value ? 1 : 0} className='[--icon-size:0.95rem]' />
@@ -125,7 +125,7 @@ export function OperationLog() {
       <TableScrollBox className='min-h-0 flex-1'>
         <table className='w-full table-fixed border-collapse text-left text-sm'>
           <thead className='sticky top-0 z-10'>
-            <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-3 [&>th]:py-2 [&>th]:font-semibold [&>th]:whitespace-nowrap'>
+            <tr className='[&>th]:bg-(--bg-2) [&>th]:px-3 [&>th]:py-2 [&>th]:font-semibold [&>th]:whitespace-nowrap'>
               <th className='w-40'>Data</th>
               <th>Operador</th>
               <th>Tipo</th>
@@ -136,15 +136,15 @@ export function OperationLog() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className='border-t border-[var(--border)] align-top [&>td]:px-3 [&>td]:py-2'>
+              <tr key={r.id} className='border-t border-(--border) align-top [&>td]:px-3 [&>td]:py-2'>
                 <td className='tabular-nums whitespace-nowrap opacity-80'>{fmtStamp(r.at)}</td>
-                <td className={clsx("break-words", r.operatorName === "Sistema" ? "italic opacity-60" : "font-medium")} title={r.operatorName}>
+                <td className={clsx("wrap-break-word", r.operatorName === "Sistema" ? "italic opacity-60" : "font-medium")} title={r.operatorName}>
                   {r.operatorName}
                 </td>
-                <td className='break-words' title={TYPE_LABEL[r.type] ?? r.type}>
+                <td className='wrap-break-word' title={TYPE_LABEL[r.type] ?? r.type}>
                   {TYPE_LABEL[r.type] ?? r.type}
                 </td>
-                <td className='break-words opacity-80' title={OBJECT_LABEL[r.object] ?? r.object}>
+                <td className='wrap-break-word opacity-80' title={OBJECT_LABEL[r.object] ?? r.object}>
                   {OBJECT_LABEL[r.object] ?? r.object}
                 </td>
                 <td className='font-mono text-xs break-all opacity-60' title={r.objectId ?? undefined}>
@@ -185,7 +185,7 @@ function DataCell({ data }: { data: OperationLogEntryDto["data"] }) {
         const changed = f.before != null && f.before !== "";
         return (
           <div key={i} className='flex flex-wrap items-baseline gap-1.5'>
-            <span className='shrink-0 rounded bg-[var(--surface-2)] px-1.5 py-0.5 font-mono text-xs'>{f.field}</span>
+            <span className='shrink-0 rounded bg-(--surface-2) px-1.5 py-0.5 font-mono text-xs'>{f.field}</span>
             {changed ? (
               <span className='inline-flex flex-wrap items-baseline gap-1'>
                 <span className='font-mono text-xs break-all text-red-700/90 line-through dark:text-red-300/90'>{f.before}</span>

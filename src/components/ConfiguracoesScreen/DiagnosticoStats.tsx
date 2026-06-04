@@ -28,8 +28,8 @@ const SEVERITY_STYLE: Record<ErrorSeverity, string> = {
 
 function StatCard({ icon, label, value }: { icon: string; label: string; value: number | string }) {
   return (
-    <div className='flex items-center gap-3 rounded-xl border border-[var(--border)] p-3'>
-      <IconGeneral icon={icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.75rem]' />
+    <div className='flex items-center gap-3 rounded-xl border border-(--border) p-3'>
+      <IconGeneral icon={icon} fill={0} className='shrink-0 text-(--brand) [--icon-size:1.75rem]' />
       <div className='min-w-0'>
         <p className='truncate text-sm opacity-70'>{label}</p>
         <p className='text-xl font-semibold tabular-nums'>{value}</p>
@@ -40,7 +40,7 @@ function StatCard({ icon, label, value }: { icon: string; label: string; value: 
 
 /** A bounded -/+ stepper for the ranking size. */
 function Stepper({ value, onChange }: { value: number; onChange: (_v: number) => void }) {
-  const btn = "btn-press grid size-7 cursor-pointer place-items-center rounded-lg border border-[var(--border)] disabled:cursor-not-allowed disabled:opacity-40";
+  const btn = "btn-press grid size-7 cursor-pointer place-items-center rounded-lg border border-(--border) disabled:cursor-not-allowed disabled:opacity-40";
   return (
     <div className='flex items-center gap-1'>
       <button type='button' aria-label='Mostrar menos' disabled={value <= DIAG_RANK_MIN} onClick={() => onChange(value - 1)} className={btn}>
@@ -74,9 +74,9 @@ function RankCard({
 }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
-    <div className='flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] p-4'>
-      <header className='flex items-center gap-2 border-b border-[var(--border)] pb-2'>
-        <IconGeneral icon={icon} fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
+    <div className='flex flex-col gap-3 rounded-xl border border-(--border) bg-(--surface-inset) p-4'>
+      <header className='flex items-center gap-2 border-b border-(--border) pb-2'>
+        <IconGeneral icon={icon} fill={1} className='text-(--brand) [--icon-size:1.5rem]' />
         <h4 className='flex-1 font-semibold'>{title}</h4>
         <Stepper value={count} onChange={onCount} />
       </header>
@@ -94,8 +94,8 @@ function RankCard({
                   {r.value} <span className='font-normal opacity-50'>{unit}</span>
                 </span>
               </div>
-              <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-[var(--surface-2)]'>
-                <div className='h-full rounded-full bg-[var(--brand)]' style={{ width: `${(r.value / max) * 100}%` }} />
+              <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-(--surface-2)'>
+                <div className='h-full rounded-full bg-(--brand)' style={{ width: `${(r.value / max) * 100}%` }} />
               </div>
             </div>
           </li>
@@ -164,9 +164,9 @@ export function DiagnosticoStats() {
       </div>
 
       {/* Faults by type */}
-      <div className='flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] p-4'>
-        <header className='flex items-center gap-2 border-b border-[var(--border)] pb-2'>
-          <IconGeneral icon='report' fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
+      <div className='flex flex-col gap-3 rounded-xl border border-(--border) bg-(--surface-inset) p-4'>
+        <header className='flex items-center gap-2 border-b border-(--border) pb-2'>
+          <IconGeneral icon='report' fill={1} className='text-(--brand) [--icon-size:1.5rem]' />
           <h4 className='font-semibold'>Falhas por tipo</h4>
         </header>
         {faults.length === 0 && <p className='py-2 text-sm opacity-60'>Nenhuma falha registrada.</p>}
@@ -179,7 +179,7 @@ export function DiagnosticoStats() {
                   <span className='truncate text-sm'>{f.message}</span>
                   <span className='shrink-0 text-sm font-semibold tabular-nums'>{f.count}</span>
                 </div>
-                <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-[var(--surface-2)]'>
+                <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-(--surface-2)'>
                   <div
                     className={clsx(
                       "h-full rounded-full",

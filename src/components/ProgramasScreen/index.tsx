@@ -99,12 +99,12 @@ export function ProgramasScreen() {
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-(--border) pb-3'>
         <h1 className='text-2xl font-semibold'>Programas</h1>
         <Link
           href='/'
           aria-label='Fechar'
-          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'
         >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
@@ -112,7 +112,7 @@ export function ProgramasScreen() {
 
       {/* Search + filter + sort */}
       <div className='flex flex-wrap items-center gap-3'>
-        <label className='flex flex-1 items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5'>
+        <label className='flex flex-1 items-center gap-2 rounded-xl border border-(--border) px-4 py-2.5'>
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
           <input
             value={query}

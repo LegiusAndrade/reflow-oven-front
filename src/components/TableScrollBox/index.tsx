@@ -13,8 +13,8 @@ import type { ReactNode } from "react";
  */
 export function TableScrollBox({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={clsx("h-full overflow-hidden rounded-xl border border-[var(--border)] pr-2", className)}>
-      <div className='h-full overflow-auto pr-3 [scrollbar-gutter:stable]'>{children}</div>
+    <div className={clsx("h-full overflow-hidden rounded-xl border border-(--border) pr-2", className)}>
+      <div className='h-full overflow-auto pr-3 scrollbar-gutter-stable'>{children}</div>
     </div>
   );
 }

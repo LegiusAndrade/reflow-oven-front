@@ -147,7 +147,7 @@ export function UsuariosTab() {
             setPage(0);
           }}
         />
-        <label className='flex flex-1 items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5'>
+        <label className='flex flex-1 items-center gap-2 rounded-xl border border-(--border) px-4 py-2.5'>
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
           <input
             value={query}
@@ -176,7 +176,7 @@ export function UsuariosTab() {
         <TableScrollBox>
           <table className='w-full border-collapse text-left'>
             <thead className='sticky top-0 z-10 text-sm'>
-              <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
+              <tr className='[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
                 <th className='w-12'>#</th>
                 <th>Usuário</th>
                 <th>Tipo de Usuário</th>
@@ -187,7 +187,7 @@ export function UsuariosTab() {
             </thead>
             <tbody>
               {shown.map((u, i) => (
-                <tr key={u.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
+                <tr key={u.id} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-3'>
                   <td className='tabular-nums opacity-70'>{start + i + 1}</td>
                   <td className='font-medium'>{u.name}</td>
                   <td className='opacity-80'>{u.type}</td>
@@ -196,7 +196,7 @@ export function UsuariosTab() {
                   </td>
                   <td className='tabular-nums opacity-80'>{u.lastLogin}</td>
                   <td>
-                    <div className='flex items-center justify-end gap-1 text-[var(--brand)]'>
+                    <div className='flex items-center justify-end gap-1 text-(--brand)'>
                       <RowAction icon='visibility' label={`Detalhe de ${u.name}`} onClick={() => openDetail(u)} />
                       <RowAction icon='edit' label={`Editar ${u.name}`} onClick={() => openEdit(u)} />
                       {u.canDelete && u.id !== selfId && <RowAction icon='delete' label={`Remover ${u.name}`} onClick={() => openDelete(u)} danger />}
@@ -263,7 +263,7 @@ function RowAction({ icon, label, onClick, danger }: { icon: string; label: stri
       type='button'
       onClick={onClick}
       aria-label={label}
-      className={`btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-[var(--hover)] ${danger ? "text-red-700 dark:text-red-400" : ""}`}
+      className={`btn-press grid size-9 cursor-pointer place-items-center rounded-lg hover:bg-(--hover) ${danger ? "text-red-700 dark:text-red-400" : ""}`}
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.375rem]' />
     </button>

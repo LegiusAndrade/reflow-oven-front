@@ -90,8 +90,8 @@ export function ChangePasswordModal({ open, onClose, forced = false }: IChangePa
     >
       <form onSubmit={handleSubmit} className='flex max-h-[inherit] flex-col gap-4'>
         {forced && (
-          <div className='flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--hover)] p-3'>
-            <IconGeneral icon='info' fill={1} className='shrink-0 text-[var(--brand)] [--icon-size:1.5rem]' />
+          <div className='flex items-start gap-3 rounded-xl border border-(--border) bg-(--hover) p-3'>
+            <IconGeneral icon='info' fill={1} className='shrink-0 text-(--brand) [--icon-size:1.5rem]' />
             <div className='flex flex-col gap-1'>
               <h2 className='font-semibold'>Defina uma nova senha</h2>
               <p className='text-sm opacity-70'>Você está usando uma senha provisória. Crie uma nova senha para continuar.</p>
@@ -99,7 +99,7 @@ export function ChangePasswordModal({ open, onClose, forced = false }: IChangePa
           </div>
         )}
 
-        <div className='flex min-h-0 flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+        <div className='flex min-h-0 flex-col gap-4 overflow-y-auto pr-3 scrollbar-gutter-stable'>
           <PasswordLine
             label='Senha atual'
             value={current}
@@ -140,13 +140,13 @@ export function ChangePasswordModal({ open, onClose, forced = false }: IChangePa
           </p>
         )}
 
-        <footer className='mt-auto flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
+        <footer className='mt-auto flex items-center justify-end gap-3 border-t border-(--border) pt-3'>
           {!forced && (
             <button
               type='button'
               onClick={onClose}
               disabled={submitting}
-              className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40'
+              className='btn-press cursor-pointer rounded-xl border border-(--border) px-5 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40'
             >
               Cancelar
             </button>

@@ -5,7 +5,7 @@ import type { User } from "@/lib/users";
 import { UserStatusBadge } from "./userBadges";
 
 function Heading({ children }: { children: React.ReactNode }) {
-  return <h3 className='mb-2 text-sm font-semibold tracking-wide text-[var(--brand)] uppercase'>{children}</h3>;
+  return <h3 className='mb-2 text-sm font-semibold tracking-wide text-(--brand) uppercase'>{children}</h3>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

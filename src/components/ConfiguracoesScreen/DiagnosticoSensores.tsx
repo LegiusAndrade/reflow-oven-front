@@ -55,7 +55,7 @@ export function DiagnosticoSensores() {
           <button
             type='button'
             onClick={() => setLogOpen(true)}
-            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold'
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-(--border) px-4 py-2 text-sm font-semibold'
           >
             <IconGeneral icon='receipt_long' fill={0} className='[--icon-size:1.25rem]' />
             Log do Sistema
@@ -63,8 +63,8 @@ export function DiagnosticoSensores() {
         </div>
         <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
           {sensors.map((s) => (
-            <div key={s.label} className='flex items-center gap-3 rounded-xl border border-[var(--border)] p-3'>
-              <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.75rem]' />
+            <div key={s.label} className='flex items-center gap-3 rounded-xl border border-(--border) p-3'>
+              <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-(--brand) [--icon-size:1.75rem]' />
               <div className='min-w-0'>
                 <p className='truncate text-sm opacity-70'>{s.label}</p>
                 <p className='text-xl font-semibold tabular-nums'>
@@ -86,7 +86,7 @@ export function DiagnosticoSensores() {
           <button
             type='button'
             onClick={runAll}
-            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold'
+            className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-(--border) px-4 py-2 text-sm font-semibold'
           >
             <IconGeneral icon='play_circle' fill={0} className='[--icon-size:1.25rem]' />
             Executar todos
@@ -94,7 +94,7 @@ export function DiagnosticoSensores() {
         </div>
         <ul className='flex flex-col gap-2'>
           {TESTS.map((t) => (
-            <li key={t.id} className='flex items-center gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5'>
+            <li key={t.id} className='flex items-center gap-3 rounded-xl border border-(--border) px-3 py-2.5'>
               <IconGeneral icon={t.icon} fill={0} className='shrink-0 opacity-80 [--icon-size:1.5rem]' />
               <span className='flex-1'>{t.label}</span>
               <TestStatus state={tests[t.id] ?? "idle"} />
@@ -102,7 +102,7 @@ export function DiagnosticoSensores() {
                 type='button'
                 onClick={() => runTest(t.id)}
                 disabled={tests[t.id] === "running"}
-                className='btn-press cursor-pointer rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50'
+                className='btn-press cursor-pointer rounded-lg border border-(--border) px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50'
               >
                 Testar
               </button>
@@ -119,7 +119,7 @@ export function DiagnosticoSensores() {
 function TestStatus({ state }: { state: TestState }) {
   if (state === "idle") return <span className='text-sm opacity-40'>—</span>;
   if (state === "running")
-    return <IconGeneral icon='progress_activity' fill={0} className='animate-spin text-[var(--brand)] [--icon-size:1.25rem]' />;
+    return <IconGeneral icon='progress_activity' fill={0} className='animate-spin text-(--brand) [--icon-size:1.25rem]' />;
   const ok = state === "ok";
   return (
     <span className={clsx("inline-flex items-center gap-1 text-sm font-medium", ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400")}>

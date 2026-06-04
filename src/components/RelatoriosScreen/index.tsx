@@ -213,12 +213,12 @@ export function RelatoriosScreen() {
 
   return (
     <section className='card relative flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-(--border) pb-3'>
         <h1 className='text-2xl font-semibold'>Relatórios</h1>
         <Link
           href='/'
           aria-label='Fechar'
-          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'
         >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
@@ -234,7 +234,7 @@ export function RelatoriosScreen() {
             aria-current={tab === id ? "page" : undefined}
             className={clsx(
               "flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 font-semibold transition-colors",
-              tab === id ? "btn-link-active" : "hover:bg-[var(--hover)]"
+              tab === id ? "btn-link-active" : "hover:bg-(--hover)"
             )}
           >
             <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
@@ -266,7 +266,7 @@ export function RelatoriosScreen() {
             setPage(0);
           }}
         />
-        <label className='flex flex-1 items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5'>
+        <label className='flex flex-1 items-center gap-2 rounded-xl border border-(--border) px-4 py-2.5'>
           <IconGeneral icon='search' fill={0} className='shrink-0 opacity-70 [--icon-size:1.25rem]' />
           <input
             value={query}
@@ -349,7 +349,7 @@ function ExecutionsTable({
   return (
     <TableShell>
       <thead className='sticky top-0 z-10 text-sm'>
-        <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
+        <tr className='[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
           <th className='w-12'>#</th>
           <th>Nome do Programa</th>
           <th>Início da Execução</th>
@@ -360,7 +360,7 @@ function ExecutionsTable({
       </thead>
       <tbody>
         {executions.map((exec, i) => (
-          <tr key={exec.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
+          <tr key={exec.id} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-3'>
             <td className='tabular-nums opacity-70'>{startIndex + i + 1}</td>
             <td className='font-medium'>{exec.programName}</td>
             <td className='tabular-nums opacity-80'>{exec.startedAt}</td>
@@ -373,7 +373,7 @@ function ExecutionsTable({
                 type='button'
                 onClick={() => onOpen(exec)}
                 aria-label='Ver detalhe da execução'
-                className='btn-press grid size-10 cursor-pointer place-items-center rounded-lg text-[var(--brand)] hover:bg-[var(--hover)]'
+                className='btn-press grid size-10 cursor-pointer place-items-center rounded-lg text-(--brand) hover:bg-(--hover)'
               >
                 <IconGeneral icon='monitoring' fill={0} className='[--icon-size:1.5rem]' />
               </button>
@@ -390,7 +390,7 @@ function ChangesTable({ changes, startIndex, onOpen }: { changes: ChangeLogEntry
   return (
     <TableShell>
       <thead className='sticky top-0 z-10 text-sm'>
-        <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
+        <tr className='[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
           <th className='w-12'>#</th>
           <th>Data / Hora</th>
           <th>Ação</th>
@@ -401,7 +401,7 @@ function ChangesTable({ changes, startIndex, onOpen }: { changes: ChangeLogEntry
       </thead>
       <tbody>
         {changes.map((change, i) => (
-          <tr key={change.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
+          <tr key={change.id} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-3'>
             <td className='tabular-nums opacity-70'>{startIndex + i + 1}</td>
             <td className='tabular-nums opacity-80'>{change.at}</td>
             <td>
@@ -424,7 +424,7 @@ function ErrorsTable({ errors, startIndex, onOpen }: { errors: ErrorLogEntry[]; 
   return (
     <TableShell>
       <thead className='sticky top-0 z-10 text-sm'>
-        <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
+        <tr className='[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
           <th className='w-12'>#</th>
           <th>Data / Hora</th>
           <th>Severidade</th>
@@ -435,7 +435,7 @@ function ErrorsTable({ errors, startIndex, onOpen }: { errors: ErrorLogEntry[]; 
       </thead>
       <tbody>
         {errors.map((err, i) => (
-          <tr key={err.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
+          <tr key={err.id} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-3'>
             <td className='tabular-nums opacity-70'>{startIndex + i + 1}</td>
             <td className='tabular-nums opacity-80'>{err.at}</td>
             <td>
@@ -461,7 +461,7 @@ function DetailButton({ label, onClick }: { label: string; onClick: () => void }
       type='button'
       onClick={onClick}
       aria-label={label}
-      className='btn-press grid size-10 cursor-pointer place-items-center rounded-lg text-[var(--brand)] hover:bg-[var(--hover)]'
+      className='btn-press grid size-10 cursor-pointer place-items-center rounded-lg text-(--brand) hover:bg-(--hover)'
     >
       <IconGeneral icon='visibility' fill={0} className='[--icon-size:1.5rem]' />
     </button>

@@ -143,7 +143,7 @@ export function AppShell({ children }: IAppShellProps) {
     if (bootTimedOut) {
       return (
         <div className='text-fg grid h-screen place-items-center p-6'>
-          <div className='card flex w-[min(92vw,28rem)] flex-col items-center gap-4 rounded-2xl border border-[var(--border)] p-6 text-center'>
+          <div className='card flex w-[min(92vw,28rem)] flex-col items-center gap-4 rounded-2xl border border-(--border) p-6 text-center'>
             <IconGeneral icon='cloud_off' fill={1} className='shrink-0 text-red-700 dark:text-red-400 [--icon-size:2.5rem]' />
             <h1 className='text-xl font-semibold'>Não foi possível conectar ao servidor</h1>
             <p className='opacity-70'>Verifique se o servidor está ligado e a rede conectada, depois tente novamente.</p>

@@ -8,10 +8,10 @@ import { useStore } from "@/hooks/useStore";
 import { type AppNotification, clearAll, formatNotificationStamp, markAllRead, notificationsStore, refreshNotifications } from "@/lib/notifications";
 
 const KIND_META: Record<AppNotification["kind"], { icon: string; cls: string }> = {
-  update: { icon: "system_update", cls: "text-[var(--brand)]" },
+  update: { icon: "system_update", cls: "text-(--brand)" },
   error: { icon: "error", cls: "text-red-700 dark:text-red-400" },
   warning: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
-  info: { icon: "info", cls: "text-[var(--brand)]" },
+  info: { icon: "info", cls: "text-(--brand)" },
 };
 
 /** Notificações screen: the full feed. Marks everything as read when the user OPENS it (clears the
@@ -41,7 +41,7 @@ export function NotificacoesScreen() {
   }, [entryUnread]);
 
   return (
-    <div className='flex h-full min-h-0 flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+    <div className='flex h-full min-h-0 flex-col gap-4 overflow-y-auto pr-3 scrollbar-gutter-stable'>
       <div className='flex items-center justify-between gap-3'>
         <h1 className='text-xl font-semibold'>Notificações</h1>
         <button
@@ -66,7 +66,7 @@ export function NotificacoesScreen() {
             return (
               <li
                 key={n.id}
-                className={clsx("card flex items-start gap-3 rounded-xl border border-[var(--border)] p-3 transition-opacity", !unread && "opacity-55")}
+                className={clsx("card flex items-start gap-3 rounded-xl border border-(--border) p-3 transition-opacity", !unread && "opacity-55")}
               >
                 <IconGeneral icon={meta.icon} fill={1} className={`shrink-0 [--icon-size:1.5rem] ${meta.cls}`} />
                 <div className='min-w-0 flex-1'>
@@ -76,7 +76,7 @@ export function NotificacoesScreen() {
                   </div>
                   <p className='text-sm opacity-70'>{n.message}</p>
                 </div>
-                {unread && <span className='mt-1.5 size-2 shrink-0 rounded-full bg-[var(--brand)]' aria-label='Não lida' />}
+                {unread && <span className='mt-1.5 size-2 shrink-0 rounded-full bg-(--brand)' aria-label='Não lida' />}
               </li>
             );
           })}

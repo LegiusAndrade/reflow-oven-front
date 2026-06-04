@@ -41,7 +41,7 @@ export function CalibracaoTab() {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
-      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+      <div className='flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-3 scrollbar-gutter-stable'>
         <div className='flex flex-wrap items-center gap-2'>
           <span className='rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300'>Modo técnico</span>
           <p className='text-sm opacity-70'>Calibração dos sensores e atuadores — ajuste com cuidado.</p>

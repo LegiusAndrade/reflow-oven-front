@@ -17,7 +17,7 @@ export default function MenuToggle({ open, onClick }: IMenuToggleProps) {
       onClick={onClick}
       aria-label={open ? "Fechar menu" : "Abrir menu"}
       aria-expanded={open}
-      className='btn-press grid size-11 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
+      className='btn-press grid size-11 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'
     >
       <span className='relative block h-[18px] w-7'>
         <span

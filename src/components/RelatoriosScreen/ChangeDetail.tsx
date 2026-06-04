@@ -46,7 +46,7 @@ export function ChangeDetail({ change, open, onClose }: { change: ChangeLogEntry
         {change && <ChangeMeta change={change} />}
 
         {detail?.kind === "config" && (
-          <ul className='ml-5 flex list-disc flex-col gap-2 marker:text-[var(--brand)]'>
+          <ul className='ml-5 flex list-disc flex-col gap-2 marker:text-(--brand)'>
             {detail.bullets.map((b, i) => (
               <li key={i}>{b}</li>
             ))}
@@ -109,7 +109,7 @@ function ChangeMeta({ change }: { change: ChangeLogEntry }) {
  *  brand=changed, red=removed, neutral for the curve. Replaces the old "• ..." bullet lines. */
 function SectionHeading({ icon, tone, children }: { icon: string; tone: "brand" | "emerald" | "red" | "neutral"; children: React.ReactNode }) {
   const toneCls = {
-    brand: "text-[var(--brand)]",
+    brand: "text-(--brand)",
     emerald: "text-emerald-700 dark:text-emerald-400",
     red: "text-red-700 dark:text-red-400",
     neutral: "opacity-80",
@@ -201,7 +201,7 @@ function ProgramChart({ change, detail }: { change: ChangeLogEntry; detail: Extr
       <SectionHeading icon='show_chart' tone='neutral'>
         {caption}
       </SectionHeading>
-      <div className='h-[clamp(170px,28vh,260px)] rounded-xl border border-[var(--border)] p-2'>
+      <div className='h-[clamp(170px,28vh,260px)] rounded-xl border border-(--border) p-2'>
         <TemperatureProfileChart points={primary} overlays={overlays} className='h-full w-full' />
       </div>
 
@@ -228,7 +228,7 @@ function ProgramChart({ change, detail }: { change: ChangeLogEntry; detail: Extr
             return (
               <li key={e.id}>
                 <label className='flex cursor-pointer items-center gap-2 text-sm'>
-                  <input type='checkbox' checked={checked} onChange={() => toggle(e.id)} className='size-4 accent-[var(--brand)]' />
+                  <input type='checkbox' checked={checked} onChange={() => toggle(e.id)} className='size-4 accent-(--brand)' />
                   <LegendSwatch color={checked ? colorFor(e.id) : "var(--border)"} dashed />
                   <span className='tabular-nums'>{e.at}</span>
                   <span className='opacity-60'>· {e.action}</span>
@@ -248,16 +248,16 @@ function LegendSwatch({ color, dashed }: { color: string; dashed: boolean }) {
   return dashed ? (
     <span className='inline-block w-5 shrink-0 border-t-2 border-dashed' style={{ borderColor: color }} aria-hidden='true' />
   ) : (
-    <span className='inline-block h-[3px] w-5 shrink-0 rounded' style={{ backgroundColor: color }} aria-hidden='true' />
+    <span className='inline-block h-0.75 w-5 shrink-0 rounded' style={{ backgroundColor: color }} aria-hidden='true' />
   );
 }
 
-const TH_CLS = "[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold";
+const TH_CLS = "[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold";
 
 /** Plain point table (added / removed points). */
 function PointTable({ rows }: { rows: ChangePointRow[] }) {
   return (
-    <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
+    <div className='overflow-x-auto rounded-xl border border-(--border)'>
       <table className='w-full border-collapse text-left'>
         <thead className='text-sm'>
           <tr className={TH_CLS}>
@@ -269,7 +269,7 @@ function PointTable({ rows }: { rows: ChangePointRow[] }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.index} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
+            <tr key={r.index} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-2.5'>
               <td className='tabular-nums opacity-70'>{r.index}</td>
               <td className='tabular-nums'>{r.temp}</td>
               <td className='tabular-nums'>{r.timeSec}</td>
@@ -287,7 +287,7 @@ function PointTable({ rows }: { rows: ChangePointRow[] }) {
  *  Replaces the old git-style "− index / + index" two-row layout, whose # column read like "minus 2". */
 function DiffTable({ changed }: { changed: ChangedPointDiff[] }) {
   return (
-    <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
+    <div className='overflow-x-auto rounded-xl border border-(--border)'>
       <table className='w-full border-collapse text-left'>
         <thead className='text-sm'>
           <tr className={TH_CLS}>
@@ -299,7 +299,7 @@ function DiffTable({ changed }: { changed: ChangedPointDiff[] }) {
         </thead>
         <tbody>
           {changed.map((c, i) => (
-            <tr key={i} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
+            <tr key={i} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-2.5'>
               <td className='font-semibold tabular-nums opacity-70'>{c.after.index}</td>
               <DiffCell before={c.before.temp} after={c.after.temp} changed={c.changedFields.includes("temp")} numeric />
               <DiffCell before={c.before.timeSec} after={c.after.timeSec} changed={c.changedFields.includes("timeSec")} numeric />

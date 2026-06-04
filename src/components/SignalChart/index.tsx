@@ -97,18 +97,18 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
         {ready && (
           <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className='absolute inset-0' role='img' aria-label='Sinais ao longo do tempo'>
             {GRID.map((f) => (
-              <line key={f} x1={PAD.left} y1={PAD.top + plotH * f} x2={w - PAD.right} y2={PAD.top + plotH * f} className='[stroke:var(--fg)] opacity-10' strokeWidth={1} />
+              <line key={f} x1={PAD.left} y1={PAD.top + plotH * f} x2={w - PAD.right} y2={PAD.top + plotH * f} className='stroke-(--fg) opacity-10' strokeWidth={1} />
             ))}
 
-            <text x={PAD.left} y={h - 8} textAnchor='start' className='[fill:var(--fg)] text-sm opacity-60'>
+            <text x={PAD.left} y={h - 8} textAnchor='start' className='fill-(--fg) text-sm opacity-60'>
               0s
             </text>
-            <text x={w - PAD.right} y={h - 8} textAnchor='end' className='[fill:var(--fg)] text-sm opacity-60'>
+            <text x={w - PAD.right} y={h - 8} textAnchor='end' className='fill-(--fg) text-sm opacity-60'>
               {Math.round(xMaxSec)}s
             </text>
 
             {hover != null && (
-              <line x1={sx(hover)} y1={PAD.top} x2={sx(hover)} y2={PAD.top + plotH} className='[stroke:var(--fg)] opacity-40' strokeWidth={1} strokeDasharray='4 4' />
+              <line x1={sx(hover)} y1={PAD.top} x2={sx(hover)} y2={PAD.top + plotH} className='stroke-(--fg) opacity-40' strokeWidth={1} strokeDasharray='4 4' />
             )}
 
             {scaled.map(({ signal, d }) => (
@@ -124,7 +124,7 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
 
         {ready && hover != null && (
           <div
-            className='pointer-events-none absolute top-1 z-10 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1.5 text-sm shadow-lg'
+            className='pointer-events-none absolute top-1 z-10 rounded-lg border border-(--border) bg-(--bg-2) px-2.5 py-1.5 text-sm shadow-lg'
             style={{ left: tooltipLeft, width: TOOLTIP_W }}
           >
             <div className='mb-1 font-semibold tabular-nums opacity-70'>t = {hoverTime}s</div>
@@ -157,7 +157,7 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
                 type='button'
                 onClick={() => toggle(s.name)}
                 aria-pressed={!off}
-                className={clsx("btn-press flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 hover:bg-[var(--hover)]", off && "opacity-40")}
+                className={clsx("btn-press flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 hover:bg-(--hover)", off && "opacity-40")}
               >
                 <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: s.color }} aria-hidden='true' />
                 <span className={clsx(off && "line-through")}>{s.name}</span>

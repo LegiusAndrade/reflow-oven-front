@@ -64,7 +64,7 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
       {user && (
         <div className='flex flex-col gap-5'>
           <section>
-            <h3 className='mb-2 text-sm font-semibold tracking-wide text-[var(--brand)] uppercase'>Detalhes do Usuário</h3>
+            <h3 className='mb-2 text-sm font-semibold tracking-wide text-(--brand) uppercase'>Detalhes do Usuário</h3>
             <div className='flex flex-col gap-4'>
               <div className='flex flex-wrap items-center gap-x-2'>
                 <span className='opacity-60'>Usuário:</span>
@@ -114,8 +114,8 @@ export function UserEditModal({ user, open, onClose }: { user: User | null; open
             </div>
           </section>
 
-          <footer className='flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
-            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
+          <footer className='flex items-center justify-end gap-3 border-t border-(--border) pt-3'>
+            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-(--border) px-5 py-2.5 font-semibold'>
               Cancelar
             </button>
             <button type='button' onClick={handleSave} className='btn-action flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 font-semibold'>

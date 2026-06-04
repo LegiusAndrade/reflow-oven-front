@@ -180,7 +180,7 @@ function TrashList<T extends { id: string; deletedAt: string; deletedBy?: string
   }
   return (
     <TableScrollBox className='min-h-0 flex-1'>
-      <ul className='divide-y divide-[var(--border)]'>
+      <ul className='divide-y divide-(--border)'>
         {items.map((it) => (
           <li key={it.id} className='flex items-center gap-3 px-3 py-2.5'>
             <IconGeneral icon='delete' fill={0} className='shrink-0 opacity-40 [--icon-size:1.25rem]' />
@@ -195,7 +195,7 @@ function TrashList<T extends { id: string; deletedAt: string; deletedBy?: string
             <button
               type='button'
               onClick={() => onRestore(it)}
-              className='btn-press flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold hover:bg-[var(--hover)]'
+              className='btn-press flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-(--border) px-3 py-1.5 text-sm font-semibold hover:bg-(--hover)'
             >
               <IconGeneral icon='restore' fill={0} className='[--icon-size:1.125rem]' />
               Restaurar

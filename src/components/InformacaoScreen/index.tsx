@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <div className='flex items-start gap-3'>
-      <IconGeneral icon={icon} fill={0} className='mt-0.5 shrink-0 text-[var(--brand)] [--icon-size:1.5rem]' />
+      <IconGeneral icon={icon} fill={0} className='mt-0.5 shrink-0 text-(--brand) [--icon-size:1.5rem]' />
       <div className='min-w-0'>
         <dt className='text-sm opacity-70'>{label}</dt>
         <dd className='font-semibold tabular-nums'>{value}</dd>
@@ -53,9 +53,9 @@ function CpuLoadRow() {
 /** A titled info block (border + subtle fill + icon header) — the shared card chrome. */
 function InfoCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
   return (
-    <div className='flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] p-4'>
-      <header className='flex items-center gap-2 border-b border-[var(--border)] pb-2'>
-        <IconGeneral icon={icon} fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
+    <div className='flex flex-col gap-3 rounded-xl border border-(--border) bg-(--surface-inset) p-4'>
+      <header className='flex items-center gap-2 border-b border-(--border) pb-2'>
+        <IconGeneral icon={icon} fill={1} className='text-(--brand) [--icon-size:1.5rem]' />
         <h2 className='font-semibold'>{title}</h2>
       </header>
       {children}
@@ -145,18 +145,18 @@ export function InformacaoScreen() {
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-(--border) pb-3'>
         <h1 className='text-2xl font-semibold'>Informação</h1>
         <Link
           href='/'
           aria-label='Fechar'
-          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'
         >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
       </header>
 
-      <div className='flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pr-3 [scrollbar-gutter:stable] lg:flex-row lg:items-start'>
+      <div className='flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pr-3 scrollbar-gutter-stable lg:flex-row lg:items-start'>
         {/* Logo + repository QR */}
         <div className='flex shrink-0 flex-col items-center gap-3'>
           <Image src='/Logo.svg' alt='PandeWilly' width={112} height={112} priority className='size-28' />
@@ -168,7 +168,7 @@ export function InformacaoScreen() {
             href={REPO_URL}
             target='_blank'
             rel='noreferrer'
-            className='max-w-[12rem] text-center text-xs break-all text-[var(--brand)] hover:underline'
+            className='max-w-[12rem] text-center text-xs break-all text-(--brand) hover:underline'
           >
             {REPO_URL.replace("https://", "")}
           </Link>
@@ -177,9 +177,9 @@ export function InformacaoScreen() {
         {/* System info + per-board blocks, each in a matching card (top-aligned so nothing is clipped at 1024×600) */}
         <div className='flex min-w-0 flex-1 flex-col gap-4'>
           {update?.updateAvailable === true && (
-            <div className='flex flex-col gap-3 rounded-xl border border-[var(--brand)] p-4 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex flex-col gap-3 rounded-xl border border-(--brand) p-4 sm:flex-row sm:items-center sm:justify-between'>
               <div className='flex items-center gap-3'>
-                <IconGeneral icon='system_update' fill={1} className='shrink-0 text-[var(--brand)] [--icon-size:1.75rem]' />
+                <IconGeneral icon='system_update' fill={1} className='shrink-0 text-(--brand) [--icon-size:1.75rem]' />
                 <div>
                   <p className='font-semibold'>Atualização disponível</p>
                   <p className='text-sm opacity-70'>

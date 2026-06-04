@@ -127,7 +127,7 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
             type='button'
             onClick={toggleAll}
             disabled={selectable.length === 0}
-            className='btn-press flex w-fit shrink-0 cursor-pointer items-center gap-2 self-end rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40'
+            className='btn-press flex w-fit shrink-0 cursor-pointer items-center gap-2 self-end rounded-lg border border-(--border) px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40'
           >
             <IconGeneral icon={allSelected ? "deselect" : "select_all"} fill={0} className='[--icon-size:1.125rem]' />
             {allSelected ? "Limpar seleção" : "Selecionar tudo"}
@@ -139,7 +139,7 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
               <span className='text-sm'>Carregando registros…</span>
             </div>
           ) : (
-            <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+            <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 scrollbar-gutter-stable'>
               {visibleCategories.map((c) => {
                 const overviewBacked = liveById.has(c.id);
                 const count = displayCountOf(c.id);
@@ -153,9 +153,9 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
                   <li key={c.id}>
                     <label
                       className={clsx(
-                        "flex items-center gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5 transition-colors",
-                        disabled ? (empty ? "cursor-not-allowed opacity-50" : "cursor-default") : "cursor-pointer hover:bg-[var(--hover)]",
-                        checked && "border-[var(--brand)] bg-[var(--brand)]/10"
+                        "flex items-center gap-3 rounded-xl border border-(--border) px-3 py-2.5 transition-colors",
+                        disabled ? (empty ? "cursor-not-allowed opacity-50" : "cursor-default") : "cursor-pointer hover:bg-(--hover)",
+                        checked && "border-(--brand) bg-(--brand)/10"
                       )}
                     >
                       {blocked ? (
@@ -163,20 +163,20 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
                       ) : (
                         <input
                           type='checkbox'
-                          className='size-4 shrink-0 accent-[var(--brand)]'
+                          className='size-4 shrink-0 accent-(--brand)'
                           checked={checked}
                           disabled={disabled}
                           onChange={() => toggle(c.id)}
                         />
                       )}
-                      <IconGeneral icon={c.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.5rem]' />
+                      <IconGeneral icon={c.icon} fill={0} className='shrink-0 text-(--brand) [--icon-size:1.5rem]' />
                       <div className='min-w-0 flex-1'>
                         <p className='font-medium'>{c.label}</p>
                         <p className='truncate text-sm opacity-60'>{c.hint}</p>
                       </div>
-                      {blocked && <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-xs font-medium opacity-70'>Somente Admin</span>}
+                      {blocked && <span className='shrink-0 rounded-md bg-(--surface-2) px-2 py-0.5 text-xs font-medium opacity-70'>Somente Admin</span>}
                       <span
-                        className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'
+                        className='shrink-0 rounded-md bg-(--surface-2) px-2 py-0.5 text-right text-sm font-semibold tabular-nums'
                         title={!empty && !overviewBacked ? "Tamanho exato pendente do servidor" : undefined}
                       >
                         {empty ? "vazio" : overviewBacked ? `${count} · ${formatBytes(bytesOf(c.id))}` : `${count} ${count === 1 ? "item" : "itens"}`}
@@ -188,8 +188,8 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
             </ul>
           )}
 
-          <div className='flex shrink-0 items-center justify-end gap-3 border-t border-[var(--border)] pt-4'>
-            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
+          <div className='flex shrink-0 items-center justify-end gap-3 border-t border-(--border) pt-4'>
+            <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-(--border) px-5 py-2.5 font-semibold'>
               Cancelar
             </button>
             <button

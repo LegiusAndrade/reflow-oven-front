@@ -148,7 +148,7 @@ export function RedeTab() {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-5'>
-      <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+      <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-3 scrollbar-gutter-stable'>
         <section className='flex flex-col gap-2'>
           <h3 className='font-semibold'>Interfaces de rede</h3>
           {loadingInterfaces ? (
@@ -164,7 +164,7 @@ export function RedeTab() {
                     key={iface.name}
                     className={clsx(
                       "flex flex-wrap items-center gap-3 rounded-xl border p-3",
-                      isActive ? "border-[var(--brand)] bg-[var(--brand)]/5" : "border-[var(--border)]"
+                      isActive ? "border-(--brand) bg-(--brand)/5" : "border-(--border)"
                     )}
                   >
                     <IconGeneral icon={iface.kind === "Ethernet" ? "lan" : "wifi"} fill={0} className='opacity-70 [--icon-size:1.25rem]' />
@@ -184,7 +184,7 @@ export function RedeTab() {
                         type='button'
                         onClick={() => setPriority(iface.name)}
                         disabled={settingPriority !== null}
-                        className='btn-press ml-auto cursor-pointer rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-medium hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50'
+                        className='btn-press ml-auto cursor-pointer rounded-lg border border-(--border) px-3 py-1.5 text-sm font-medium hover:bg-(--hover) disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         {settingPriority === iface.name ? "Definindo…" : "Definir como prioritária"}
                       </button>
@@ -196,7 +196,7 @@ export function RedeTab() {
           )}
         </section>
 
-        <div className='flex flex-wrap gap-3 border-t border-[var(--border)] pt-4'>
+        <div className='flex flex-wrap gap-3 border-t border-(--border) pt-4'>
           <TextLine
             label='Endereço IP'
             value={form.ip}
@@ -250,7 +250,7 @@ export function RedeTab() {
           <span>IP Fixo</span>
         </div>
 
-        <section className='flex flex-col gap-2 border-t border-[var(--border)] pt-4'>
+        <section className='flex flex-col gap-2 border-t border-(--border) pt-4'>
           <h3 className='font-semibold'>Teste de Ping</h3>
           {/* items-start so the two field labels (and their inputs) line up; the Porta field's
               Mín/Máx hint then hangs below without shoving its input up. The Testar button gets a

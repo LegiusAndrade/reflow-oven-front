@@ -41,9 +41,9 @@ export function ConfiguracoesScreen() {
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
-      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-(--border) pb-3'>
         <h1 className='text-2xl font-semibold'>Configurações</h1>
-        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'>
+        <Link href='/' aria-label='Fechar' className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'>
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </Link>
       </header>
@@ -57,7 +57,7 @@ export function ConfiguracoesScreen() {
             aria-current={tab === id ? "page" : undefined}
             className={clsx(
               "flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 font-semibold transition-colors",
-              tab === id ? "btn-link-active" : "hover:bg-[var(--hover)]"
+              tab === id ? "btn-link-active" : "hover:bg-(--hover)"
             )}
           >
             <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />

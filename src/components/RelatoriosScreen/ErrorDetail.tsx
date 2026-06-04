@@ -25,7 +25,7 @@ export function ErrorDetail({ err, onClose }: { err: ErrorLogEntry; onClose: () 
               <span className='opacity-60'>Usuário:</span> <span className='font-medium'>{err.user}</span>
             </span>
           </p>
-          <div className='h-[clamp(240px,46vh,400px)] rounded-xl border border-[var(--border)] p-2'>
+          <div className='h-[clamp(240px,46vh,400px)] rounded-xl border border-(--border) p-2'>
             <SnapshotChart snapshot={err.snapshot} className='h-full w-full' />
           </div>
         </section>

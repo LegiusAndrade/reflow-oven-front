@@ -47,7 +47,7 @@ export function ExecutionDetail({
         )}
         {/* Profile chart: programmed (dashed) vs real (solid), with the fault flagged */}
         <div>
-          <div className='h-[clamp(170px,30vh,300px)] rounded-xl border border-[var(--border)] p-2'>
+          <div className='h-[clamp(170px,30vh,300px)] rounded-xl border border-(--border) p-2'>
             <TemperatureProfileChart
               points={exec.realProfile}
               comparePoints={exec.profile}
@@ -61,7 +61,7 @@ export function ExecutionDetail({
               <span className='opacity-80'>Programado</span>
             </li>
             <li className='flex items-center gap-1.5'>
-              <span className='inline-block h-[3px] w-5 rounded bg-[var(--brand)]' aria-hidden='true' />
+              <span className='inline-block h-0.75 w-5 rounded bg-(--brand)' aria-hidden='true' />
               <span className='opacity-80'>Real</span>
             </li>
             {exec.faultAt && (
@@ -77,7 +77,7 @@ export function ExecutionDetail({
         {exec.trace && exec.trace.series.length > 0 && (
           <section>
             <SectionTitle>Sinais da Execução</SectionTitle>
-            <div className='h-[clamp(240px,46vh,400px)] rounded-xl border border-[var(--border)] p-2'>
+            <div className='h-[clamp(240px,46vh,400px)] rounded-xl border border-(--border) p-2'>
               <SnapshotChart snapshot={exec.trace} className='h-full w-full' />
             </div>
           </section>
@@ -102,7 +102,7 @@ export function ExecutionDetail({
         <section>
           <SectionTitle>Comparativo do Perfil</SectionTitle>
           {exec.comparison.length === 0 ? (
-            <div className='flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-3 text-sm opacity-70'>
+            <div className='flex items-center gap-2 rounded-xl border border-(--border) px-4 py-3 text-sm opacity-70'>
               {exec.status === "Concluído" ? (
                 <>
                   <IconGeneral icon='check_circle' fill={1} className='shrink-0 text-emerald-700 dark:text-emerald-400 [--icon-size:1.25rem]' />
@@ -116,10 +116,10 @@ export function ExecutionDetail({
               )}
             </div>
           ) : (
-            <div className='overflow-x-auto rounded-xl border border-[var(--border)]'>
+            <div className='overflow-x-auto rounded-xl border border-(--border)'>
               <table className='w-full border-collapse text-left'>
                 <thead className='text-sm'>
-                  <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold'>
+                  <tr className='[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-2.5 [&>th]:font-semibold'>
                     <th className='w-12'>#</th>
                     <th>Temp. Progr.</th>
                     <th>Temp. Real</th>
@@ -130,7 +130,7 @@ export function ExecutionDetail({
                 </thead>
                 <tbody>
                   {exec.comparison.map((row, i) => (
-                    <tr key={i} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-2.5'>
+                    <tr key={i} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-2.5'>
                       <td className='tabular-nums opacity-70'>{i + 1}</td>
                       <td className='tabular-nums'>{row.tempProg}°C</td>
                       <td className='tabular-nums'>{row.tempReal}°C</td>

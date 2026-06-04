@@ -38,7 +38,7 @@ export function DiagnosticoTab() {
             aria-current={sub === t.id ? "page" : undefined}
             className={clsx(
               "btn-press flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-              sub === t.id ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "border border-[var(--border)] hover:bg-[var(--hover)]"
+              sub === t.id ? "bg-(--brand)/15 text-(--brand)" : "border border-(--border) hover:bg-(--hover)"
             )}
           >
             <IconGeneral icon={t.icon} fill={sub === t.id ? 1 : 0} className='[--icon-size:1.125rem]' />
@@ -47,7 +47,7 @@ export function DiagnosticoTab() {
         ))}
       </nav>
 
-      <div className='min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+      <div className='min-h-0 flex-1 overflow-y-auto pr-3 scrollbar-gutter-stable'>
         {sub === "stats" && <DiagnosticoStats />}
         {sub === "sensores" && <DiagnosticoSensores />}
         {sub === "manutencao" && <ManutencaoTab />}

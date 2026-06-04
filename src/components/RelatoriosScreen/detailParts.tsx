@@ -29,25 +29,25 @@ export function DetailShell({ title, onClose, children }: { title: string; onClo
 
   return (
     <div ref={ref} className='flex h-full min-h-0 flex-col gap-5'>
-      <header className='flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
+      <header className='flex items-center justify-between gap-4 border-b border-(--border) pb-3'>
         <h1 className='truncate text-2xl font-semibold'>{title}</h1>
         <button
           type='button'
           onClick={onClose}
           aria-label='Voltar'
-          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
+          className='btn-press grid size-10 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'
         >
           <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
         </button>
       </header>
-      <div className='min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>{children}</div>
+      <div className='min-h-0 flex-1 overflow-y-auto pr-3 scrollbar-gutter-stable'>{children}</div>
     </div>
   );
 }
 
 /** Small uppercase heading used for each block of a detail view. */
 export function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className='mb-2 text-sm font-semibold tracking-wide text-[var(--brand)] uppercase'>{children}</h2>;
+  return <h2 className='mb-2 text-sm font-semibold tracking-wide text-(--brand) uppercase'>{children}</h2>;
 }
 
 /** Inline "Label: value" pair for the detail grids. */
@@ -61,7 +61,7 @@ export function Field({ label, children }: { label: string; children: React.Reac
 }
 
 const EVENT_STYLE: Record<LogEventKind, { icon: string; cls: string }> = {
-  info: { icon: "info", cls: "text-[var(--brand)]" },
+  info: { icon: "info", cls: "text-(--brand)" },
   alerta: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
   falha: { icon: "error", cls: "text-red-700 dark:text-red-400" },
 };

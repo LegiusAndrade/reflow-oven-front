@@ -29,7 +29,7 @@ export function NotificacoesTab() {
         <TableScrollBox>
           <table className='w-full border-collapse text-left'>
             <thead className='sticky top-0 z-10 text-sm'>
-              <tr className='[&>th]:bg-[var(--bg-2)] [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
+              <tr className='[&>th]:bg-(--bg-2) [&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold'>
                 <th className='w-12'>#</th>
                 <th>Alerta</th>
                 <th>Processo</th>
@@ -40,7 +40,7 @@ export function NotificacoesTab() {
             </thead>
             <tbody>
               {draft.notifications.map((n, i) => (
-                <tr key={n.id} className='border-t border-[var(--border)] [&>td]:px-4 [&>td]:py-3'>
+                <tr key={n.id} className='border-t border-(--border) [&>td]:px-4 [&>td]:py-3'>
                   <td className='tabular-nums opacity-70'>{i + 1}</td>
                   <td className='font-medium'>{n.alert}</td>
                   <td>

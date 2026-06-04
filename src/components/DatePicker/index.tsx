@@ -106,7 +106,7 @@ export function DatePicker({ value, onChange, label, min, max, className }: IDat
         aria-haspopup='dialog'
         aria-expanded={open}
         aria-label={label}
-        className='btn-press flex w-full items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2.5'
+        className='btn-press flex w-full items-center gap-2 rounded-xl border border-(--border) px-3 py-2.5'
       >
         <IconGeneral icon='calendar_today' fill={0} className='shrink-0 opacity-70 [--icon-size:1.125rem]' />
         <span className={clsx("tabular-nums", !value && "opacity-60")}>{value ? isoToBr(value) : "dd/mm/aaaa"}</span>
@@ -119,7 +119,7 @@ export function DatePicker({ value, onChange, label, min, max, className }: IDat
             role='dialog'
             aria-label={label}
             style={{ position: "fixed", top: coords.top, left: coords.left }}
-            className='card text-fg z-[80] rounded-xl border border-[var(--border)] p-2 shadow-xl'
+            className='card text-fg z-[80] rounded-xl border border-(--border) p-2 shadow-xl'
           >
             <DayPicker
               mode='single'

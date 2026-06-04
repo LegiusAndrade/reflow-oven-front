@@ -25,14 +25,14 @@ export function TextField({ id, label, value, onChange, type = "text", maxLength
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
         placeholder=' '
-        className='peer w-full rounded-xl border border-[var(--border)] bg-transparent px-3 pb-2 pt-4 outline-none transition-colors focus:border-[var(--brand)]'
+        className='peer w-full rounded-xl border border-(--border) bg-transparent px-3 pb-2 pt-4 outline-none transition-colors focus:border-(--brand)'
       />
       <label
         htmlFor={id}
         className={clsx(
-          "pointer-events-none absolute left-2 top-1/2 origin-left -translate-y-1/2 rounded bg-[var(--card-bg)] px-1 opacity-60 transition-all duration-150",
+          "pointer-events-none absolute left-2 top-1/2 origin-left -translate-y-1/2 rounded bg-(--card-bg) px-1 opacity-60 transition-all duration-150",
           // Floated state: focused OR filled (not showing the placeholder)
-          "peer-focus:top-0 peer-focus:text-xs peer-focus:text-[var(--brand)] peer-focus:opacity-100",
+          "peer-focus:top-0 peer-focus:text-xs peer-focus:text-(--brand) peer-focus:opacity-100",
           "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:opacity-100"
         )}
       >

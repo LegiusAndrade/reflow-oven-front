@@ -23,7 +23,7 @@ export function StatusBadge({ status }: { status: ExecutionStatus }) {
 
 const ACTION_STYLE: Record<ChangeAction, { icon: string; cls: string }> = {
   Criado: { icon: "add_circle", cls: "text-emerald-700 dark:text-emerald-400" },
-  Editado: { icon: "edit", cls: "text-[var(--brand)]" },
+  Editado: { icon: "edit", cls: "text-(--brand)" },
   Removido: { icon: "delete", cls: "text-red-700 dark:text-red-400" },
 };
 
@@ -41,7 +41,7 @@ export function ActionBadge({ action }: { action: ChangeAction }) {
 const SEVERITY_STYLE: Record<ErrorSeverity, { icon: string; cls: string }> = {
   Crítico: { icon: "error", cls: "text-red-700 dark:text-red-400" },
   Alerta: { icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
-  Aviso: { icon: "info", cls: "text-[var(--brand)]" },
+  Aviso: { icon: "info", cls: "text-(--brand)" },
 };
 
 /** Fault severity pill (Crítico / Alerta / Aviso). */

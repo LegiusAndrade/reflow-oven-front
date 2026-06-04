@@ -65,7 +65,7 @@ export function CalibracaoSaidaModal({ open, onClose, onApply }: { open: boolean
     onClose();
   };
 
-  const inputCls = "w-full rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] px-3 py-2.5 tabular-nums outline-none placeholder:opacity-40 focus:border-[var(--brand)]";
+  const inputCls = "w-full rounded-xl border border-(--border) bg-(--surface-inset) px-3 py-2.5 tabular-nums outline-none placeholder:opacity-40 focus:border-(--brand)";
 
   return (
     <Modal open={open} title='Calibração da saída' onClose={onClose} panelClassName='w-[min(92vw,32rem)]'>
@@ -77,7 +77,7 @@ export function CalibracaoSaidaModal({ open, onClose, onApply }: { open: boolean
               key={v}
               className={clsx(
                 "flex h-7 flex-1 items-center justify-center rounded-md text-xs font-semibold tabular-nums",
-                i < step ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : i === step ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "bg-[var(--surface-2)] opacity-60"
+                i < step ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : i === step ? "bg-(--brand)/20 text-(--brand)" : "bg-(--surface-2) opacity-60"
               )}
             >
               {v} V
@@ -85,8 +85,8 @@ export function CalibracaoSaidaModal({ open, onClose, onApply }: { open: boolean
           ))}
         </ol>
 
-        <div className='flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-inset)] p-3'>
-          <IconGeneral icon='bolt' fill={1} className='shrink-0 text-[var(--brand)] [--icon-size:1.75rem]' />
+        <div className='flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-inset) p-3'>
+          <IconGeneral icon='bolt' fill={1} className='shrink-0 text-(--brand) [--icon-size:1.75rem]' />
           <div>
             <p className='text-sm opacity-70'>
               Passo {step + 1} de {STEPS.length} — saída ajustada para
@@ -111,12 +111,12 @@ export function CalibracaoSaidaModal({ open, onClose, onApply }: { open: boolean
           </label>
         </div>
 
-        <div className='mt-1 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-4'>
+        <div className='mt-1 flex items-center justify-between gap-3 border-t border-(--border) pt-4'>
           <button
             type='button'
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
-            className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-4 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40'
+            className='btn-press cursor-pointer rounded-xl border border-(--border) px-4 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-40'
           >
             Voltar
           </button>

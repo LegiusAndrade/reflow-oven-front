@@ -8,7 +8,7 @@ import type { NotificationKind } from "@/lib/settings";
 
 const KINDS: { value: NotificationKind; icon: string; cls: string }[] = [
   { value: "Normal", icon: "check_circle", cls: "text-emerald-700 dark:text-emerald-400" },
-  { value: "Atenção", icon: "info", cls: "text-[var(--brand)]" },
+  { value: "Atenção", icon: "info", cls: "text-(--brand)" },
   { value: "Crítica", icon: "warning", cls: "text-amber-700 dark:text-amber-400" },
   { value: "Grave", icon: "cancel", cls: "text-red-700 dark:text-red-400" },
 ];
@@ -63,7 +63,7 @@ export function KindSelect({ value, onChange }: { value: NotificationKind; onCha
         onClick={toggle}
         aria-haspopup='listbox'
         aria-expanded={open}
-        className='btn-press flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] px-2.5 py-1.5'
+        className='btn-press flex cursor-pointer items-center gap-1.5 rounded-lg border border-(--border) px-2.5 py-1.5'
       >
         <span className={clsx("inline-flex items-center gap-1.5 font-medium", current.cls)}>
           <IconGeneral icon={current.icon} fill={1} className='[--icon-size:1.25rem]' />
@@ -78,7 +78,7 @@ export function KindSelect({ value, onChange }: { value: NotificationKind; onCha
             ref={popRef}
             role='listbox'
             style={{ position: "fixed", top: coords.top, left: coords.left, width: POPOVER_W }}
-            className='card z-[80] rounded-xl border border-[var(--border)] py-1 shadow-xl'
+            className='card z-[80] rounded-xl border border-(--border) py-1 shadow-xl'
           >
             {KINDS.map((k) => (
               <button
@@ -90,7 +90,7 @@ export function KindSelect({ value, onChange }: { value: NotificationKind; onCha
                   onChange(k.value);
                   setOpen(false);
                 }}
-                className='flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left hover:bg-[var(--hover)]'
+                className='flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left hover:bg-(--hover)'
               >
                 <IconGeneral icon={k.icon} fill={1} className={clsx("[--icon-size:1.25rem]", k.cls)} />
                 <span className='text-fg flex-1'>{k.value}</span>

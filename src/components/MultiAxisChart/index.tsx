@@ -162,12 +162,12 @@ export function MultiAxisChart({
               const y = pad.top + plotH * f;
               return (
                 <g key={`h-${f}`}>
-                  <line x1={pad.left} y1={y} x2={w - pad.right} y2={y} className='[stroke:var(--fg)] opacity-10' strokeWidth={1} />
-                  <text x={pad.left - 6} y={y} textAnchor='end' dominantBaseline='middle' className='[fill:var(--fg)] text-sm opacity-55 tabular-nums'>
+                  <line x1={pad.left} y1={y} x2={w - pad.right} y2={y} className='stroke-(--fg) opacity-10' strokeWidth={1} />
+                  <text x={pad.left - 6} y={y} textAnchor='end' dominantBaseline='middle' className='fill-(--fg) text-sm opacity-55 tabular-nums'>
                     {fmt(lHi - (lHi - lLo) * f)}
                   </text>
                   {right && (
-                    <text x={w - pad.right + 6} y={y} textAnchor='start' dominantBaseline='middle' className='[fill:var(--fg)] text-sm opacity-55 tabular-nums'>
+                    <text x={w - pad.right + 6} y={y} textAnchor='start' dominantBaseline='middle' className='fill-(--fg) text-sm opacity-55 tabular-nums'>
                       {fmt(rHi - (rHi - rLo) * f)}
                     </text>
                   )}
@@ -178,19 +178,19 @@ export function MultiAxisChart({
             {/* Vertical time gridlines + labels */}
             {xTicks.map((t) => (
               <g key={`v-${t}`}>
-                <line x1={sx(t)} y1={pad.top} x2={sx(t)} y2={pad.top + plotH} className='[stroke:var(--fg)] opacity-[0.07]' strokeWidth={1} />
-                <text x={sx(t)} y={h - 8} textAnchor='middle' className='[fill:var(--fg)] text-sm opacity-55 tabular-nums'>
+                <line x1={sx(t)} y1={pad.top} x2={sx(t)} y2={pad.top + plotH} className='stroke-(--fg) opacity-[0.07]' strokeWidth={1} />
+                <text x={sx(t)} y={h - 8} textAnchor='middle' className='fill-(--fg) text-sm opacity-55 tabular-nums'>
                   {t}s
                 </text>
               </g>
             ))}
 
             {/* Axis unit labels — sit above the top tick so they never collide with it */}
-            <text x={pad.left - 6} y={pad.top - 14} textAnchor='end' className='[fill:var(--fg)] text-sm font-semibold opacity-70'>
+            <text x={pad.left - 6} y={pad.top - 14} textAnchor='end' className='fill-(--fg) text-sm font-semibold opacity-70'>
               {left.unit}
             </text>
             {right && (
-              <text x={w - pad.right + 6} y={pad.top - 14} textAnchor='start' className='[fill:var(--fg)] text-sm font-semibold opacity-70'>
+              <text x={w - pad.right + 6} y={pad.top - 14} textAnchor='start' className='fill-(--fg) text-sm font-semibold opacity-70'>
                 {right.unit}
               </text>
             )}
@@ -198,7 +198,7 @@ export function MultiAxisChart({
             {/* Expected (programmed) reference, faded */}
             {bgPath && <path d={bgPath} fill='none' stroke={background!.color} strokeWidth={1.5} strokeDasharray='5 4' opacity={0.4} strokeLinejoin='round' />}
 
-            {hi >= 0 && <line x1={sx(times[hi] ?? 0)} y1={pad.top} x2={sx(times[hi] ?? 0)} y2={pad.top + plotH} className='[stroke:var(--fg)] opacity-40' strokeWidth={1} strokeDasharray='4 4' />}
+            {hi >= 0 && <line x1={sx(times[hi] ?? 0)} y1={pad.top} x2={sx(times[hi] ?? 0)} y2={pad.top + plotH} className='stroke-(--fg) opacity-40' strokeWidth={1} strokeDasharray='4 4' />}
 
             {leftVisible.map((s) => (
               <path key={s.name} d={linePath(s.values, syL)} fill='none' stroke={s.color} strokeWidth={2} strokeLinejoin='round' strokeLinecap='round' />
@@ -238,7 +238,7 @@ export function MultiAxisChart({
                 type='button'
                 onClick={() => toggle(s.name)}
                 aria-pressed={!off}
-                className={clsx("btn-press flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 hover:bg-[var(--hover)]", off && "opacity-40")}
+                className={clsx("btn-press flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 hover:bg-(--hover)", off && "opacity-40")}
               >
                 <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: s.color }} aria-hidden='true' />
                 <span className={clsx(off && "line-through")}>{s.name}</span>

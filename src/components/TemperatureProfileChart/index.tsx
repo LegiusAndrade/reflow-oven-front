@@ -10,7 +10,7 @@ const COMPACT_BELOW = 420;
 // Distance from the plot's bottom edge to the x-axis number baseline.
 const X_LABEL_DY = 20;
 // Labels use the same responsive scale as the rest of the UI (matches the "Execuções" line).
-const LABEL_CLS = "[fill:var(--fg)] text-sm opacity-70 sm:text-base";
+const LABEL_CLS = "fill-(--fg) text-sm opacity-70 sm:text-base";
 
 /** "Nice" step (1/2/5 × 10ⁿ) so axis ticks land on round numbers. A non-positive/non-finite range
  *  (e.g. a profile whose points are all at t=0 — every duration zeroed) has no span to divide, so we
@@ -142,7 +142,7 @@ function Plot({
       {!compact &&
         ticks(yMax, yStep).map((value) => (
           <g key={`y-${value}`}>
-            <line x1={pad.left} y1={sy(value)} x2={w - pad.right} y2={sy(value)} className='[stroke:var(--fg)] opacity-10' strokeWidth={1} />
+            <line x1={pad.left} y1={sy(value)} x2={w - pad.right} y2={sy(value)} className='stroke-(--fg) opacity-10' strokeWidth={1} />
             <text x={pad.left - 8} y={sy(value)} textAnchor='end' dominantBaseline='middle' className={LABEL_CLS}>
               {value}
             </text>
@@ -152,7 +152,7 @@ function Plot({
       {!compact &&
         ticks(xMax, xStep).map((value) => (
           <g key={`x-${value}`}>
-            <line x1={sx(value)} y1={pad.top} x2={sx(value)} y2={pad.top + plotH} className='[stroke:var(--fg)] opacity-10' strokeWidth={1} />
+            <line x1={sx(value)} y1={pad.top} x2={sx(value)} y2={pad.top + plotH} className='stroke-(--fg) opacity-10' strokeWidth={1} />
             <text x={sx(value)} y={pad.top + plotH + X_LABEL_DY} textAnchor='middle' className={LABEL_CLS}>
               {value}
             </text>
@@ -193,10 +193,10 @@ function Plot({
       ))}
 
       {/* Setpoint curve */}
-      <path d={linePath} fill='none' className='[stroke:var(--brand)]' strokeWidth={compact ? 2 : 3} strokeLinejoin='round' strokeLinecap='round' />
+      <path d={linePath} fill='none' className='stroke-(--brand)' strokeWidth={compact ? 2 : 3} strokeLinejoin='round' strokeLinecap='round' />
 
       {/* Peak marker */}
-      <circle cx={sx(peak.t)} cy={sy(peak.temp)} r={compact ? 3 : 4} className='[fill:var(--brand)]' />
+      <circle cx={sx(peak.t)} cy={sy(peak.temp)} r={compact ? 3 : 4} className='fill-(--brand)' />
       <text x={sx(peak.t)} y={sy(peak.temp) - 8} textAnchor='middle' className={peakLabelClass(compact)}>
         {`${Math.round(peak.temp)}°C`}
       </text>
@@ -217,5 +217,5 @@ function Plot({
 }
 
 function peakLabelClass(compact: boolean): string {
-  return compact ? "[fill:var(--fg)] text-sm font-semibold" : "[fill:var(--fg)] text-base font-semibold sm:text-lg";
+  return compact ? "fill-(--fg) text-sm font-semibold" : "fill-(--fg) text-base font-semibold sm:text-lg";
 }

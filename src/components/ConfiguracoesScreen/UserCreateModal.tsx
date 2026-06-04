@@ -65,7 +65,7 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
     <Modal open={open} title='Novo Usuário' onClose={onClose} panelClassName='max-h-[85vh] w-[90vw] max-w-xl'>
       <div className='flex flex-col gap-5'>
         <section>
-          <h3 className='mb-2 text-sm font-semibold tracking-wide text-[var(--brand)] uppercase'>Detalhes do Usuário</h3>
+          <h3 className='mb-2 text-sm font-semibold tracking-wide text-(--brand) uppercase'>Detalhes do Usuário</h3>
           <div className='flex flex-col gap-4'>
             <div className='flex flex-col gap-1'>
               <TextLine
@@ -99,8 +99,8 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
           </div>
         </section>
 
-        <footer className='flex items-center justify-end gap-3 border-t border-[var(--border)] pt-3'>
-          <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
+        <footer className='flex items-center justify-end gap-3 border-t border-(--border) pt-3'>
+          <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-(--border) px-5 py-2.5 font-semibold'>
             Cancelar
           </button>
           <button

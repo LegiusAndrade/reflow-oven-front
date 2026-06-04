@@ -8,7 +8,7 @@ import { dismissToast, getToastsServerSnapshot, getToastsSnapshot, subscribeToas
 const STYLES: Record<Toast["type"], { icon: string; accent: string }> = {
   success: { icon: "check_circle", accent: "text-emerald-700 dark:text-emerald-400" },
   error: { icon: "cancel", accent: "text-red-700 dark:text-red-400" },
-  info: { icon: "info", accent: "text-[var(--brand)]" },
+  info: { icon: "info", accent: "text-(--brand)" },
   warning: { icon: "warning", accent: "text-amber-700 dark:text-amber-400" },
 };
 
@@ -23,14 +23,14 @@ export function Toaster() {
       {toasts.map((toast) => {
         const style = STYLES[toast.type];
         return (
-          <div key={toast.id} role='status' className='toast-item card pointer-events-auto flex items-center gap-3 rounded-xl border border-[var(--border)] py-3 pl-4 pr-3'>
+          <div key={toast.id} role='status' className='toast-item card pointer-events-auto flex items-center gap-3 rounded-xl border border-(--border) py-3 pl-4 pr-3'>
             <IconGeneral icon={toast.icon ?? style.icon} fill={1} className={clsx("shrink-0 [--icon-size:1.5rem]", style.accent)} />
             <span className='font-medium'>{toast.message}</span>
             <button
               type='button'
               onClick={() => dismissToast(toast.id)}
               aria-label='Fechar'
-              className='btn-press grid size-7 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'
+              className='btn-press grid size-7 shrink-0 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'
             >
               <IconGeneral icon='close' fill={0} className='[--icon-size:1.125rem]' />
             </button>

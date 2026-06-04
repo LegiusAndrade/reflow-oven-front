@@ -26,7 +26,7 @@ type RunStatus = "running" | "done" | "aborted";
 type Sample = { t: number; alvo: number; oven: number; board: number; current: number; voltage: number; ovenFan: number; boardFan: number };
 
 const STATUS_META: Record<RunStatus, { label: string; icon: string; cls: string }> = {
-  running: { label: "Executando", icon: "play_circle", cls: "text-[var(--brand)]" },
+  running: { label: "Executando", icon: "play_circle", cls: "text-(--brand)" },
   done: { label: "Concluído", icon: "check_circle", cls: "text-emerald-700 dark:text-emerald-400" },
   aborted: { label: "Interrompido", icon: "cancel", cls: "text-red-700 dark:text-red-400" },
 };
@@ -116,7 +116,7 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   if (invalid) {
     return (
       <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
-        <div className='card flex w-[min(92vw,28rem)] flex-col gap-4 rounded-2xl border border-[var(--border)] p-6'>
+        <div className='card flex w-[min(92vw,28rem)] flex-col gap-4 rounded-2xl border border-(--border) p-6'>
           <div className='flex items-center gap-3'>
             <IconGeneral icon='warning' fill={1} className='shrink-0 text-amber-700 dark:text-amber-400 [--icon-size:1.75rem]' />
             <h1 className='text-xl font-semibold'>Programa sem duração</h1>
@@ -206,9 +206,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
 
   return (
     <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
-      <div className='card flex h-[min(96vh,44rem)] w-[min(96vw,90rem)] flex-col gap-3 rounded-2xl border border-[var(--border)] p-4'>
+      <div className='card flex h-[min(96vh,44rem)] w-[min(96vw,90rem)] flex-col gap-3 rounded-2xl border border-(--border) p-4'>
         {/* Header */}
-        <header className='flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] pb-3'>
+        <header className='flex shrink-0 items-center justify-between gap-4 border-b border-(--border) pb-3'>
           <div className='flex min-w-0 items-center gap-3'>
             <IconGeneral icon={meta.icon} fill={1} className={clsx("shrink-0 [--icon-size:1.75rem]", meta.cls)} />
             <div className='min-w-0'>
@@ -223,14 +223,14 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
             <span className='text-lg font-semibold tabular-nums'>
               {mmss(elapsed)} <span className='opacity-50'>/ {mmss(total)}</span>
             </span>
-            <button type='button' onClick={requestClose} aria-label='Fechar' className='btn-press grid size-10 cursor-pointer place-items-center rounded-full hover:bg-[var(--hover)]'>
+            <button type='button' onClick={requestClose} aria-label='Fechar' className='btn-press grid size-10 cursor-pointer place-items-center rounded-full hover:bg-(--hover)'>
               <IconGeneral icon='close' fill={0} className='[--icon-size:1.75rem]' />
             </button>
           </div>
         </header>
 
         {/* Three time-synced charts (scrolls on the 1024×600 baseline) */}
-        <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+        <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-3 scrollbar-gutter-stable'>
           {hasTemp && (
             <section className={chartWrap}>
               <p className='mb-1 text-base font-semibold opacity-70'>Temperatura</p>
@@ -265,8 +265,8 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
         {/* Live readings strip — always visible, follows the crosshair or the latest sample */}
         <div className='grid shrink-0 grid-cols-4 gap-2 sm:grid-cols-7'>
           {readings.map((s) => (
-            <div key={s.label} className='flex items-center gap-2 rounded-xl border border-[var(--border)] px-2 py-1.5'>
-              <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.25rem]' />
+            <div key={s.label} className='flex items-center gap-2 rounded-xl border border-(--border) px-2 py-1.5'>
+              <IconGeneral icon={s.icon} fill={0} className='shrink-0 text-(--brand) [--icon-size:1.25rem]' />
               <div className='min-w-0'>
                 <p className='truncate text-[11px] opacity-60'>{s.label}</p>
                 <p className='text-sm font-semibold tabular-nums'>
@@ -280,9 +280,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
 
         {/* Progress + actions */}
         <div className='flex shrink-0 items-center gap-4'>
-          <div className='h-2.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]'>
+          <div className='h-2.5 flex-1 overflow-hidden rounded-full bg-(--surface-2)'>
             <div
-              className={clsx("h-full rounded-full transition-[width] duration-500", status === "aborted" ? "bg-red-400" : "bg-[var(--brand)]")}
+              className={clsx("h-full rounded-full transition-[width] duration-500", status === "aborted" ? "bg-red-400" : "bg-(--brand)")}
               style={{ width: `${progress}%` }}
             />
           </div>

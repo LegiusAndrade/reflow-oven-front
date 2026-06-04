@@ -34,14 +34,14 @@ export function ProgramListCard({ program }: { program: Program }) {
 
   return (
     <article className='card flex h-full flex-col gap-3 rounded-xl p-4'>
-      <header className='flex items-start justify-between gap-2 border-b border-[var(--border)] pb-2'>
+      <header className='flex items-start justify-between gap-2 border-b border-(--border) pb-2'>
         <h3 className='truncate text-lg font-semibold'>{program.name}</h3>
         <button
           type='button'
           onClick={() => toggleFavorite(program.id).catch((err) => showToast(err instanceof ApiError ? err.message : "Falha ao atualizar o favorito", "error"))}
           aria-pressed={isFavorite}
           aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-          className={clsx("btn-press shrink-0 cursor-pointer text-[var(--brand)]", !isFavorite && "opacity-50 hover:opacity-100")}
+          className={clsx("btn-press shrink-0 cursor-pointer text-(--brand)", !isFavorite && "opacity-50 hover:opacity-100")}
         >
           <IconGeneral icon='star' fill={isFavorite ? 1 : 0} className='[--icon-size:1.75rem]' />
         </button>
@@ -59,7 +59,7 @@ export function ProgramListCard({ program }: { program: Program }) {
       </dl>
       <p className='text-sm opacity-70'>{`Último Uso: ${program.lastUsed}`}</p>
 
-      <div className='mt-auto flex items-center gap-1 text-[var(--brand)]'>
+      <div className='mt-auto flex items-center gap-1 text-(--brand)'>
         <CardAction icon='monitoring' label='Ver Gráfico' onClick={() => setChartOpen(true)} />
         {canManage && (
           <>
@@ -120,7 +120,7 @@ function CardAction({ icon, label, onClick }: { icon: string; label: string; onC
     <button
       type='button'
       onClick={onClick}
-      className='btn-press flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm hover:bg-[var(--hover)]'
+      className='btn-press flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm hover:bg-(--hover)'
     >
       <IconGeneral icon={icon} fill={0} className='[--icon-size:1.25rem]' />
       <span className='whitespace-nowrap'>{label}</span>
