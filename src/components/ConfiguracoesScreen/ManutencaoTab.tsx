@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { api, ApiError, type MaintenanceOverviewDto } from "@/lib/api";
+import { sessionStore } from "@/lib/auth";
 import { formatBytes } from "@/lib/maintenance";
 import { DbCleanupModal } from "./DbCleanupModal";
 import { FactoryResetModal } from "./FactoryResetModal";
@@ -26,6 +27,9 @@ export function ManutencaoTab() {
   const [reloadKey, setReloadKey] = useState(0);
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+  // Frontend-known counts the overview doesn't report yet (programs, active users) — passed to the
+  // cleanup modal so the Master sees their QUANTITY instead of "vazio" while backend #5 is pending.
+  const [fallbackCounts, setFallbackCounts] = useState<{ programas?: number; usuarios?: number }>({});
 
   // Fetch the real overview (DB size + per-category counts + host disk/OS). Re-runs on `refresh()`,
   // e.g. after a cleanup. setState only after the await — keeps clear of react-hooks/set-state-in-effect.
@@ -40,6 +44,17 @@ export function ManutencaoTab() {
       } catch (e) {
         if (!alive) return;
         setError(e instanceof ApiError ? e.message : "Falha ao carregar o estado do sistema.");
+      }
+      // Frontend-known counts for the cleanup modal while the overview doesn't report programs/active
+      // users (backend #5) — best-effort, so a failure here never blocks the page.
+      try {
+        const [progs, users] = await Promise.all([api.listPrograms({ page: 1, pageSize: 1 }), api.listUsers()]);
+        if (!alive) return;
+        const selfId = sessionStore.get()?.id;
+        const usuarios = users.filter((u) => u.status === "Ativo" && u.id !== selfId).length;
+        setFallbackCounts({ programas: progs.total, usuarios });
+      } catch {
+        /* best-effort — leave the fallback counts as-is */
       }
     }
     void load();
@@ -103,7 +118,13 @@ export function ManutencaoTab() {
         </div>
       </section>
 
-      <DbCleanupModal open={cleanupOpen} onClose={() => setCleanupOpen(false)} categories={overview?.database.categories ?? null} onCleaned={refresh} />
+      <DbCleanupModal
+        open={cleanupOpen}
+        onClose={() => setCleanupOpen(false)}
+        categories={overview?.database.categories ?? null}
+        fallbackCounts={fallbackCounts}
+        onCleaned={refresh}
+      />
       <FactoryResetModal open={resetOpen} onClose={() => setResetOpen(false)} />
     </div>
   );

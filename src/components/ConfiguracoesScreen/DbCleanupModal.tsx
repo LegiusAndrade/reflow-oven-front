@@ -34,12 +34,15 @@ interface IDbCleanupModalProps {
   onClose: () => void;
   /** Live per-category counts/sizes from the overview (null while the parent is still loading it). */
   categories: MaintenanceCategoryDto[] | null;
+  /** Frontend-known counts (e.g. programs, active users) shown while the overview doesn't report their
+   *  size yet (backend #5). Display-only: a category is cleanable only when the overview backs it. */
+  fallbackCounts?: Partial<Record<CleanupId, number>>;
   /** Called after a successful cleanup so the parent re-fetches the overview. */
   onCleaned: () => void;
 }
 
 /** Diagnóstico → modal to clear historical records (and inactive users) from the database. */
-export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbCleanupModalProps) {
+export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCleaned }: IDbCleanupModalProps) {
   const [selected, setSelected] = useState<Set<CleanupId>>(new Set());
   const [confirming, setConfirming] = useState(false);
   // Reset selection/confirm each time the modal opens (adjust-during-render, no effect).
@@ -56,6 +59,10 @@ export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbClea
   const liveById = new Map((categories ?? []).map((c) => [c.id, c]));
   const countOf = (id: CleanupId): number => liveById.get(id)?.count ?? 0;
   const bytesOf = (id: CleanupId): number => liveById.get(id)?.bytes ?? 0;
+  // For DISPLAY: the overview's real count, else the frontend-known fallback (so the Master at least
+  // sees the QUANTITY while the overview doesn't report programs/active-users sizes — #5). Cleanability
+  // still keys off the overview (`countOf`), so a fallback-only row shows its count but can't be cleaned.
+  const displayCountOf = (id: CleanupId): number => (liveById.has(id) ? liveById.get(id)!.count : (fallbackCounts?.[id] ?? 0));
   // The Master (dev superuser) keeps a read-only view of the programs/users size but can't clean them.
   const master = isMaster(useSession()?.role ?? "Regular");
   const restricted = (id: CleanupId): boolean => master && ADMIN_ONLY_CLEANUP.has(id);
@@ -113,11 +120,13 @@ export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbClea
           ) : (
             <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
               {CATEGORIES.map((c) => {
-                const count = countOf(c.id);
-                const size = bytesOf(c.id);
+                const overviewBacked = liveById.has(c.id);
+                const count = displayCountOf(c.id);
                 const empty = count === 0;
                 const blocked = restricted(c.id); // Master: view-only on programs/users
-                const disabled = empty || blocked;
+                // Cleanable only when the overview backs it (the backend supports the id); a fallback-only
+                // row shows its count but stays disabled until the overview reports it.
+                const disabled = countOf(c.id) === 0 || blocked;
                 const checked = selected.has(c.id);
                 return (
                   <li key={c.id}>
@@ -145,8 +154,11 @@ export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbClea
                         <p className='truncate text-sm opacity-60'>{c.hint}</p>
                       </div>
                       {blocked && <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-xs font-medium opacity-70'>Somente Admin</span>}
-                      <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
-                        {empty ? "vazio" : `${count} · ${formatBytes(size)}`}
+                      <span
+                        className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'
+                        title={!empty && !overviewBacked ? "Tamanho exato pendente do servidor" : undefined}
+                      >
+                        {empty ? "vazio" : overviewBacked ? `${count} · ${formatBytes(bytesOf(c.id))}` : `${count} ${count === 1 ? "item" : "itens"}`}
                       </span>
                     </label>
                   </li>
