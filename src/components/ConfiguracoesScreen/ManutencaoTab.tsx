@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { api, ApiError, type MaintenanceOverviewDto } from "@/lib/api";
-import { sessionStore } from "@/lib/auth";
 import { formatBytes } from "@/lib/maintenance";
 import { DbCleanupModal } from "./DbCleanupModal";
 import { FactoryResetModal } from "./FactoryResetModal";
@@ -50,8 +49,9 @@ export function ManutencaoTab() {
       try {
         const [progs, users] = await Promise.all([api.listPrograms({ page: 1, pageSize: 1 }), api.listUsers()]);
         if (!alive) return;
-        const selfId = sessionStore.get()?.id;
-        const usuarios = users.filter((u) => u.status === "Ativo" && u.id !== selfId).length;
+        // TOTAL active users (including the signed-in one) — the cleanup badge shows the real count; the
+        // cleanup itself still spares the signed-in user (the toast says so), deleting only the others.
+        const usuarios = users.filter((u) => u.status === "Ativo").length;
         setFallbackCounts({ programas: progs.total, usuarios });
       } catch {
         /* best-effort — leave the fallback counts as-is */

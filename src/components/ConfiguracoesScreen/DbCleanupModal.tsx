@@ -67,7 +67,12 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
   // For DISPLAY: the overview's real count, else the frontend-known fallback (so the Master at least
   // sees the QUANTITY while the overview doesn't report programs/active-users sizes — #5). Cleanability
   // still keys off the overview (`countOf`), so a fallback-only row shows its count but can't be cleaned.
-  const displayCountOf = (id: CleanupId): number => (liveById.has(id) ? liveById.get(id)!.count : (fallbackCounts?.[id] ?? 0));
+  const displayCountOf = (id: CleanupId): number => {
+    // "Usuários ativos": show the TOTAL active (including the signed-in user) from the front store so the
+    // count matches reality; the cleanup still spares the signed-in one (see the toast) and deletes the rest.
+    if (id === "usuarios" && fallbackCounts?.usuarios != null) return fallbackCounts.usuarios;
+    return liveById.has(id) ? liveById.get(id)!.count : (fallbackCounts?.[id] ?? 0);
+  };
   // The Master (dev superuser) keeps a read-only view of the programs/users size but can't clean them.
   const master = isMaster(useSession()?.role ?? "Regular");
   const restricted = (id: CleanupId): boolean => master && ADMIN_ONLY_CLEANUP.has(id);
@@ -94,7 +99,10 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
     try {
       const deleted = await performCleanup(chosen);
       const n = deleted || totalRecords;
-      showToast(`Limpeza concluída — ${n} ${n === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
+      // "Usuários ativos" never removes the signed-in user (the count shows the total, but the cleanup
+      // spares you) — say so, so a smaller "removed" number than the badge isn't a surprise.
+      const spared = chosen.includes("usuarios") ? " Seu usuário foi mantido." : "";
+      showToast(`Limpeza concluída — ${n} ${n === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)}).${spared}`);
       onCleaned();
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : "Falha na limpeza do banco", "error");
