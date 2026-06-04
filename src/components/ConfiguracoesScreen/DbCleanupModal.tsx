@@ -5,7 +5,9 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
+import { useSession } from "@/hooks/useSession";
 import { ApiError, type MaintenanceCategoryDto } from "@/lib/api";
+import { isMaster } from "@/lib/auth";
 import { type CleanupId, formatBytes, performCleanup } from "@/lib/maintenance";
 import { showToast } from "@/lib/toast";
 
@@ -20,6 +22,11 @@ const CATEGORIES: { id: CleanupId; label: string; hint: string; icon: string }[]
   { id: "inativos", label: "Usuários inativos", hint: "Remove permanentemente os usuários marcados como inativos", icon: "person_off" },
   { id: "usuarios", label: "Usuários ativos", hint: "Remove os usuários ativos, exceto o que está em uso agora", icon: "group" },
 ];
+
+// Categories the Master may VIEW (size) but not clean — wiping saved programs and user accounts is the
+// Admin's data-management job, not the technician's. History (execuções/falhas/logs/inativos) stays
+// cleanable by both. The backend must enforce this too (front gating alone isn't security).
+const ADMIN_ONLY_CLEANUP: ReadonlySet<CleanupId> = new Set(["programas", "usuarios"]);
 
 interface IDbCleanupModalProps {
   open: boolean;
@@ -48,6 +55,9 @@ export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbClea
   const liveById = new Map((categories ?? []).map((c) => [c.id, c]));
   const countOf = (id: CleanupId): number => liveById.get(id)?.count ?? 0;
   const bytesOf = (id: CleanupId): number => liveById.get(id)?.bytes ?? 0;
+  // The Master (dev superuser) keeps a read-only view of the programs/users size but can't clean them.
+  const master = isMaster(useSession()?.role ?? "Regular");
+  const restricted = (id: CleanupId): boolean => master && ADMIN_ONLY_CLEANUP.has(id);
 
   const toggle = (id: CleanupId) =>
     setSelected((prev) => {
@@ -57,11 +67,11 @@ export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbClea
       return next;
     });
 
-  const selectable = CATEGORIES.filter((c) => countOf(c.id) > 0);
+  const selectable = CATEGORIES.filter((c) => countOf(c.id) > 0 && !restricted(c.id));
   const allSelected = selectable.length > 0 && selectable.every((c) => selected.has(c.id));
   const toggleAll = () => setSelected(allSelected ? new Set() : new Set(selectable.map((c) => c.id)));
 
-  const chosen = [...selected].filter((id) => countOf(id) > 0);
+  const chosen = [...selected].filter((id) => countOf(id) > 0 && !restricted(id));
   const totalRecords = chosen.reduce((sum, id) => sum + countOf(id), 0);
   const totalBytes = chosen.reduce((sum, id) => sum + bytesOf(id), 0);
 
@@ -105,28 +115,35 @@ export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbClea
                 const count = countOf(c.id);
                 const size = bytesOf(c.id);
                 const empty = count === 0;
+                const blocked = restricted(c.id); // Master: view-only on programs/users
+                const disabled = empty || blocked;
                 const checked = selected.has(c.id);
                 return (
                   <li key={c.id}>
                     <label
                       className={clsx(
-                        "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors",
-                        empty ? "cursor-not-allowed border-[var(--border)] opacity-50" : "cursor-pointer border-[var(--border)] hover:bg-[var(--hover)]",
+                        "flex items-center gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5 transition-colors",
+                        disabled ? (empty ? "cursor-not-allowed opacity-50" : "cursor-default") : "cursor-pointer hover:bg-[var(--hover)]",
                         checked && "border-[var(--brand)] bg-[var(--brand)]/10"
                       )}
                     >
-                      <input
-                        type='checkbox'
-                        className='size-4 shrink-0 accent-[var(--brand)]'
-                        checked={checked}
-                        disabled={empty}
-                        onChange={() => toggle(c.id)}
-                      />
+                      {blocked ? (
+                        <IconGeneral icon='lock' fill={1} className='shrink-0 opacity-60 [--icon-size:1.125rem]' />
+                      ) : (
+                        <input
+                          type='checkbox'
+                          className='size-4 shrink-0 accent-[var(--brand)]'
+                          checked={checked}
+                          disabled={disabled}
+                          onChange={() => toggle(c.id)}
+                        />
+                      )}
                       <IconGeneral icon={c.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.5rem]' />
                       <div className='min-w-0 flex-1'>
                         <p className='font-medium'>{c.label}</p>
                         <p className='truncate text-sm opacity-60'>{c.hint}</p>
                       </div>
+                      {blocked && <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-xs font-medium opacity-70'>Somente Admin</span>}
                       <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
                         {empty ? "vazio" : `${count} · ${formatBytes(size)}`}
                       </span>
