@@ -24,6 +24,12 @@ export const POINT_TEMP_MAX = 500;
 export const POINT_DURATION_MIN = 0;
 export const POINT_DURATION_MAX = 3600;
 
+/** Casas decimais máximas dos valores numéricos de um PROGRAMA (temperatura e tempo) ao persistir no
+ *  backend — um "#define" único aplicado na fronteira de escrita (`programStore.saveProgram`). PID,
+ *  calibração e demais configurações relevantes NÃO usam este teto: precisam de mais precisão e são
+ *  salvas por outras stores. */
+export const PROGRAM_VALUE_MAX_DECIMALS = 2;
+
 // --- Configurações ---------------------------------------------------------------------
 
 /** PID gains (P, I, D) — allow fractional values. */

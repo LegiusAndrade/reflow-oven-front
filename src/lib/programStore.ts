@@ -6,8 +6,9 @@
  * refresh the same page. Snapshots keep a stable reference until the data actually changes.
  */
 import { api, type ProgramDto, type ProgramListQuery, type SaveProgramRequest } from "./api";
-import { PROGRAM_LIST_PAGE_SIZE } from "./limits";
+import { PROGRAM_LIST_PAGE_SIZE, PROGRAM_VALUE_MAX_DECIMALS } from "./limits";
 import { logger } from "./logger";
+import { roundToDecimals } from "./numericInput";
 import type { Program } from "./programs";
 
 const EMPTY_PROGRAMS: Program[] = [];
@@ -166,11 +167,25 @@ export async function deleteProgram(id: string): Promise<void> {
   }
 }
 
+/** Cap every numeric program value at PROGRAM_VALUE_MAX_DECIMALS before it reaches the backend. This
+ *  is the single DB write path for a program's numbers (create + update) — favoriting, deleting and
+ *  starting a run carry no numeric program data — so capping here guarantees the limit regardless of
+ *  the caller. PID/calibration/settings persist through other stores and keep their full precision. */
+function capProgramPrecision(req: SaveProgramRequest): SaveProgramRequest {
+  const round = (n: number) => roundToDecimals(n, PROGRAM_VALUE_MAX_DECIMALS);
+  return {
+    ...req,
+    segments: req.segments?.map((s) => ({ ...s, temp: round(s.temp), durationSec: round(s.durationSec) })) ?? req.segments,
+    profile: req.profile?.map((p) => ({ t: round(p.t), temp: round(p.temp) })) ?? req.profile,
+  };
+}
+
 /** Create (no id) or update (existing id) a program from the editor, then refresh the current page. */
 export async function saveProgram(req: SaveProgramRequest, id?: string): Promise<void> {
   // Trust the id (an existing program) rather than the cache: opening the editor directly by URL
   // never populates the cache, so a cache check would wrongly create a duplicate instead of updating.
-  if (id) await api.updateProgram(id, req);
-  else await api.createProgram(req);
+  const capped = capProgramPrecision(req);
+  if (id) await api.updateProgram(id, capped);
+  else await api.createProgram(capped);
   await loadPrograms(currentQuery);
 }
