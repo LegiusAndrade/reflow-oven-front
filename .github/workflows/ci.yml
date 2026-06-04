@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+
+# Cancel an in-progress run when a new commit lands on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck
+        run: yarn tsc --noEmit
+
+      - name: Test
+        run: yarn test
+
+      - name: Build
+        run: yarn build
+        env:
+          # Compile-time only; the build never calls the backend. Keeps the inlined default explicit.
+          NEXT_PUBLIC_API_URL: http://localhost:5248
