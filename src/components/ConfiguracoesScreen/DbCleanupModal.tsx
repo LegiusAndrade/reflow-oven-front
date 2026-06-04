@@ -105,7 +105,13 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
 
   return (
     <>
-      <Modal open={open} title='Limpeza do banco de dados' onClose={onClose} panelClassName='h-[min(88vh,34rem)] w-[min(92vw,40rem)]'>
+      <Modal
+        open={open}
+        title='Limpeza do banco de dados'
+        onClose={onClose}
+        // Compact on the 1024×600 device; grows on larger screens (xl+) so it isn't a small box on a monitor.
+        panelClassName='h-[min(88vh,34rem)] w-[min(92vw,40rem)] xl:h-[min(90vh,56rem)] xl:w-[min(85vw,60rem)]'
+      >
         <div className='flex h-full flex-col gap-4'>
           <p className='shrink-0 text-sm opacity-70'>Selecione o que deseja remover. A ação é permanente e não pode ser desfeita.</p>
 
