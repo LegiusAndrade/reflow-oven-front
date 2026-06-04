@@ -55,11 +55,18 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 ### Relatórios
 
-5. [ ] **Execução parada por falha aparece "Falha", mas o log diz "Execução abortada"** — quando foi
-   abortada, mostrar status/ícone **"Abortado"** (não o de erro). (`2026-05-31_15-05.png`)
-6. [ ] **Execução com falha deve mostrar o motivo** — hoje só diz "Falha". Exibir o **motivo** e, sendo
-   falha, um **link para o Relatório de Erros** (idealmente já filtrado no erro correspondente).
-7. [ ] **Gráfico antes × depois (detalhe da Alteração) — refazer.** (`2026-05-31_15-16.png`, `aaaaaaa.png`)
+5. [x] **Status "Abortado" distinto de "Falha" (verificado 2026-06-03)** — `StatusBadge` renderiza
+   **Abortado** com `stop_circle` âmbar (≠ `cancel` vermelho da Falha) e o tipo `ExecutionStatus` inclui
+   "Abortado"; o backend já retorna esse status. (`2026-05-31_15-05.png`)
+6. [x] **Motivo da falha + link pro Relatório de Erros (verificado ao vivo 2026-06-03)** — o detalhe da
+   execução com falha mostra "MOTIVO DA FALHA" (ex.: "Sobretemperatura na grelha (termopar tipo-K)", Código
+   E-101) e o botão **"Ver no Relatório de Erros"**, que pula pro detalhe do erro ("Snapshot da Falha").
+7. [~] **Gráfico antes × depois (detalhe da Alteração) — majoritariamente feito.** (`2026-05-31_15-16.png`, `aaaaaaa.png`)
+   _Status 2026-06-03:_ **um só gráfico** (verificado ao vivo) com a edição aberta em **linha contínua** e as
+   demais **tracejadas** ("Antes" + toggle "Comparar com"); o **diff estruturado** por ponto (sugestão do dono)
+   chegou do backend e renderiza (Adicionado/Alterado/Removido). (a) usa a curva resultante (`afterProfile`) e
+   (d) o `EditionCompare` filtra por data (`before: change.atIso`, exclui posteriores) — **ambos no código**
+   (comentários "7d"). _Falta:_ só o polish de layout vs. Figma (c) e um olhar no device.
    - a. Não está usando a curva da **última** modificação (o texto está certo, a curva não).
    - b. **Um só gráfico** (o de cima): habilitar/desabilitar as curvas nele; **remover o de baixo**.
         A edição aberta fica **linha contínua** e as demais **tracejadas**.
@@ -85,10 +92,10 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 ### Programas / execução
 
-11. [ ] **Favoritar/desfavoritar recarrega o programa todo (pisca "branco")** — só alternar o favorito
-    está reenviando/recarregando o programa inteiro. Deve haver um **POST dedicado de favoritar/
-    desfavoritar por id** (idem para deletar por id), sem refetch da lista inteira. _(Pode ter parte
-    no backend; ver TODO do backend.)_
+11. [~] **Favoritar/desfavoritar — store já otimista (sem refetch).** _Investigado 2026-06-03:_
+    `programStore.toggleFavorite` (e `deleteProgram`) já alternam o flag no cache e `notify()` na hora,
+    **sem `loadPrograms`** (comentário "no refetch → no flicker"), persistindo via o POST dedicado
+    `api.toggleFavorite`. _Falta:_ revalidar no device que o "pisca branco" sumiu de fato.
 12. [~] **Editar programa + Salvar não sai da tela** — _Investigado:_ o `handleSave` é compartilhado e já
     chama `router.push("/programas")` tanto ao criar quanto ao editar; o palpite de "faltou await" estava
     errado (`router.push` é void no Next 16). Não reproduz por leitura de código — revalidar no device
