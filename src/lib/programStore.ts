@@ -157,6 +157,10 @@ export async function deleteProgram(id: string): Promise<void> {
   notify();
   try {
     await api.deleteProgram(id);
+    // Refill the page from the server so the grid reflows into the freed slot — the optimistic removal
+    // above only drops the card, and the item that should shift up to fill the gap lives on a later page
+    // (not in this page's cache), so a refetch is the only way to pull it in.
+    await loadPrograms(currentQuery);
   } catch (e) {
     // Restore the exact pre-mutation references/total and re-notify so the row comes back.
     programs = prevPrograms;
