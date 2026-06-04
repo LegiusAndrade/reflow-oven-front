@@ -223,13 +223,21 @@ export function ProgramEditorScreen({ title = "Novo Programa", initialProgram }:
                           <input
                             type='number'
                             aria-label={`Temperatura do ponto ${i + 1}`}
-                            value={held ? incoming[i] : s.temp}
+                            // Show an empty field (not "0") for the transient 0 while clearing, so typing
+                            // a fresh value can't pick up a leading zero ("0200"). 0 isn't a valid temp
+                            // (min is POINT_TEMP_MIN), so it only ever stands in for "empty".
+                            value={held ? incoming[i] : s.temp === 0 ? "" : s.temp}
                             disabled={held}
                             min={POINT_TEMP_MIN}
                             max={POINT_TEMP_MAX}
                             step={1}
                             title={held ? "Fixo mantém a temperatura atual" : undefined}
-                            onChange={(e) => update(s.id, { temp: Math.round(clamp(Number(e.target.value), POINT_TEMP_MIN, POINT_TEMP_MAX)) })}
+                            // Clamp only the MAX while typing so a multi-digit value whose intermediate
+                            // state is below POINT_TEMP_MIN (e.g. the "1" while typing "150") isn't snapped
+                            // up mid-entry; the floor is enforced on blur (and #9 still holds — you can't
+                            // leave a sub-50 value).
+                            onChange={(e) => update(s.id, { temp: Math.round(clamp(Number(e.target.value), 0, POINT_TEMP_MAX)) })}
+                            onBlur={(e) => update(s.id, { temp: Math.round(clamp(Number(e.target.value), POINT_TEMP_MIN, POINT_TEMP_MAX)) })}
                             className={clsx(numberInputClass, held && "cursor-not-allowed opacity-50")}
                           />
                         </td>
