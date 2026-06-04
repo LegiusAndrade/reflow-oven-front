@@ -23,8 +23,13 @@ export type Session = {
 /** Logged-in session, cached in localStorage. The source of truth is the JWT (see api.ts). */
 export const sessionStore = createJsonStore<Session | null>("reflow:session:v1", null);
 
-/** Authenticate against the backend; on success stores the JWT and the session. */
-export async function login(name: string, password: string): Promise<{ ok: boolean; error?: string; redirect?: string }> {
+/** Authenticate against the backend; on success stores the JWT and the session.
+ *  `kind: "connection"` flags a transport failure (status 0) so the login screen can show the
+ *  troubleshooting help block instead of the short inline row that clips long messages. */
+export async function login(
+  name: string,
+  password: string
+): Promise<{ ok: boolean; error?: string; redirect?: string; kind?: "connection" }> {
   try {
     const result = await api.login(name.trim(), password);
     if (!result.ok || !result.token || !result.session) {
@@ -35,14 +40,12 @@ export async function login(name: string, password: string): Promise<{ ok: boole
     return { ok: true, redirect: "/" };
   } catch (e) {
     // A connection failure (status 0) carries a long, multi-sentence guidance message that the
-    // inline error row on the login form clips ("...por causa do tamanho"). Surface it as a toast
-    // (room to wrap) using the same dedupe key as refreshSession, and keep a short label inline so
-    // there's still feedback when the toast is deduped on a quick retry. Credential errors (401) are
-    // short and stay inline next to the password field.
+    // short inline row clips. Flag it as kind "connection" so the form shows a dedicated help block
+    // (full message + possible fixes) rather than the toast. Credential errors (401) are short and
+    // stay inline next to the password field.
     if (e instanceof ApiError && e.status === 0) {
       logger.error("auth", "Falha de conexão no login", e);
-      showToast(e.message, "error");
-      return { ok: false, error: "Sem conexão com o servidor." };
+      return { ok: false, error: e.message, kind: "connection" };
     }
     return { ok: false, error: e instanceof ApiError ? e.message : "Falha no login." };
   }

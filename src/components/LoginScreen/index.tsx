@@ -23,6 +23,11 @@ export function LoginScreen() {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
+  const [errorKind, setErrorKind] = useState<"connection" | undefined>(undefined);
+  const clearError = () => {
+    setError("");
+    setErrorKind(undefined);
+  };
   const [recoverOpen, setRecoverOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [recoverError, setRecoverError] = useState("");
@@ -35,6 +40,7 @@ export function LoginScreen() {
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error ?? "Falha no login.");
+      setErrorKind(result.kind);
       return;
     }
     router.replace(result.redirect ?? "/");
@@ -75,7 +81,7 @@ export function LoginScreen() {
                   value={name}
                   onChange={(e) => {
                     setName(sanitizeUsername(e.target.value));
-                    setError("");
+                    clearError();
                   }}
                   placeholder='Usuário'
                   autoComplete='username'
@@ -91,7 +97,7 @@ export function LoginScreen() {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    setError("");
+                    clearError();
                   }}
                   placeholder='Senha'
                   autoComplete='current-password'
@@ -108,13 +114,29 @@ export function LoginScreen() {
                 </button>
               </div>
 
-              {/* Error sits on the same row as the link, so showing it never resizes the card */}
+              {/* Credential error sits on the same row as the link, so it never resizes the card */}
               <div className='flex items-center justify-between gap-3'>
-                <span className='truncate text-sm text-red-700 dark:text-red-400'>{error}</span>
+                <span className='truncate text-sm text-red-700 dark:text-red-400'>{errorKind === "connection" ? "" : error}</span>
                 <button type='button' onClick={() => setRecoverOpen(true)} className='shrink-0 cursor-pointer text-sm text-[var(--brand)] hover:underline'>
                   Esqueceu a senha?
                 </button>
               </div>
+
+              {/* Connection failure: a help block with possible fixes (room to wrap, unlike the inline row) */}
+              {errorKind === "connection" && (
+                <div className='flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm'>
+                  <IconGeneral icon='cloud_off' fill={1} className='mt-0.5 shrink-0 text-red-700 dark:text-red-400 [--icon-size:1.25rem]' />
+                  <div className='flex min-w-0 flex-col gap-1'>
+                    <p className='font-semibold text-red-700 dark:text-red-300'>Não foi possível conectar ao servidor</p>
+                    <p className='opacity-80'>Verifique:</p>
+                    <ul className='list-disc pl-4 opacity-80'>
+                      <li>se o servidor está ligado;</li>
+                      <li>a conexão de rede (cabo ou Wi-Fi);</li>
+                      <li>o endereço do servidor nas configurações.</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
 
             <button type='submit' disabled={submitting} className='btn-action w-full cursor-pointer rounded-xl px-5 py-3 font-semibold disabled:opacity-60'>

@@ -41,9 +41,11 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 1. [x] **Toasts de erro com ícone errado** — todo erro mostrava o "check" verde; deve ser um **X**
    vermelho. _Feito (`5224f0f`):_ as 22 chamadas `showToast(...)` de falha passaram a usar `"error"`
    e o ícone do tipo `error` no `Toaster` virou `cancel` (círculo com X).
-2. [~] **Spam do toast "Não foi possível conectar ao servidor"** — _Feito (`b9824fb`):_ dedupe por
+2. [x] **Spam do toast "Não foi possível conectar ao servidor"** — _Feito (`b9824fb`):_ dedupe por
    `${type}:${message}` numa janela de `TOAST_DEDUPE_MS` (5 s) — toasts idênticos não repetem.
-   _Pendente (enhancement):_ a mensagem trazer também **possíveis soluções** (texto de ajuda).
+   _Feito 2026-06-03:_ no login, o erro de conexão (`status 0`) agora mostra um **bloco de ajuda** com
+   **possíveis soluções** (servidor ligado / rede / endereço) em vez do inline truncado — `login()` devolve
+   `kind: "connection"` e o erro de credencial continua inline. Verificado ao vivo (`route.abort`).
 3. [~] **CTRL+F5 na tela de Programas → vários toasts "Execução abortada"** — _Investigado:_ não existe
    toast "Execução abortada" no código atual (o `RunModal` só faz toast em "concluída"/erro; `onStatus`
    "aborted" não dispara toast). O dedupe do #2 já barra repetições. Revalidar no device — se ainda
@@ -116,10 +118,12 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
     (crescem em telas grandes; mantêm o baseline 1024×600).
 17. [x] **Tela de login não deveria ter o botão de trocar tema** — _Feito (`db0b0b3`):_ o `ThemeToggle`
     no TopBar agora é gated por usuário logado (`{user && …}`), some no /login.
-18. [~] **Limitar escrita e colagem pelos `min`/`max` do campo** — _Feito (`ef42aa9`):_ o `NumberField`
+18. [x] **Limitar escrita e colagem pelos `min`/`max` do campo** — _Feito (`ef42aa9`):_ o `NumberField`
     (campos de Configurações) ganhou `onPaste` que faz clamp do CTRL+V, via helper `clampToRange`/
-    `parseClampedPaste` (`lib/numericInput.ts`). _Pendente:_ porta do ping (RedeTab) e auditar os demais;
-    os inputs do editor de programa já fazem clamp no `onChange`.
+    `parseClampedPaste` (`lib/numericInput.ts`). _Auditado 2026-06-03:_ a **porta do ping** (RedeTab) e
+    **todos** os campos numéricos de Configurações (Geral/Calibração) usam `NumberField` (clamp no paste+blur);
+    os dois únicos `type='number'` crus (editor de programa) já clampam no `onChange` — que também pega o
+    paste. Nenhum input numérico sem clamp.
 19. [x] **Casas decimais** — _Verificado:_ `formatReading` (`lib/sensors.ts`) já faz RPM com 0 casas
     (`Math.round`) e °C/V/A com 1 casa (`toFixed(1)`); BottomBar e Diagnóstico usam essa função.
 20. [x] **Nova aba "Log" em Diagnóstico (somente login dev)** — _Feito (`6de510b`):_ aba **Log** só
