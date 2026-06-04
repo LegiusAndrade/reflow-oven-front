@@ -84,10 +84,11 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 8. [x] **Ping: campo HOST/IP desalinhado com o campo Porta.** (`2026-05-31_15-08.png`) — aba Rede.
    _Feito (`6c42b97`):_ a linha virou `items-start` e o botão Testar ganhou `mt-[1.625rem]` (altura do label).
-9. [~] **Ícone de WiFi "zoado".** (`2026-05-31_15-11.png`) — _Investigado:_ a captura era a ligadura
+9. [x] **Ícone de WiFi "zoado".** (`2026-05-31_15-11.png`) — _Investigado:_ a captura era a ligadura
    `signal_wifi_3_bar` desenhada como TEXTO (fonte offline) — já resolvido pela fonte self-hospedada
-   (`7118783`); hoje o `IconWifi` é glyph. A tentativa de igualar o `--icon-size` dos vizinhos foi
-   revertida (o `IconWifi` não aceita `className`); refazer dando suporte a `className` se ainda destoar.
+   (`7118783`); hoje o `IconWifi` é glyph. _Feito 2026-06-03:_ `IconWifi` passou a aceitar `className` e o
+   TopBar passa uma constante única `STATUS_ICON_CLASS` pros 4 ícones de status (WiFi/cabo + servidor) —
+   o `--icon-size` agora mora num só lugar, sem duplicação.
 10. [x] **Botão de notificação (sino):** ao clicar, levar à tela de Notificações (atualização nova,
     erros, etc.); o badge "3" são as não vistas. _Feito (`e47b591`):_ o sino virou `Link` para
     `/notificacoes` (`btn-press`); o badge de não vistas continua.
@@ -137,16 +138,18 @@ Os 8 primeiros estão sob investigação por um workflow de triagem (raiz + arqu
 
 Itens a escrever/validar no `../reflow-oven-backend/TODO.md` (descrever o que se espera e o formato de retorno):
 
-- [ ] **Diff estruturado da Alteração** (ver bug 7) — formato proposto pelo dono (por ponto: `before`/
-  `after`/`status`/`changedFields` + `summary`); o front passaria a consumir esse JSON.
-- [ ] **POST de favoritar/desfavoritar e deletar por id** (ver bug 11).
+- [x] **Diff estruturado da Alteração** (ver bug 7) — _validado ao vivo 2026-06-03:_ o backend entrega o
+  `diff` (por ponto: `before`/`after`/`status`/`changedFields` + `summary`) e o front já consome.
+- [x] **POST de favoritar/desfavoritar e deletar por id** (ver bug 11) — `api.toggleFavorite`/`deleteProgram`
+  existem e o `programStore` aplica otimista (sem refetch).
 - [ ] **Permissão de `runs/start` para Regular** (ver bug 13) — confirmar a regra.
-- [ ] **Curva `changed-before` (item H)** — `reportsClient` já preparado (particiona por `role` e
-  preenche `beforeProfile`); validar `role` exatamente `"changed-before"`/`"changed-after"`.
+- [x] **Curva `changed-before` (item H)** — _validado 2026-06-03:_ a curva antes×depois
+  (`beforeCurve`/`afterCurve`) renderiza no detalhe da Alteração; o `reportsClient` consome as reais.
 - [ ] **Aviso de pouco espaço em disco (item D)** — backend já notifica (sino + e-mail); confirmar a tela.
 - [ ] **Simular atualização do HTML (e do backend)** — pedir ao backend sugestões de como faria
   (futuramente talvez o STM32); o front já tem o card "atualização disponível".
-- [ ] **Valores reais de tamanho do banco / espaço em HD** — confirmar que vêm mesmo do backend.
+- [x] **Valores reais de tamanho do banco / espaço em HD** — _feito 2026-06-03:_ a Manutenção mostra o
+  tamanho do banco + HD + SO reais do `GET /api/maintenance/overview` (commit `51f0268`).
 
 ## Perguntas / ideias
 
