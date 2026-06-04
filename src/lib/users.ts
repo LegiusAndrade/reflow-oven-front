@@ -19,6 +19,8 @@ export type User = {
   /** "dd/mm/aa - HH:MM" or "—" */
   lastLogin: string;
   events: UserEvent[];
+  /** Whether the current session may delete this user (Admin: any; Master: only its own). */
+  canDelete: boolean;
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -41,6 +43,7 @@ const toUser = (dto: UserDto): User => ({
   createdAt: formatStamp(dto.createdAt, true),
   lastLogin: formatStamp(dto.lastLogin, false),
   events: dto.events,
+  canDelete: dto.canDelete,
 });
 
 // --- API-backed cache (JsonStore-shaped for useStore) ----------------------------------

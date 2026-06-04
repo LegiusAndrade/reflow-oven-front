@@ -51,6 +51,7 @@ export const toProgram = (dto: ProgramDto): Program => ({
   lastUsed: formatLastUsed(dto.lastUsed),
   profile: dto.profile,
   segments: dto.segments ?? undefined,
+  canDelete: dto.canDelete,
 });
 
 /** Fetch one page (with the given search/filter/sort/page/pageSize) and refresh the cache. */

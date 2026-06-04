@@ -51,7 +51,9 @@ export function UserCreateModal({ open, onClose }: { open: boolean; onClose: () 
   const handleCreate = async () => {
     if (!canSubmit) return;
     try {
-      await upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), status, type, createdAt: nowStamp(), lastLogin: "—", events: [] });
+      // canDelete is server-computed; this client-built shell only feeds upsertUser (which sends just
+      // name/email/type/status), so the value is irrelevant and refreshed on reload.
+      await upsertUser({ id: `user-${Date.now()}`, name: trimmedName, email: email.trim(), status, type, createdAt: nowStamp(), lastLogin: "—", events: [], canDelete: false });
       showToast("Usuário criado");
       onClose();
     } catch (e) {

@@ -32,4 +32,6 @@ export type Program = {
   profile: ProfilePoint[];
   /** Editable segments the curve was built from (lets the editor round-trip losslessly). */
   segments?: ProfileSegment[];
+  /** Whether the current session may delete this program (Admin: any; Master: only its own). */
+  canDelete: boolean;
 };

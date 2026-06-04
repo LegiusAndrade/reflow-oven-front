@@ -169,6 +169,8 @@ export interface ProgramDto {
   profile: ProfilePointDto[];
   segments?: ProfileSegmentDto[] | null;
   favorite: boolean;
+  /** Whether the current session may delete this program (Admin: any; Master: only its own creations). */
+  canDelete: boolean;
 }
 
 export interface SaveProgramRequest {
@@ -211,6 +213,8 @@ export interface UserDto {
   /** ISO 8601 or null (= never logged in). */
   lastLogin?: string | null;
   events: { label: string; count: number }[];
+  /** Whether the current session may delete this user (Admin: any; Master: only its own creations). */
+  canDelete: boolean;
 }
 
 export interface SensorReadingsDto {
