@@ -5,6 +5,7 @@
 import * as signalR from "@microsoft/signalr";
 import { API_URL, fetchWsToken, getToken, type RunPhase, type RunStatusKind, type SensorReadingsDto, type TraceSampleDto } from "./api";
 import { SIGNALR_RECONNECT_DELAYS_MS } from "./limits";
+import { parseRunPhase, parseRunStatus, parseSensorReadings, parseTraceSample } from "./realtimeSchemas";
 
 const build = (path: string): signalR.HubConnection =>
   new signalR.HubConnectionBuilder()
@@ -16,7 +17,11 @@ const build = (path: string): signalR.HubConnection =>
 /** Subscribe to the 1 Hz sensor stream (Diagnóstico / BottomBar). Returns a stop function. */
 export function connectDiagnostics(onReading: (_r: SensorReadingsDto) => void): () => void {
   const conn = build("/hubs/diagnostics");
-  const onTick = (r: SensorReadingsDto) => onReading(r);
+  // Validate at the boundary: drop a malformed/NaN board payload so the gauges keep their last good value.
+  const onTick = (r: unknown) => {
+    const reading = parseSensorReadings(r);
+    if (reading) onReading(reading);
+  };
   conn.on("ReadingTick", onTick);
   let stopped = false;
   const started = conn.start().catch(() => {
@@ -43,9 +48,20 @@ export interface RunTelemetryHandlers {
 /** Join a run's group and receive its live trace. Returns a stop function. */
 export function connectRunTelemetry(runId: string, handlers: RunTelemetryHandlers): () => void {
   const conn = build("/hubs/telemetry");
-  const onTrace = (_runId: string, sample: TraceSampleDto) => handlers.onTrace?.(sample);
-  const onPhase = (_runId: string, phase: RunPhase) => handlers.onPhase?.(phase);
-  const onStatus = (_runId: string, status: RunStatusKind) => handlers.onStatus?.(status);
+  // Validate each board payload at the boundary; an invalid sample/phase/status is dropped rather than
+  // pushed to the live chart or the run state.
+  const onTrace = (_runId: string, sample: unknown) => {
+    const s = parseTraceSample(sample);
+    if (s) handlers.onTrace?.(s);
+  };
+  const onPhase = (_runId: string, phase: unknown) => {
+    const p = parseRunPhase(phase);
+    if (p) handlers.onPhase?.(p);
+  };
+  const onStatus = (_runId: string, status: unknown) => {
+    const s = parseRunStatus(status);
+    if (s) handlers.onStatus?.(s);
+  };
   const onCompleted = (_runId: string, executionId: string) => handlers.onCompleted?.(executionId);
   if (handlers.onTrace) conn.on("TraceSample", onTrace);
   if (handlers.onPhase) conn.on("RunPhaseChanged", onPhase);
