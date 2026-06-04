@@ -1,5 +1,3 @@
-"use client";
-
 import { SignalChart } from "@/components/SignalChart";
 import type { FailureSnapshot } from "@/lib/reports";
 

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api, type NetworkLink } from "@/lib/api";
 import { SYSTEM_STATUS_POLL_MS } from "@/lib/limits";
 import { logger } from "@/lib/logger";
+import { pollWhileVisible } from "@/lib/polling";
 
 export interface SystemStatusSnapshot {
   link: NetworkLink;
@@ -58,12 +59,11 @@ export function useSystemStatus(enabled: boolean): SystemStatusSnapshot {
       }
     }
 
-    void load();
-    const id = setInterval(() => void load(), SYSTEM_STATUS_POLL_MS);
+    const stop = pollWhileVisible(() => void load(), SYSTEM_STATUS_POLL_MS);
 
     return () => {
       alive = false;
-      clearInterval(id);
+      stop();
     };
   }, [enabled]);
 

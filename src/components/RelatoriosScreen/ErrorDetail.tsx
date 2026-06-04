@@ -1,5 +1,3 @@
-"use client";
-
 import type { ErrorLogEntry } from "@/lib/reports";
 import { SeverityBadge } from "./badges";
 import { DetailShell, EventList, Field, SectionTitle } from "./detailParts";

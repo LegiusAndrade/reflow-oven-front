@@ -1,5 +1,3 @@
-"use client";
-
 import { Modal } from "@/components/Modal";
 import type { User } from "@/lib/users";
 import { UserStatusBadge } from "./userBadges";

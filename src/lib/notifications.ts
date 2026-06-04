@@ -8,6 +8,7 @@ import { api, type NotificationDto } from "./api";
 import { NOTIFICATION_MAX_ITEMS, NOTIFICATION_POLL_MS } from "./limits";
 import type { JsonStore } from "./localStore";
 import { logger } from "./logger";
+import { pollWhileVisible } from "./polling";
 import { showToast } from "./toast";
 
 export type NotificationKind = "update" | "error" | "warning" | "info";
@@ -129,9 +130,7 @@ export async function clearAll(): Promise<void> {
 
 /** Refresh now, then poll every {@link NOTIFICATION_POLL_MS}. Returns a stop function. */
 export function startNotificationsPolling(): () => void {
-  void refreshNotifications();
-  const id = setInterval(() => void refreshNotifications(), NOTIFICATION_POLL_MS);
-  return () => clearInterval(id);
+  return pollWhileVisible(() => void refreshNotifications(), NOTIFICATION_POLL_MS);
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");

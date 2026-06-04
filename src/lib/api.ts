@@ -13,10 +13,14 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5248
 
 const TOKEN_KEY = "reflow:token:v1";
 
+/** In-flight GET de-dup map (see `request` below); cleared on any token change. */
+const inflightGets = new Map<string, Promise<unknown>>();
+
 export const getToken = (): string | null => (typeof window === "undefined" ? null : window.localStorage.getItem(TOKEN_KEY));
 
 export const setToken = (token: string | null): void => {
   if (typeof window === "undefined") return;
+  inflightGets.clear(); // a token change invalidates any shared in-flight read
   if (token) window.localStorage.setItem(TOKEN_KEY, token);
   else window.localStorage.removeItem(TOKEN_KEY);
 };
@@ -39,7 +43,7 @@ interface RequestOptions {
   auth?: boolean;
 }
 
-async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+async function doRequest<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
   if (opts.body !== undefined) headers["Content-Type"] = "application/json";
   const token = getToken();
@@ -89,6 +93,23 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     throw new ApiError(res.status, problem?.detail ?? problem?.title ?? `Erro ${res.status}`);
   }
   return data as T;
+}
+
+/**
+ * Public request entry point. For GETs it de-duplicates concurrent identical reads: while a GET for a
+ * path is already on the wire, an identical GET shares that same promise instead of firing a second
+ * request. Nothing is kept past resolution (no TTL), so it never serves stale data — it only collapses
+ * burst/parallel reads. A caller-supplied AbortSignal opts out (it wants its own cancellation), and on
+ * the server each RSC render uses Next's own fetch memoization.
+ */
+function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+  const isGet = (opts.method ?? "GET").toUpperCase() === "GET";
+  if (!isGet || opts.signal || typeof window === "undefined") return doRequest<T>(path, opts);
+  const existing = inflightGets.get(path);
+  if (existing) return existing as Promise<T>;
+  const p = doRequest<T>(path, opts).finally(() => inflightGets.delete(path));
+  inflightGets.set(path, p);
+  return p as Promise<T>;
 }
 
 // Accept `object` (not just Record<string, unknown>) so the typed report query interfaces below

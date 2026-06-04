@@ -6,6 +6,7 @@ import { api, ApiError, getToken, type SystemMetricsDto, type UpdateStatusDto } 
 import { canAdminister, sessionStore } from "@/lib/auth";
 import { DEVICE_INFO, REPO_URL, type BoardInfo, type DeviceInfo } from "@/lib/deviceInfo";
 import { SYSTEM_METRICS_POLL_MS } from "@/lib/limits";
+import { pollWhileVisible } from "@/lib/polling";
 import { showToast } from "@/lib/toast";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,11 +40,10 @@ function CpuLoadRow() {
         .systemMetrics()
         .then(m => alive && setMetrics(m))
         .catch(() => {});
-    void tick();
-    const id = window.setInterval(tick, SYSTEM_METRICS_POLL_MS);
+    const stop = pollWhileVisible(() => void tick(), SYSTEM_METRICS_POLL_MS);
     return () => {
       alive = false;
-      window.clearInterval(id);
+      stop();
     };
   }, []);
   const value = metrics ? `${Math.round(metrics.cpuLoadPercent)}%${metrics.cpuTempC != null ? ` · ${Math.round(metrics.cpuTempC)}°C` : ""}` : "—";

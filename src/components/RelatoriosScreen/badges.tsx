@@ -1,5 +1,3 @@
-"use client";
-
 import { clsx } from "clsx";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import type { ChangeAction, ErrorSeverity, ExecutionStatus } from "@/lib/reports";
