@@ -13,11 +13,13 @@ Front e backend estavam **parados** ao encerrar. Ao subir os dois (`yarn dev` + 
    entrega do backend destrava no front:
    - Endpoints `/deleted` · `/restore` · `/purge` (MasterOnly) → montar a **tela Lixeira** (aba própria de
      Configurações, só-Master). Métodos no `api.ts` já existem (`listDeleted*`/`restore*`/`purge*`).
-   - `comparison` real nas execuções → a tabela **"Comparativo do Perfil"** volta a aparecer (front já trata vazio).
-   - `diff` / `beforeCurve` / `afterCurve` / `?before=` nas Alterações → destaque por célula + curva antes×depois
-     + filtro por data (front já tem fallback; "acende sozinho").
-   - Notificações: backend emitir `warning` na execução **abortada** (front já renderiza âmbar), criar notificação
-     das **falhas da placa** e do **OTA**.
+   - [x] **`comparison` real (verificado 2026-06-03)** → a tabela **"Comparativo do Perfil"** voltou a aparecer
+     (execução abortada mostra a linha real: prog 150°C / real 17°C, desvios -133°C / -53s).
+   - [x] **`diff` / `beforeCurve` / `afterCurve` / `?before=` (verificado 2026-06-03)** → detalhe da Alteração com
+     diff estruturado por ponto (Adicionado/Alterado/Removido), curva **antes×depois** real e o toggle
+     **"Comparar com"** edição anterior. "Acendeu sozinho"; só faltava tipar `api.change` (era `unknown`).
+   - Notificações: a **"Execução abortada" já gera notificação**, mas com `kind: error` — falta o backend emitir
+     **`warning`** (front já renderiza âmbar) + criar as de **falha da placa** e **OTA** (backend TODO #3).
    - [x] **Limpeza real (front) — feito 2026-06-03** (commit `51f0268`): `maintenance.ts` consome
      `GET /api/maintenance/overview` (contagens + tamanho do banco + HD + SO reais); `MOCK_RECORD_COUNTS` e a
      flag local `cleanupStore` removidos. **⚠️ Testar ao vivo depois:** (a) rodar uma **limpeza destrutiva de
