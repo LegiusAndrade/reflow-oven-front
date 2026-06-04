@@ -9,11 +9,12 @@ import { sessionStore } from "./auth";
 import { usersStore } from "./users";
 
 /** Clearable categories. "execucoes"/"falhas"/"logs" are record tables; "programas" drops saved
- *  programs; "programas_deletados" purges soft-deleted programs (the Lixeira/trash); "inativos" removes
- *  inactive users; "usuarios" removes active users EXCEPT the signed-in one (enforced server-side).
- *  "alteracoes" (the audit log) is intentionally absent — protected (#8). Counts for every id come from
- *  GET /api/maintenance/overview (programas/programas_deletados/usuarios are pending backend). */
-export type CleanupId = "execucoes" | "falhas" | "logs" | "programas" | "programas_deletados" | "inativos" | "usuarios";
+ *  programs; "programas_deletados"/"usuarios_deletados" purge soft-deleted programs/users (the
+ *  Lixeira/trash — Master-only); "inativos" removes inactive users; "usuarios" removes active users
+ *  EXCEPT the signed-in one (enforced server-side). "alteracoes" (the audit log) is intentionally
+ *  absent — protected (#8). Counts come from GET /api/maintenance/overview (programas/usuarios and the
+ *  two *_deletados are pending backend). */
+export type CleanupId = "execucoes" | "falhas" | "logs" | "programas" | "programas_deletados" | "inativos" | "usuarios" | "usuarios_deletados";
 
 /** Human-readable byte size, e.g. "1.4 MB" / "240 KB" / "12 B". */
 export function formatBytes(bytes: number): string {

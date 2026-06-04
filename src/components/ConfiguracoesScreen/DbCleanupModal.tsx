@@ -18,16 +18,21 @@ const CATEGORIES: { id: CleanupId; label: string; hint: string; icon: string }[]
   { id: "execucoes", label: "Histórico de execuções", hint: "Relatórios de execuções concluídas e com falha", icon: "history" },
   { id: "falhas", label: "Registro de falhas", hint: "Eventos de falha registrados pela placa de potência", icon: "error" },
   { id: "logs", label: "Logs do sistema", hint: "Mensagens de INFO / Aviso / Erro do sistema", icon: "receipt_long" },
-  { id: "programas", label: "Programas salvos", hint: "Remove todos os perfis de temperatura salvos", icon: "article" },
+  { id: "programas", label: "Programas", hint: "Remove todos os perfis de temperatura salvos", icon: "article" },
   { id: "programas_deletados", label: "Programas deletados", hint: "Expurga os programas na lixeira (já excluídos)", icon: "auto_delete" },
   { id: "inativos", label: "Usuários inativos", hint: "Remove permanentemente os usuários marcados como inativos", icon: "person_off" },
   { id: "usuarios", label: "Usuários ativos", hint: "Remove os usuários ativos, exceto o que está em uso agora", icon: "group" },
+  { id: "usuarios_deletados", label: "Usuários deletados", hint: "Expurga os usuários na lixeira (já excluídos)", icon: "person_remove" },
 ];
 
 // Categories the Master may VIEW (size) but not clean — wiping saved programs and user accounts is the
 // Admin's data-management job, not the technician's. History (execuções/falhas/logs/inativos) stays
 // cleanable by both. The backend must enforce this too (front gating alone isn't security).
 const ADMIN_ONLY_CLEANUP: ReadonlySet<CleanupId> = new Set(["programas", "usuarios"]);
+
+// Trash categories — only the Master sees and purges them (the Lixeira is Master-only); the Admin never
+// sees deleted programs/users in the cleanup at all. Orthogonal to ADMIN_ONLY_CLEANUP above.
+const MASTER_ONLY_CLEANUP: ReadonlySet<CleanupId> = new Set(["programas_deletados", "usuarios_deletados"]);
 
 interface IDbCleanupModalProps {
   open: boolean;
@@ -66,6 +71,8 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
   // The Master (dev superuser) keeps a read-only view of the programs/users size but can't clean them.
   const master = isMaster(useSession()?.role ?? "Regular");
   const restricted = (id: CleanupId): boolean => master && ADMIN_ONLY_CLEANUP.has(id);
+  // The Admin never even sees the trash (deleted programs/users) categories — only the Master does.
+  const visibleCategories = CATEGORIES.filter((c) => master || !MASTER_ONLY_CLEANUP.has(c.id));
 
   const toggle = (id: CleanupId) =>
     setSelected((prev) => {
@@ -75,7 +82,7 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
       return next;
     });
 
-  const selectable = CATEGORIES.filter((c) => countOf(c.id) > 0 && !restricted(c.id));
+  const selectable = visibleCategories.filter((c) => countOf(c.id) > 0 && !restricted(c.id));
   const allSelected = selectable.length > 0 && selectable.every((c) => selected.has(c.id));
   const toggleAll = () => setSelected(allSelected ? new Set() : new Set(selectable.map((c) => c.id)));
 
@@ -119,7 +126,7 @@ export function DbCleanupModal({ open, onClose, categories, fallbackCounts, onCl
             </div>
           ) : (
             <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
-              {CATEGORIES.map((c) => {
+              {visibleCategories.map((c) => {
                 const overviewBacked = liveById.has(c.id);
                 const count = displayCountOf(c.id);
                 const empty = count === 0;
