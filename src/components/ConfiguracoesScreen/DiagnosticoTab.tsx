@@ -5,10 +5,10 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
 import { isMaster } from "@/lib/auth";
-import { DiagnosticoLog } from "./DiagnosticoLog";
 import { DiagnosticoSensores } from "./DiagnosticoSensores";
 import { DiagnosticoStats } from "./DiagnosticoStats";
 import { ManutencaoTab } from "./ManutencaoTab";
+import { OperationLog } from "./OperationLog";
 
 type SubTab = "stats" | "sensores" | "manutencao" | "log";
 
@@ -51,7 +51,7 @@ export function DiagnosticoTab() {
         {sub === "stats" && <DiagnosticoStats />}
         {sub === "sensores" && <DiagnosticoSensores />}
         {sub === "manutencao" && <ManutencaoTab />}
-        {sub === "log" && master && <DiagnosticoLog />}
+        {sub === "log" && master && <OperationLog />}
       </div>
     </div>
   );

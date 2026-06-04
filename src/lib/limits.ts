@@ -89,6 +89,9 @@ export const REPORT_PAGE_SIZE_MAX = 200;
  *  `DomainConstants.ChangeRetentionPerProgramMax`); o histórico de edições busca até esse total. */
 export const CHANGE_RETENTION_PER_PROGRAM_MAX = 10;
 
+/** Log de Operação (auditoria) — registros por página. Paginação é obrigatória (volume alto). */
+export const OPERATION_LOG_PAGE_SIZE = 15;
+
 // --- Conexão (timeouts em ms) ---------------------------------------------------------
 /** Tempo máximo de uma requisição REST antes de abortar e reportar "servidor não respondeu". */
 export const API_TIMEOUT_MS = 12000;

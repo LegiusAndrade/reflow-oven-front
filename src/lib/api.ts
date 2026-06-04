@@ -569,6 +569,59 @@ export interface SystemLogRow {
   message: string;
 }
 
+// --- Log de Operação (auditoria — Master-only) ------------------------------------------
+// Accent-free PascalCase string enums (backend has a JsonStringEnumConverter). `category` is the
+// coarse sub-tab/filter dimension; `type`/`object` are the finer TIPO/OBJETO columns.
+export type OperationCategory = "Execucao" | "Alteracao" | "Usuario" | "Erro" | "Comunicacao" | "Falha" | "Calibracao" | "Manutencao";
+export type OperationType =
+  | "Criacao"
+  | "Alteracao"
+  | "Remocao"
+  | "Execucao"
+  | "Erro"
+  | "Comunicacao"
+  | "Login"
+  | "Logout"
+  | "Calibracao"
+  | "Limpeza"
+  | "ResetFabrica";
+export type OperationObject = "Programa" | "Execucao" | "Falha" | "Usuario" | "Configuracao" | "Controlador" | "Sessao" | "Sistema";
+
+/** One field of an entry's DADOS payload. `before` is absent for stateless events (execution/login/comm). */
+export interface OperationFieldDto {
+  field: string;
+  before?: string | null;
+  after?: string | null;
+}
+
+/** One Log de Operação row: DATA · OPERADOR · TIPO · OBJETO · OBJETO ID · DADOS. `operatorName` is
+ *  "Sistema" for automatic events; `at` is ISO 8601 (the client formats it). */
+export interface OperationLogEntryDto {
+  id: string;
+  at: string;
+  operatorName: string;
+  operatorId?: string | null;
+  category: OperationCategory;
+  type: OperationType;
+  object: OperationObject;
+  objectId?: string | null;
+  data: OperationFieldDto[];
+}
+
+export interface OperationLogQuery {
+  search?: string;
+  from?: string;
+  to?: string;
+  before?: string;
+  page?: number;
+  pageSize?: number;
+  category?: OperationCategory;
+  operator?: string;
+  type?: OperationType;
+  object?: OperationObject;
+  objectId?: string;
+}
+
 // --- Endpoints ---------------------------------------------------------------------------
 
 export const api = {
@@ -637,6 +690,8 @@ export const api = {
   changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/changes${qs(q)}`),
   change: (id: string) => request<ChangeDetailDto>(`/api/changes/${encodeURIComponent(id)}`),
   systemLog: (q: SystemLogQuery) => request<PagedResult<SystemLogRow>>(`/api/system-log${qs(q)}`),
+  // Log de Operação (universal audit trail — Master-only; 403 for Admin/Regular).
+  operationLog: (q: OperationLogQuery = {}) => request<PagedResult<OperationLogEntryDto>>(`/api/operation-log${qs({ ...q })}`),
   faultTypes: () => request<unknown[]>("/api/fault-types"),
 
   // diagnostics
