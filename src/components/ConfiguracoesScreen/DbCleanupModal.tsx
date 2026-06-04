@@ -25,10 +25,10 @@ const CATEGORIES: { id: CleanupId; label: string; hint: string; icon: string }[]
   { id: "usuarios_deletados", label: "Usuários deletados", hint: "Expurga os usuários na lixeira (já excluídos)", icon: "person_remove" },
 ];
 
-// Categories the Master may VIEW (size) but not clean — wiping saved programs and user accounts is the
-// Admin's data-management job, not the technician's. History (execuções/falhas/logs/inativos) stays
-// cleanable by both. The backend must enforce this too (front gating alone isn't security).
-const ADMIN_ONLY_CLEANUP: ReadonlySet<CleanupId> = new Set(["programas", "usuarios"]);
+// Categories the Master may VIEW (size) but not clean — wiping saved programs and user accounts (active
+// OR inactive) is the Admin's data-management job, not the technician's. History (execuções/falhas/logs)
+// stays cleanable by both. The backend must enforce this too (front gating alone isn't security).
+const ADMIN_ONLY_CLEANUP: ReadonlySet<CleanupId> = new Set(["programas", "usuarios", "inativos"]);
 
 // Trash categories — only the Master sees and purges them (the Lixeira is Master-only); the Admin never
 // sees deleted programs/users in the cleanup at all. Orthogonal to ADMIN_ONLY_CLEANUP above.
