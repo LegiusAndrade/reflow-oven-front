@@ -38,6 +38,10 @@ export interface IAppShellProps {
 export function AppShell({ children }: IAppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
+  // Set once the first session re-validation (token bootstrap + /me) finishes — gates the authed UI
+  // (see `blocked`) and the data effects below, so nothing fetches before the in-memory token is
+  // hydrated from the cookie (on a hard reload the session loads from cache before the token does).
+  const [bootDone, setBootDone] = useState(false);
   const liveReadings = useLiveReadings(MOCK_READINGS);
   const drawerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -45,7 +49,7 @@ export function AppShell({ children }: IAppShellProps) {
   const hydrated = useHydrated();
   const session = useSession();
   const unread = unreadCount(useStore(notificationsStore));
-  const sys = useSystemStatus(Boolean(session));
+  const sys = useSystemStatus(Boolean(session) && bootDone);
 
   // While open: close on Esc, move focus into the drawer, and restore focus on close.
   useEffect(() => {
@@ -62,9 +66,12 @@ export function AppShell({ children }: IAppShellProps) {
     };
   }, [drawerOpen]);
 
-  // Re-validate the stored JWT against the API once hydrated (clears the session if expired).
+  // Re-validate the session once hydrated: hydrate the in-memory token from the httpOnly cookie
+  // (ws-token) then validate against the API. `bootDone` gates the authed UI until that first pass
+  // finishes, so no screen mounts (and fetches) before the token is in memory — see `blocked` below.
   useEffect(() => {
-    if (hydrated) void refreshSession();
+    if (!hydrated) return;
+    void refreshSession().finally(() => setBootDone(true));
   }, [hydrated]);
 
   // Apply the per-user theme + seed the prefs store from the session — keyed on the session itself so
@@ -98,15 +105,15 @@ export function AppShell({ children }: IAppShellProps) {
 
   // Poll the notifications feed while signed in (never on /login). Stops on logout/unmount.
   useEffect(() => {
-    if (!session) return;
+    if (!session || !bootDone) return;
     return startNotificationsPolling();
-  }, [session]);
+  }, [session, bootDone]);
 
   // Also refresh the feed on every navigation while signed in.
   useEffect(() => {
-    if (!session) return;
+    if (!session || !bootDone) return;
     void refreshNotifications();
-  }, [session, pathname]);
+  }, [session, bootDone, pathname]);
 
   // Auth guard (deferred until hydrated so the persisted session loads): /login is always
   // reachable; every other route needs a session and an allowed role.
@@ -124,7 +131,7 @@ export function AppShell({ children }: IAppShellProps) {
     if (!canAccess(session.role, pathname)) router.replace("/");
   }, [hydrated, isLogin, session, pathname, router]);
 
-  const blocked = !hydrated || (isLogin ? Boolean(session) : !session ? true : !canAccess(session.role, pathname));
+  const blocked = !hydrated || (isLogin ? Boolean(session) : !bootDone || !session || !canAccess(session.role, pathname));
 
   // Don't spin forever: if the boot stays blocked (e.g. the backend is unreachable while we
   // validate the session), surface a connection error with a retry once the timeout elapses.

@@ -3,12 +3,12 @@
  * (the backend reads it from the query string for hub connections).
  */
 import * as signalR from "@microsoft/signalr";
-import { API_URL, getToken, type RunPhase, type RunStatusKind, type SensorReadingsDto, type TraceSampleDto } from "./api";
+import { API_URL, fetchWsToken, getToken, type RunPhase, type RunStatusKind, type SensorReadingsDto, type TraceSampleDto } from "./api";
 import { SIGNALR_RECONNECT_DELAYS_MS } from "./limits";
 
 const build = (path: string): signalR.HubConnection =>
   new signalR.HubConnectionBuilder()
-    .withUrl(`${API_URL}${path}`, { accessTokenFactory: () => getToken() ?? "" })
+    .withUrl(`${API_URL}${path}`, { accessTokenFactory: async () => getToken() ?? (await fetchWsToken()) ?? "" })
     .withAutomaticReconnect(SIGNALR_RECONNECT_DELAYS_MS)
     .configureLogging(signalR.LogLevel.Critical)
     .build();

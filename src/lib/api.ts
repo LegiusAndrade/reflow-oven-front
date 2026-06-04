@@ -11,19 +11,36 @@ import type { ChangeAction, ErrorSeverity, ExecutionStatus } from "./reports";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5248";
 
-const TOKEN_KEY = "reflow:token:v1";
+// The JWT lives in an httpOnly cookie (set by the BFF /api/auth/login route). The client can't read
+// that cookie, so it keeps the token in this MODULE-LOCAL (client-only) variable, hydrated on load
+// from /api/auth/ws-token (see fetchWsToken + auth.refreshSession) and never persisted in JS-readable
+// storage. On the SERVER getToken() returns null: server code (RSC / Route Handlers) reads the cookie
+// per-request via lib/serverAuth, because a module variable would be SHARED across all users there.
+let memToken: string | null = null;
 
 /** In-flight GET de-dup map (see `request` below); cleared on any token change. */
 const inflightGets = new Map<string, Promise<unknown>>();
 
-export const getToken = (): string | null => (typeof window === "undefined" ? null : window.localStorage.getItem(TOKEN_KEY));
+export const getToken = (): string | null => (typeof window === "undefined" ? null : memToken);
 
 export const setToken = (token: string | null): void => {
   if (typeof window === "undefined") return;
   inflightGets.clear(); // a token change invalidates any shared in-flight read
-  if (token) window.localStorage.setItem(TOKEN_KEY, token);
-  else window.localStorage.removeItem(TOKEN_KEY);
+  memToken = token;
 };
+
+/** Fetch the JWT from the httpOnly cookie via the Next ws-token route (client-only): hydrates the
+ *  in-memory token on load and backs the SignalR accessTokenFactory. null = not signed in. */
+export async function fetchWsToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const res = await fetch("/api/auth/ws-token");
+    if (!res.ok) return null;
+    return ((await res.json()) as { token: string | null }).token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /** An error carrying the HTTP status (the API returns pt-BR messages via ProblemDetails). */
 export class ApiError extends Error {
