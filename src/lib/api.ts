@@ -4,7 +4,10 @@
  * TODO(backend): this replaces the localStorage mock stores screen by screen.
  */
 
+import type { ZodType } from "zod";
+import { pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
 import { API_TIMEOUT_MS } from "./limits";
+import { logger } from "./logger";
 // Type-only import (erased at runtime, so it forms no import cycle): the report row DTOs carry
 // the same accented display unions the Relatórios screen renders.
 import type { ChangeAction, ErrorSeverity, ExecutionStatus } from "./reports";
@@ -58,6 +61,8 @@ interface RequestOptions {
   signal?: AbortSignal;
   /** Set false to skip the Authorization header (login / forgot-password). */
   auth?: boolean;
+  /** Optional zod schema to validate the response against — logs a warning on mismatch (see apiSchemas). */
+  schema?: ZodType;
 }
 
 async function doRequest<T>(path: string, opts: RequestOptions = {}): Promise<T> {
@@ -108,6 +113,13 @@ async function doRequest<T>(path: string, opts: RequestOptions = {}): Promise<T>
   if (!res.ok) {
     const problem = data as { detail?: string; title?: string } | undefined;
     throw new ApiError(res.status, problem?.detail ?? problem?.title ?? `Erro ${res.status}`);
+  }
+  // Validate against the optional schema: a mismatch is logged (backend contract drift) but the data
+  // still flows, so an imperfect schema never breaks a valid response. null/undefined (a 204, or "no
+  // active run") is skipped.
+  if (opts.schema && data != null) {
+    const parsed = opts.schema.safeParse(data);
+    if (!parsed.success) logger.warn("api", `Resposta de ${path} fora do contrato esperado`, parsed.error);
   }
   return data as T;
 }
@@ -670,7 +682,7 @@ export const api = {
   // auth
   login: (username: string, password: string) => request<LoginResult>("/api/auth/login", { method: "POST", body: { username, password }, auth: false }),
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
-  me: () => request<SessionDto>("/api/auth/me"),
+  me: () => request<SessionDto>("/api/auth/me", { schema: sessionSchema }),
   forgotPassword: (email: string) => request<{ ok: boolean }>("/api/auth/forgot-password", { method: "POST", body: { email }, auth: false }),
   // Authenticated self-service password change (also used to clear a forced provisional-password change).
   changePassword: (currentPassword: string, newPassword: string) =>
@@ -682,7 +694,7 @@ export const api = {
   updatePreferences: (body: UserPreferencesDto) => request<UserPreferencesDto>("/api/me/preferences", { method: "PUT", body }),
 
   // programs
-  listPrograms: (q: ProgramListQuery = {}) => request<PagedResult<ProgramDto>>(`/api/programs${qs({ ...q })}`),
+  listPrograms: (q: ProgramListQuery = {}) => request<PagedResult<ProgramDto>>(`/api/programs${qs({ ...q })}`, { schema: pagedProgramsSchema }),
   getProgram: (id: string) => request<ProgramDto>(`/api/programs/${encodeURIComponent(id)}`),
   createProgram: (body: SaveProgramRequest) => request<ProgramDto>("/api/programs", { method: "POST", body }),
   updateProgram: (id: string, body: SaveProgramRequest) => request<ProgramDto>(`/api/programs/${encodeURIComponent(id)}`, { method: "PUT", body }),
@@ -719,7 +731,7 @@ export const api = {
   updateSettings: (body: unknown) => request<unknown>("/api/settings", { method: "PUT", body }),
 
   // runs
-  runStatus: () => request<RunStatusDto | null>("/api/runs/status"),
+  runStatus: () => request<RunStatusDto | null>("/api/runs/status", { schema: runStatusSchema }),
   startRun: (programId: string) => request<RunStatusDto>("/api/runs/start", { method: "POST", body: { programId } }),
   stopRun: () => request<RunStatusDto | null>("/api/runs/stop", { method: "POST" }),
 
