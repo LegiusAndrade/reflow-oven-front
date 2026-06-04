@@ -153,7 +153,14 @@ Itens a escrever/validar no `../reflow-oven-backend/TODO.md` (descrever o que se
 
 ## Perguntas / ideias
 
-- [ ] Log das operações set/update (e get): registrar o que retornou e o que foi setado.
+- [~] **Log de Operação (auditoria completa)** — *pedido do Lucas 2026-06-04 (ref. print accelero em
+  `~/Pictures/2026-06-04_11-00.png`).* Trilha única **DATA/OPERADOR/TIPO/OBJETO/OBJETO ID/DADOS** cobrindo
+  alteração/execução/erro/**comunicação**/login/calibração. Decidido **backend primeiro** — spec detalhada
+  (modelo + cobertura + `GET /api/operation-log` + contrato `OperationLogEntryDto`) já registrada no
+  `../reflow-oven-backend/TODO.md` **#9**. **Front (refinado 2026-06-04):** **substitui a aba Diagnóstico → Log**
+  (a atual, "feia"); separar **por categoria** — **Tudo** + Execução · Alteração · Usuário · Erro · Comunicação ·
+  Falha (cada uma = `?category=…`); **paginação obrigatória** (reusa o `Pagination` de Relatórios). Espelha o
+  print (1024×600) e **aguarda o endpoint**.
 - [ ] Qual a dificuldade de implementar GraphQL?
 
 ## Feito
