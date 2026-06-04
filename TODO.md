@@ -6,14 +6,20 @@ usam o marcador `TODO(backend)` (`grep -rn "TODO(backend)" src/`).
 
 ## Backend (registrado lá; o front já está pronto ou contornado)
 
-- [ ] **#13 — Regular leva 403 ao iniciar programa** (`vanessa`, `POST /api/runs/start` → 403). Decidir se o
-  operador pode executar: se sim, liberar no backend; se não, esconder/bloquear no front.
-- [ ] **#14 — criação de usuário** — (a) não loga com a senha criada (hash/login no backend); (b) o erro
-  "usuário já existe" aparece no campo **antes** de o modal fechar (resposta chega antes).
-- [ ] **#11 — `diagnostics/overview` conta o Master em `activeUsers`** — mostra 2 onde a tela de Usuários mostra 1.
-  _Contornado no front_ (Estatísticas derivam de `GET /api/users`); o ideal é o overview excluir o Master.
-- [ ] **Auto-delete server-side** — o Admin ainda consegue se **auto-deletar** via API direta (quando não é o
-  último admin). O front já esconde o botão na própria linha; falta o backend rejeitar (defesa em profundidade).
+- [x] **#13 — Regular leva 403 ao iniciar programa** — ✅ **backend já libera** (2026-06-04): `/api/runs/start`+`/stop`
+  usam a policy `OperatorOrAdmin` (inclui Regular). Verificado ao vivo: `vanessa` (Regular) → **HTTP 200**. Se ainda
+  der 403 no device, é token antigo/build velho — re-logar.
+- [~] **#14 — criação de usuário** — (a) ✅ **backend correto** (2026-06-04): MODELO B — gera a senha, envia por
+  e-mail e o **login com ela funciona** (verificado ao vivo). Decidido (Lucas, 04/06): **manter MODELO B**. →
+  **Front:** ao criar, mostrar "senha enviada por e-mail" e **não** coletar/esperar senha do admin; em dev a senha
+  provisória sai no console da API (`[stub-email] … senha 'XXXX'`). (b) o "usuário já existe" antes de o modal
+  fechar é **front**.
+- [x] **#11 — `diagnostics/overview` conta o Master em `activeUsers`** — ✅ **resolvido no backend** (commit `01ec08f`):
+  `DiagnosticsService` exclui o Master de `activeUsers`/`inactiveUsers`/`admins` **e** do ranking `topUsers`
+  (idem `SystemService` / `/api/system/audit`). O contorno do front pode sair (ou ficar — é inofensivo).
+- [x] **Auto-delete server-side** — ✅ **resolvido no backend** (2026-06-04): `UserService.DeleteAsync` rejeita
+  apagar a própria conta → **403** "Você não pode excluir a própria conta." (verificado). O esconder do botão no
+  front agora tem o guard do servidor por trás.
 - [ ] **Notificações `kind`** — "Execução abortada" emite `kind: error`, deveria ser **`warning`** (front já
   renderiza âmbar); faltam as notificações de **falha da placa** e **OTA** (backend #3).
 - [ ] **Aviso de pouco espaço em disco** — o backend já notifica (sino + e-mail); confirmar a tela no front.
