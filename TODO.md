@@ -11,8 +11,10 @@ Front e backend estavam **parados** ao encerrar. Ao subir os dois (`yarn dev` + 
    → vira 50; 75 passa) e o **eixo do gráfico de perfil começa em 0** (a rampa sai de (0,0)).
 2. **Executar as tarefas do backend** conforme chegarem. O `../reflow-oven-backend/TODO.md` mapeia o que cada
    entrega do backend destrava no front:
-   - Endpoints `/deleted` · `/restore` · `/purge` (MasterOnly) → montar a **tela Lixeira** (aba própria de
-     Configurações, só-Master). Métodos no `api.ts` já existem (`listDeleted*`/`restore*`/`purge*`).
+   - [x] **Tela Lixeira — FEITA (2026-06-04).** Aba **"Lixeira"** (só-Master) em Configurações: Segmented
+     Programas/Usuários/Notificações com contagens, **Restaurar** e **Excluir definitivamente** (confirm) por
+     item. Consome `/deleted` · `/restore` · `/purge` (MasterOnly). Verificado ao vivo com o Master real
+     (16 programas / 1 usuário / 2 notificações).
    - [x] **`comparison` real (verificado 2026-06-03)** → a tabela **"Comparativo do Perfil"** voltou a aparecer
      (execução abortada mostra a linha real: prog 150°C / real 17°C, desvios -133°C / -53s).
    - [x] **`diff` / `beforeCurve` / `afterCurve` / `?before=` (verificado 2026-06-03)** → detalhe da Alteração com
@@ -153,6 +155,9 @@ Itens a escrever/validar no `../reflow-oven-backend/TODO.md` (descrever o que se
 
 ## Perguntas / ideias
 
+- [x] **Log de Operação (auditoria completa) — FEITA (2026-06-04).** Substitui a aba Diagnóstico → Log
+  (Master-only); tabela DATA/OPERADOR/TIPO/OBJETO/OBJETO ID/DADOS + chips por categoria + paginação. Verificada
+  ao vivo com o Master real (389 registros; filtro por categoria OK; Falha=50, Erro=0). _Histórico abaixo:_
 - [~] **Log de Operação (auditoria completa)** — *pedido do Lucas 2026-06-04 (ref. print accelero em
   `~/Pictures/2026-06-04_11-00.png`).* Trilha única **DATA/OPERADOR/TIPO/OBJETO/OBJETO ID/DADOS** cobrindo
   alteração/execução/erro/**comunicação**/login/calibração. Decidido **backend primeiro** — spec detalhada
