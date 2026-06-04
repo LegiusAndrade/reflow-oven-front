@@ -158,9 +158,9 @@ Itens a escrever/validar no `../reflow-oven-backend/TODO.md` (descrever o que se
   alteração/execução/erro/**comunicação**/login/calibração. Decidido **backend primeiro** — spec detalhada
   (modelo + cobertura + `GET /api/operation-log` + contrato `OperationLogEntryDto`) já registrada no
   `../reflow-oven-backend/TODO.md` **#9**. **Front (refinado 2026-06-04):** **substitui a aba Diagnóstico → Log**
-  (a atual, "feia"); separar **por categoria** — **Tudo** + Execução · Alteração · Usuário · Erro · Comunicação ·
-  Falha (cada uma = `?category=…`); **paginação obrigatória** (reusa o `Pagination` de Relatórios). Espelha o
-  print (1024×600) e **aguarda o endpoint**.
+  (a atual, "feia"), seguindo **Master-only** como ela; separar **por categoria** — **Tudo** + Execução ·
+  Alteração · Usuário · Erro · Comunicação · Falha (cada uma = `?category=…`); **paginação obrigatória** (reusa o
+  `Pagination` de Relatórios). Espelha o print (1024×600) e **aguarda o endpoint**.
 - [ ] Qual a dificuldade de implementar GraphQL?
 
 ## Feito
