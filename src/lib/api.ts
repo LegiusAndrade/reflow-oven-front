@@ -287,6 +287,25 @@ export interface PingResultDto {
   host: string;
 }
 
+/** One clearable category in the maintenance overview — real per-category record counts from the backend. */
+export interface MaintenanceCategoryDto {
+  /** Matches a front `CleanupId` (execucoes | falhas | logs | inativos). */
+  id: string;
+  label: string;
+  count: number;
+  bytes: number;
+}
+
+/** Device maintenance overview: real DB size + per-category record counts, plus host CPU/disk/OS. */
+export interface MaintenanceOverviewDto {
+  database: { totalBytes: number; categories: MaintenanceCategoryDto[] };
+  cpuLoadPercent: number;
+  diskFreeGB: number;
+  diskTotalGB: number;
+  os: string;
+  osKernel: string;
+}
+
 export interface NetworkStatusDto {
   link: NetworkLink;
   interface: string;
@@ -634,7 +653,7 @@ export const api = {
     request<{ gain: number; offset: number }>("/api/calibration/wizard", { method: "POST", body: { steps } }),
 
   // maintenance
-  maintenanceOverview: () => request<unknown>("/api/maintenance/overview"),
+  maintenanceOverview: () => request<MaintenanceOverviewDto>("/api/maintenance/overview"),
   cleanup: (categories: string[]) => request<{ deleted: number }>("/api/maintenance/cleanup", { method: "POST", body: { categories } }),
   factoryReset: (confirm: string) => request<void>("/api/maintenance/factory-reset", { method: "POST", body: { confirm } }),
 

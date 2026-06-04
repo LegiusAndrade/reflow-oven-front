@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
-import { useStore } from "@/hooks/useStore";
-import { DEVICE_INFO } from "@/lib/deviceInfo";
-import { cleanupStore, databaseSizeBytes, formatBytes } from "@/lib/maintenance";
-import { usersStore } from "@/lib/users";
+import { api, ApiError, type MaintenanceOverviewDto } from "@/lib/api";
+import { formatBytes } from "@/lib/maintenance";
 import { DbCleanupModal } from "./DbCleanupModal";
 import { FactoryResetModal } from "./FactoryResetModal";
 
@@ -21,16 +19,40 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
   );
 }
 
-/** Diagnóstico → Manutenção sub-tab: storage/system info + database cleanup and factory reset. */
+/** Diagnóstico → Manutenção sub-tab: real storage/system info + database cleanup and factory reset. */
 export function ManutencaoTab() {
-  const users = useStore(usersStore);
-  const cleared = useStore(cleanupStore);
+  const [overview, setOverview] = useState<MaintenanceOverviewDto | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
 
-  const d = DEVICE_INFO;
-  const dbSize = databaseSizeBytes(cleared, users);
-  const freePct = Math.round((d.storageFreeGB / d.storageTotalGB) * 100);
+  // Fetch the real overview (DB size + per-category counts + host disk/OS). Re-runs on `refresh()`,
+  // e.g. after a cleanup. setState only after the await — keeps clear of react-hooks/set-state-in-effect.
+  useEffect(() => {
+    let alive = true;
+    async function load(): Promise<void> {
+      try {
+        const ov = await api.maintenanceOverview();
+        if (!alive) return;
+        setOverview(ov);
+        setError(null);
+      } catch (e) {
+        if (!alive) return;
+        setError(e instanceof ApiError ? e.message : "Falha ao carregar o estado do sistema.");
+      }
+    }
+    void load();
+    return () => {
+      alive = false;
+    };
+  }, [reloadKey]);
+
+  const refresh = () => setReloadKey((k) => k + 1);
+
+  const dbSize = overview ? formatBytes(overview.database.totalBytes) : "—";
+  const freePct = overview && overview.diskTotalGB > 0 ? Math.round((overview.diskFreeGB / overview.diskTotalGB) * 100) : 0;
+  const disk = overview ? `${overview.diskFreeGB} GB de ${overview.diskTotalGB} GB (${freePct}%)` : "—";
 
   return (
     <div className='flex flex-col gap-5'>
@@ -40,12 +62,19 @@ export function ManutencaoTab() {
           <IconGeneral icon='dns' fill={1} className='text-[var(--brand)] [--icon-size:1.5rem]' />
           <h3 className='font-semibold'>Sistema</h3>
         </header>
-        <dl className='grid gap-x-8 gap-y-3 sm:grid-cols-2'>
-          <InfoRow icon='database' label='Tamanho do banco de dados' value={formatBytes(dbSize)} />
-          <InfoRow icon='hard_drive' label='Espaço livre no HD' value={`${d.storageFreeGB} GB de ${d.storageTotalGB} GB (${freePct}%)`} />
-          <InfoRow icon='terminal' label='Sistema operacional' value={d.os.name} />
-          <InfoRow icon='memory' label='Versão do Linux' value={d.os.kernel} />
-        </dl>
+        {error && !overview ? (
+          <p className='flex items-center gap-2 text-sm text-red-700 dark:text-red-400'>
+            <IconGeneral icon='error' fill={1} className='shrink-0 [--icon-size:1.25rem]' />
+            {error}
+          </p>
+        ) : (
+          <dl className='grid gap-x-8 gap-y-3 sm:grid-cols-2'>
+            <InfoRow icon='database' label='Tamanho do banco de dados' value={dbSize} />
+            <InfoRow icon='hard_drive' label='Espaço livre no HD' value={disk} />
+            <InfoRow icon='terminal' label='Sistema operacional' value={overview?.os ?? "—"} />
+            <InfoRow icon='memory' label='Versão do Linux' value={overview?.osKernel ?? "—"} />
+          </dl>
+        )}
       </section>
 
       {/* Destructive actions */}
@@ -54,7 +83,10 @@ export function ManutencaoTab() {
         <div className='flex flex-wrap gap-3'>
           <button
             type='button'
-            onClick={() => setCleanupOpen(true)}
+            onClick={() => {
+              refresh();
+              setCleanupOpen(true);
+            }}
             className='btn-press flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 font-semibold'
           >
             <IconGeneral icon='delete_sweep' fill={0} className='[--icon-size:1.25rem]' />
@@ -71,7 +103,7 @@ export function ManutencaoTab() {
         </div>
       </section>
 
-      <DbCleanupModal open={cleanupOpen} onClose={() => setCleanupOpen(false)} />
+      <DbCleanupModal open={cleanupOpen} onClose={() => setCleanupOpen(false)} categories={overview?.database.categories ?? null} onCleaned={refresh} />
       <FactoryResetModal open={resetOpen} onClose={() => setResetOpen(false)} />
     </div>
   );

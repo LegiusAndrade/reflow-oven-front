@@ -5,25 +5,33 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
-import { useStore } from "@/hooks/useStore";
-import { ApiError } from "@/lib/api";
-import { cleanupStore, type CleanupId, formatBytes, performCleanup, recordCount, recordSizeBytes } from "@/lib/maintenance";
+import { ApiError, type MaintenanceCategoryDto } from "@/lib/api";
+import { type CleanupId, formatBytes, performCleanup } from "@/lib/maintenance";
 import { showToast } from "@/lib/toast";
-import { usersStore } from "@/lib/users";
 
 // "Registro de alterações" (audit log) is intentionally NOT here — it is protected from cleanup (#8);
-// the backend must also reject it server-side.
+// the backend overview omits it too, so it can never be selected. Counts/sizes are the live values
+// from GET /api/maintenance/overview (passed in as `categories`); this list only adds icon/label/hint.
 const CATEGORIES: { id: CleanupId; label: string; hint: string; icon: string }[] = [
   { id: "execucoes", label: "Histórico de execuções", hint: "Relatórios de execuções concluídas e com falha", icon: "history" },
   { id: "falhas", label: "Registro de falhas", hint: "Eventos de falha registrados pela placa de potência", icon: "error" },
   { id: "logs", label: "Logs do sistema", hint: "Mensagens de INFO / Aviso / Erro do sistema", icon: "receipt_long" },
+  { id: "programas", label: "Programas salvos", hint: "Remove todos os perfis de temperatura salvos", icon: "article" },
   { id: "inativos", label: "Usuários inativos", hint: "Remove permanentemente os usuários marcados como inativos", icon: "person_off" },
+  { id: "usuarios", label: "Usuários ativos", hint: "Remove os usuários ativos, exceto o que está em uso agora", icon: "group" },
 ];
 
+interface IDbCleanupModalProps {
+  open: boolean;
+  onClose: () => void;
+  /** Live per-category counts/sizes from the overview (null while the parent is still loading it). */
+  categories: MaintenanceCategoryDto[] | null;
+  /** Called after a successful cleanup so the parent re-fetches the overview. */
+  onCleaned: () => void;
+}
+
 /** Diagnóstico → modal to clear historical records (and inactive users) from the database. */
-export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const users = useStore(usersStore);
-  const cleared = useStore(cleanupStore);
+export function DbCleanupModal({ open, onClose, categories, onCleaned }: IDbCleanupModalProps) {
   const [selected, setSelected] = useState<Set<CleanupId>>(new Set());
   const [confirming, setConfirming] = useState(false);
   // Reset selection/confirm each time the modal opens (adjust-during-render, no effect).
@@ -36,7 +44,10 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
     }
   }
 
-  const countOf = (id: CleanupId): number => recordCount(id, cleared, users);
+  const loading = categories === null;
+  const liveById = new Map((categories ?? []).map((c) => [c.id, c]));
+  const countOf = (id: CleanupId): number => liveById.get(id)?.count ?? 0;
+  const bytesOf = (id: CleanupId): number => liveById.get(id)?.bytes ?? 0;
 
   const toggle = (id: CleanupId) =>
     setSelected((prev) => {
@@ -52,12 +63,14 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
 
   const chosen = [...selected].filter((id) => countOf(id) > 0);
   const totalRecords = chosen.reduce((sum, id) => sum + countOf(id), 0);
-  const totalBytes = chosen.reduce((sum, id) => sum + recordSizeBytes(id, countOf(id)), 0);
+  const totalBytes = chosen.reduce((sum, id) => sum + bytesOf(id), 0);
 
   const runCleanup = async () => {
     try {
-      await performCleanup(chosen);
-      showToast(`Limpeza concluída — ${totalRecords} ${totalRecords === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
+      const deleted = await performCleanup(chosen);
+      const n = deleted || totalRecords;
+      showToast(`Limpeza concluída — ${n} ${n === 1 ? "registro removido" : "registros removidos"} (${formatBytes(totalBytes)})`);
+      onCleaned();
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : "Falha na limpeza do banco", "error");
     }
@@ -81,41 +94,48 @@ export function DbCleanupModal({ open, onClose }: { open: boolean; onClose: () =
             {allSelected ? "Limpar seleção" : "Selecionar tudo"}
           </button>
 
-          <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
-            {CATEGORIES.map((c) => {
-              const count = countOf(c.id);
-              const size = recordSizeBytes(c.id, count);
-              const empty = count === 0;
-              const checked = selected.has(c.id);
-              return (
-                <li key={c.id}>
-                  <label
-                    className={clsx(
-                      "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors",
-                      empty ? "cursor-not-allowed border-[var(--border)] opacity-50" : "cursor-pointer border-[var(--border)] hover:bg-[var(--hover)]",
-                      checked && "border-[var(--brand)] bg-[var(--brand)]/10"
-                    )}
-                  >
-                    <input
-                      type='checkbox'
-                      className='size-4 shrink-0 accent-[var(--brand)]'
-                      checked={checked}
-                      disabled={empty}
-                      onChange={() => toggle(c.id)}
-                    />
-                    <IconGeneral icon={c.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.5rem]' />
-                    <div className='min-w-0 flex-1'>
-                      <p className='font-medium'>{c.label}</p>
-                      <p className='truncate text-sm opacity-60'>{c.hint}</p>
-                    </div>
-                    <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
-                      {empty ? "vazio" : `${count} · ${formatBytes(size)}`}
-                    </span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
+          {loading ? (
+            <div className='flex min-h-0 flex-1 items-center justify-center gap-2 opacity-60'>
+              <IconGeneral icon='progress_activity' fill={0} className='animate-spin [--icon-size:1.5rem]' />
+              <span className='text-sm'>Carregando registros…</span>
+            </div>
+          ) : (
+            <ul className='flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-3 [scrollbar-gutter:stable]'>
+              {CATEGORIES.map((c) => {
+                const count = countOf(c.id);
+                const size = bytesOf(c.id);
+                const empty = count === 0;
+                const checked = selected.has(c.id);
+                return (
+                  <li key={c.id}>
+                    <label
+                      className={clsx(
+                        "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors",
+                        empty ? "cursor-not-allowed border-[var(--border)] opacity-50" : "cursor-pointer border-[var(--border)] hover:bg-[var(--hover)]",
+                        checked && "border-[var(--brand)] bg-[var(--brand)]/10"
+                      )}
+                    >
+                      <input
+                        type='checkbox'
+                        className='size-4 shrink-0 accent-[var(--brand)]'
+                        checked={checked}
+                        disabled={empty}
+                        onChange={() => toggle(c.id)}
+                      />
+                      <IconGeneral icon={c.icon} fill={0} className='shrink-0 text-[var(--brand)] [--icon-size:1.5rem]' />
+                      <div className='min-w-0 flex-1'>
+                        <p className='font-medium'>{c.label}</p>
+                        <p className='truncate text-sm opacity-60'>{c.hint}</p>
+                      </div>
+                      <span className='shrink-0 rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-right text-sm font-semibold tabular-nums'>
+                        {empty ? "vazio" : `${count} · ${formatBytes(size)}`}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           <div className='flex shrink-0 items-center justify-end gap-3 border-t border-[var(--border)] pt-4'>
             <button type='button' onClick={onClose} className='btn-press cursor-pointer rounded-xl border border-[var(--border)] px-5 py-2.5 font-semibold'>
