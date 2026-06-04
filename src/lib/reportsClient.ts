@@ -73,7 +73,8 @@ export async function fetchExecutions(q: ExecutionReportQuery): Promise<{ items:
   return { items: res.items.map((e) => execFromSummary(e)), total: res.total };
 }
 
-const execFromSummary = (e: ExecSummaryDto): ExecutionReport => ({
+/** Map a summary DTO to the display row the Execuções table renders (exported for unit tests). */
+export const execFromSummary = (e: ExecSummaryDto): ExecutionReport => ({
   id: e.id,
   programName: e.programName,
   startedAt: fmtStamp(e.startedAt),
