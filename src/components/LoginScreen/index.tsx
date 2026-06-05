@@ -39,8 +39,12 @@ export function LoginScreen() {
     const result = await login(name, password);
     setSubmitting(false);
     if (!result.ok) {
-      setError(result.error ?? "Falha no login.");
+      const msg = result.error ?? "Falha no login.";
+      setError(msg);
       setErrorKind(result.kind);
+      // Also surface it as a toast (the operator may be looking away from the field). The connection
+      // failure keeps its dedicated help block instead; the toast dedupe stops repeated attempts spamming.
+      if (result.kind !== "connection") showToast(msg, "error");
       return;
     }
     router.replace(result.redirect ?? "/");
@@ -114,13 +118,15 @@ export function LoginScreen() {
                 </button>
               </div>
 
-              {/* Credential error sits on the same row as the link, so it never resizes the card */}
-              <div className='flex items-center justify-between gap-3'>
-                <span className='truncate text-sm text-red-700 dark:text-red-400'>{errorKind === "connection" ? "" : error}</span>
+              {/* Forgot-password link on its own row; the error gets a full-width row below it. */}
+              <div className='flex justify-end'>
                 <button type='button' onClick={() => setRecoverOpen(true)} className='shrink-0 cursor-pointer text-sm text-(--brand) hover:underline'>
                   Esqueceu a senha?
                 </button>
               </div>
+              {/* Credential / lockout error — full width so a longer message (e.g. the rate-limit notice)
+                  wraps instead of being clipped. The connection failure uses the richer help block below. */}
+              {errorKind !== "connection" && error && <p className='text-sm text-red-700 dark:text-red-400'>{error}</p>}
 
               {/* Connection failure: a help block with possible fixes (room to wrap, unlike the inline row) */}
               {errorKind === "connection" && (
