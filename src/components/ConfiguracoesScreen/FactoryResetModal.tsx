@@ -41,7 +41,18 @@ export function FactoryResetModal({ open, onClose }: { open: boolean; onClose: (
       onClose();
       router.replace("/login");
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : "Falha no reset de fábrica", "error");
+      // A factory reset wipes + reboots the device, which can drop this very request's connection
+      // (ApiError status 0). Surface that as "the equipment is restarting" — it reads very differently
+      // from a generic "can't connect" — instead of presenting the expected reboot as a hard failure.
+      const noConnection = e instanceof ApiError && e.status === 0;
+      showToast(
+        noConnection
+          ? "O servidor não respondeu ao reset — o equipamento pode estar reiniciando. Aguarde e faça login novamente; se persistir, verifique se o servidor está ligado."
+          : e instanceof ApiError
+            ? e.message
+            : "Falha no reset de fábrica",
+        noConnection ? "warning" : "error"
+      );
       setPending(false);
     }
   };
