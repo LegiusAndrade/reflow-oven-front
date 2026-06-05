@@ -23,7 +23,7 @@ export function Sidebar({ className, onTrocarSenha }: { className?: string; onTr
   const router = useRouter();
   const session = useSession();
   // Regular users only see the routes their role can reach (Início + Programas); logged out → no nav.
-  const items = session ? NAV_ITEMS.filter((item) => canAccess(session.role, item.href)) : [];
+  const items = session ? NAV_ITEMS.filter((item) => canAccess(session.role, item.href, session.calibration)) : [];
 
   const handleLogout = async () => {
     await logout(); // wait for the cookie to clear before redirecting, else middleware bounces /login → /

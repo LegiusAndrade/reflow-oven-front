@@ -154,9 +154,10 @@ const qs = (params: object): string => {
 
 // --- Wire types (mirror the backend DTOs) -----------------------------------------------
 
-/** "Master" is the single dev/superuser account (created in the DB; full Admin powers + the
- *  Diagnóstico → Log tab). Regular users are never this; it is not a creatable user type. */
-export type Role = "Admin" | "Regular" | "Master";
+/** "Master" is the single dev/superuser account (full Admin powers + the Diagnóstico → Log tab);
+ *  "Tecnico" is the calibration login — NOT an admin (the Calibração tab is gated by
+ *  `session.calibration`, not the role). Neither is a creatable user type (managed users are Admin/Regular). */
+export type Role = "Admin" | "Regular" | "Master" | "Tecnico";
 export type RampShape = "Linear" | "Fixo" | "Parábola positiva" | "Parábola negativa";
 export type RunStatusKind = "running" | "done" | "aborted";
 export type RunPhase = "Aquecimento" | "Patamar" | "Pico" | "Resfriamento";

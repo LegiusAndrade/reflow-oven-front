@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
-import { isMaster } from "@/lib/auth";
+import { canAdminister, isMaster } from "@/lib/auth";
 import { CalibracaoTab } from "./CalibracaoTab";
 import { DiagnosticoTab } from "./DiagnosticoTab";
 import { GeralTab } from "./GeralTab";
@@ -33,11 +33,14 @@ const LIXEIRA_TAB: { id: Tab; label: string; icon: string } = { id: "lixeira", l
 /** Configurações screen: 5 tabs (Geral, Usuários, Rede, Notificações, Diagnóstico). Each form
  *  tab carries its own Cancelar/SALVAR; switching tabs discards unsaved edits on that tab. */
 export function ConfiguracoesScreen() {
-  const [tab, setTab] = useState<Tab>("geral");
   const session = useSession();
+  const isAdmin = canAdminister(session?.role ?? "Regular");
   const master = isMaster(session?.role ?? "Regular");
-  // Lixeira is appended for the Master; Calibração only for the technician ("calibracao") session.
-  const tabs = [...TABS, ...(master ? [LIXEIRA_TAB] : []), ...(session?.calibration ? [CALIBRACAO_TAB] : [])];
+  // The technician (calibration session, NOT admin) sees ONLY the Calibração tab — the admin tabs all
+  // 403 on the server now. Lixeira is Master-only; Calibração needs the calibration session.
+  const tabs = [...(isAdmin ? TABS : []), ...(master ? [LIXEIRA_TAB] : []), ...(session?.calibration ? [CALIBRACAO_TAB] : [])];
+  // Default to the first tab the user actually has (Calibração for the technician, who has no admin tabs).
+  const [tab, setTab] = useState<Tab>(() => (isAdmin ? "geral" : session?.calibration ? "calibracao" : "geral"));
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
@@ -67,11 +70,11 @@ export function ConfiguracoesScreen() {
       </nav>
 
       <div className='flex min-h-0 flex-1 flex-col'>
-        {tab === "geral" && <GeralTab />}
-        {tab === "usuarios" && <UsuariosTab />}
-        {tab === "rede" && <RedeTab />}
-        {tab === "notificacoes" && <NotificacoesTab />}
-        {tab === "diagnostico" && <DiagnosticoTab />}
+        {isAdmin && tab === "geral" && <GeralTab />}
+        {isAdmin && tab === "usuarios" && <UsuariosTab />}
+        {isAdmin && tab === "rede" && <RedeTab />}
+        {isAdmin && tab === "notificacoes" && <NotificacoesTab />}
+        {isAdmin && tab === "diagnostico" && <DiagnosticoTab />}
         {tab === "lixeira" && master && <LixeiraTab />}
         {tab === "calibracao" && session?.calibration && <CalibracaoTab />}
       </div>

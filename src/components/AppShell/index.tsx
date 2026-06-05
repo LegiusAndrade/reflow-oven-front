@@ -128,10 +128,10 @@ export function AppShell({ children }: IAppShellProps) {
       router.replace("/login");
       return;
     }
-    if (!canAccess(session.role, pathname)) router.replace("/");
+    if (!canAccess(session.role, pathname, session.calibration)) router.replace("/");
   }, [hydrated, isLogin, session, pathname, router]);
 
-  const blocked = !hydrated || (isLogin ? Boolean(session) : !bootDone || !session || !canAccess(session.role, pathname));
+  const blocked = !hydrated || (isLogin ? Boolean(session) : !bootDone || !session || !canAccess(session.role, pathname, session.calibration));
 
   // Don't spin forever: if the boot stays blocked (e.g. the backend is unreachable while we
   // validate the session), surface a connection error with a retry once the timeout elapses.

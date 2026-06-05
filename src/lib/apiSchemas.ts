@@ -7,7 +7,7 @@ import { z } from "zod";
  * enums (role / status / phase / ramp) are the parts worth pinning exactly; looser elsewhere.
  */
 
-const role = z.enum(["Admin", "Regular", "Master"]);
+const role = z.enum(["Admin", "Regular", "Master", "Tecnico"]);
 const theme = z.enum(["light", "dark", "system"]);
 const rampShape = z.enum(["Linear", "Fixo", "Parábola positiva", "Parábola negativa"]);
 const runStatusKind = z.enum(["running", "done", "aborted"]);

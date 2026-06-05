@@ -110,11 +110,14 @@ export function isMaster(role: Role): boolean {
 }
 
 /**
- * Route access by role. Admin/Master reach everything; a Regular user may only reach the home page
- * and Programas (and its sub-routes). `/login` is never gated (handled outside the shell).
+ * Route access by role. Admin/Master reach everything; a Regular user (and the technician) may reach
+ * the home page, Programas and Notificações. A `calibration` session additionally reaches Configurações
+ * — for the Calibração tab only (gated by the session, not the role; everything else there is admin-only
+ * and 403s on the server). `/login` is never gated (handled outside the shell).
  */
-export function canAccess(role: Role, pathname: string): boolean {
+export function canAccess(role: Role, pathname: string, calibration = false): boolean {
   if (canAdminister(role)) return true;
+  if (calibration && pathname === "/configuracoes") return true;
   return pathname === "/" || pathname === "/programas" || pathname === "/notificacoes";
 }
 
