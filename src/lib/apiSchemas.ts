@@ -72,3 +72,43 @@ export const runStatusSchema = z.object({
   progress: z.number(),
   last: traceSample.nullish(),
 });
+
+/** Auto-tune outcome — pt-BR wire literals (the accent on "Concluído" is part of the contract). */
+const autotuneStatus = z.enum(["Executando", "Concluído", "Falha", "Cancelado"]);
+
+const autotuneRun = z.object({
+  id: z.string(),
+  startedAt: z.string(),
+  finishedAt: z.string().nullish(),
+  durationSeconds: z.number(),
+  status: autotuneStatus,
+  targetTemp: z.number(),
+  cycles: z.number(),
+  ku: z.number().nullish(),
+  tuMs: z.number().nullish(),
+  kp: z.number().nullish(),
+  ki: z.number().nullish(),
+  kd: z.number().nullish(),
+  prevKp: z.number(),
+  prevKi: z.number(),
+  prevKd: z.number(),
+  applied: z.boolean(),
+  dismissed: z.boolean(),
+  errorReason: z.string().nullish(),
+  faultCode: z.string().nullish(),
+  triggeredBy: z.string().nullish(),
+});
+
+/** GET/POST /api/autotune/{status,start,cancel} — the live tune, or the last finished one when idle. */
+export const autotuneStatusSchema = z.object({
+  running: z.boolean(),
+  current: autotuneRun.nullish(),
+});
+
+/** GET /api/autotune/history — paginated past tunes ("quantas vezes foi feito" = total). */
+export const autotuneHistorySchema = z.object({
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+  items: z.array(autotuneRun),
+});

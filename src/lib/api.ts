@@ -5,7 +5,7 @@
  */
 
 import type { ZodType } from "zod";
-import { pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
+import { autotuneHistorySchema, autotuneStatusSchema, pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
 import { API_TIMEOUT_MS } from "./limits";
 import { logger } from "./logger";
 // Type-only import (erased at runtime, so it forms no import cycle): the report row DTOs carry
@@ -802,7 +802,52 @@ export const api = {
   setPriorityInterface: (interfaceName: string) => request<void>("/api/system/interfaces/priority", { method: "POST", body: { interfaceName } }),
   getNetwork: () => request<NetworkStatusDto>("/api/system/network"),
   updateNetwork: (body: ApplyNetworkRequest) => request<void>("/api/system/network", { method: "PUT", body }),
+
+  // autotune (relay PID tuning). Reading status/history is open; start/cancel/apply/dismiss are CalibrationOnly.
+  autotuneStatus: () => request<AutotuneStatusDto>("/api/autotune/status", { schema: autotuneStatusSchema }),
+  autotuneHistory: (page = 1, pageSize = 50) =>
+    request<PagedResult<AutotuneRunDto>>(`/api/autotune/history${qs({ page, pageSize })}`, { schema: autotuneHistorySchema }),
+  startAutotune: (targetTemp: number) =>
+    request<AutotuneStatusDto>("/api/autotune/start", { method: "POST", body: { targetTemp }, schema: autotuneStatusSchema }),
+  cancelAutotune: () => request<AutotuneStatusDto>("/api/autotune/cancel", { method: "POST", schema: autotuneStatusSchema }),
+  applyAutotune: (id: string) => request<AutotuneRunDto>(`/api/autotune/${encodeURIComponent(id)}/apply`, { method: "POST" }),
+  dismissAutotune: (id: string) => request<AutotuneRunDto>(`/api/autotune/${encodeURIComponent(id)}/dismiss`, { method: "POST" }),
 };
+
+/** Auto-tune outcome — pt-BR wire literals (the accent on "Concluído" is the contract). */
+export type AutotuneStatus = "Executando" | "Concluído" | "Falha" | "Cancelado";
+
+/** One auto-tune run / history row (mirrors backend AutotuneRunDto). Gains (ku/tuMs/kp/ki/kd) are null
+ *  until a run finishes; prev* are the gains in effect before this tune; triggeredBy is null for the
+ *  calibration technician. */
+export interface AutotuneRunDto {
+  id: string;
+  startedAt: string;
+  finishedAt?: string | null;
+  durationSeconds: number;
+  status: AutotuneStatus;
+  targetTemp: number;
+  cycles: number;
+  ku?: number | null;
+  tuMs?: number | null;
+  kp?: number | null;
+  ki?: number | null;
+  kd?: number | null;
+  prevKp: number;
+  prevKi: number;
+  prevKd: number;
+  applied: boolean;
+  dismissed: boolean;
+  errorReason?: string | null;
+  faultCode?: string | null;
+  triggeredBy?: string | null;
+}
+
+/** GET /api/autotune/status — the live tune, or the last finished one when idle (`running` false). */
+export interface AutotuneStatusDto {
+  running: boolean;
+  current?: AutotuneRunDto | null;
+}
 
 export interface BoardDto {
   role: "power" | "control";

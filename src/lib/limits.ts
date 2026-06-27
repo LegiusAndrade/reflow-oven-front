@@ -21,6 +21,13 @@ export const PROFILE_MAX_POINTS = 50;
 export const POINT_TEMP_MIN = 50;
 export const POINT_TEMP_MAX = 500;
 
+/** Auto-tune (relay) — oscillation target the technician requests (°C). The tune swings around this
+ *  point to measure Ku/Tu; bounded to a sane reflow band in the UI (the firmware enforces its own hard
+ *  caps). DEFAULT seeds the input. */
+export const AUTOTUNE_TARGET_MIN = 100;
+export const AUTOTUNE_TARGET_MAX = 280;
+export const AUTOTUNE_TARGET_DEFAULT = 200;
+
 /** Per-point duration (seconds). */
 export const POINT_DURATION_MIN = 0;
 export const POINT_DURATION_MAX = 3600;

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
 import { canAdminister, isMaster } from "@/lib/auth";
+import { AutotuneTab } from "./AutotuneTab";
 import { CalibracaoTab } from "./CalibracaoTab";
 import { DiagnosticoTab } from "./DiagnosticoTab";
 import { GeralTab } from "./GeralTab";
@@ -14,7 +15,7 @@ import { NotificacoesTab } from "./NotificacoesTab";
 import { RedeTab } from "./RedeTab";
 import { UsuariosTab } from "./UsuariosTab";
 
-type Tab = "geral" | "usuarios" | "rede" | "notificacoes" | "diagnostico" | "calibracao" | "lixeira";
+type Tab = "geral" | "usuarios" | "rede" | "notificacoes" | "diagnostico" | "calibracao" | "autotune" | "lixeira";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "geral", label: "Geral", icon: "tune" },
@@ -27,6 +28,9 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 /** The Calibração tab is reserved for the technician (calibration) session. */
 const CALIBRACAO_TAB: { id: Tab; label: string; icon: string } = { id: "calibracao", label: "Calibração", icon: "instant_mix" };
 
+/** Autotune lives beside Calibração — same technician (calibration) session gates it. */
+const AUTOTUNE_TAB: { id: Tab; label: string; icon: string } = { id: "autotune", label: "Autotune", icon: "science" };
+
 /** The Lixeira (soft-delete trash, #8) is reserved for the Master (dev) session. */
 const LIXEIRA_TAB: { id: Tab; label: string; icon: string } = { id: "lixeira", label: "Lixeira", icon: "delete" };
 
@@ -38,7 +42,7 @@ export function ConfiguracoesScreen() {
   const master = isMaster(session?.role ?? "Regular");
   // The technician (calibration session, NOT admin) sees ONLY the Calibração tab — the admin tabs all
   // 403 on the server now. Lixeira is Master-only; Calibração needs the calibration session.
-  const tabs = [...(isAdmin ? TABS : []), ...(master ? [LIXEIRA_TAB] : []), ...(session?.calibration ? [CALIBRACAO_TAB] : [])];
+  const tabs = [...(isAdmin ? TABS : []), ...(master ? [LIXEIRA_TAB] : []), ...(session?.calibration ? [CALIBRACAO_TAB, AUTOTUNE_TAB] : [])];
   // Default to the first tab the user actually has (Calibração for the technician, who has no admin tabs).
   const [tab, setTab] = useState<Tab>(() => (isAdmin ? "geral" : session?.calibration ? "calibracao" : "geral"));
 
@@ -77,6 +81,7 @@ export function ConfiguracoesScreen() {
         {isAdmin && tab === "diagnostico" && <DiagnosticoTab />}
         {tab === "lixeira" && master && <LixeiraTab />}
         {tab === "calibracao" && session?.calibration && <CalibracaoTab />}
+        {tab === "autotune" && session?.calibration && <AutotuneTab />}
       </div>
     </section>
   );
