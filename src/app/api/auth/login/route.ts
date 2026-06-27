@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   try {
     const result = await api.login((body.username ?? "").trim(), body.password ?? "");
     if (!result.ok || !result.token || !result.session) {
-      return NextResponse.json({ ok: false, error: result.error ?? "Falha no login." });
+      return NextResponse.json({ ok: false, error: result.error ?? "Falha no login.", retryAfterSeconds: result.retryAfterSeconds });
     }
     const maxAge = result.expiresAt ? Math.max(1, Math.floor((Date.parse(result.expiresAt) - Date.now()) / 1000)) : DEFAULT_MAX_AGE_SEC;
     (await cookies()).set(authCookie(result.token, maxAge));
@@ -31,6 +31,8 @@ export async function POST(req: Request) {
     // A transport failure to the backend (status 0) carries the troubleshooting message; flag it so
     // the login screen shows its connection-help block. Credential errors (401) stay inline.
     if (e instanceof ApiError && e.status === 0) return NextResponse.json({ ok: false, error: e.message, kind: "connection" });
-    return NextResponse.json({ ok: false, error: e instanceof ApiError ? e.message : "Falha no login." });
+    // A 429 (IP rate limit) carries the wait time → forward it so the screen counts down too.
+    const retryAfterSeconds = e instanceof ApiError ? e.retryAfterSeconds : undefined;
+    return NextResponse.json({ ok: false, error: e instanceof ApiError ? e.message : "Falha no login.", retryAfterSeconds });
   }
 }

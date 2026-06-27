@@ -44,7 +44,7 @@ async function bffLogin(username: string, password: string): Promise<LoginResult
 export async function login(
   name: string,
   password: string
-): Promise<{ ok: boolean; error?: string; redirect?: string; kind?: "connection" }> {
+): Promise<{ ok: boolean; error?: string; redirect?: string; kind?: "connection"; retryAfterSeconds?: number }> {
   const result = await bffLogin(name.trim(), password);
   if (!result.ok || !result.token || !result.session) {
     // A connection failure carries a long, multi-sentence guidance message → the login screen shows a
@@ -53,7 +53,7 @@ export async function login(
       logger.error("auth", "Falha de conexão no login", result.error);
       return { ok: false, error: result.error ?? "Falha no login.", kind: "connection" };
     }
-    return { ok: false, error: result.error ?? "Falha no login." };
+    return { ok: false, error: result.error ?? "Falha no login.", retryAfterSeconds: result.retryAfterSeconds };
   }
   setToken(result.token); // in-memory (transient); the httpOnly cookie is the persistent store
   sessionStore.set(result.session);

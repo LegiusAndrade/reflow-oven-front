@@ -75,6 +75,11 @@ export const PASSWORD_MAX_LENGTH = 72;
 /** E-mail address — maximum characters (RFC 5321 limit). */
 export const EMAIL_MAX_LENGTH = 254;
 
+/** Login — teto de segurança do countdown de bloqueio (rate-limit). O front mostra no máximo este
+ *  tempo mesmo que o backend mande um `retryAfterSeconds` maior/inesperado, evitando um contador
+ *  gigante na tela. 1 h cobre com folga a política real (lockout de ~5 min). */
+export const LOGIN_RETRY_AFTER_MAX_SECONDS = 3600;
+
 // --- API paging (list fetch sizes) ----------------------------------------------------
 /** Programs — page size when loading the full catalog into the client cache. */
 export const PROGRAM_LIST_PAGE_SIZE = 100;

@@ -48,10 +48,14 @@ export async function fetchWsToken(): Promise<string | null> {
 /** An error carrying the HTTP status (the API returns pt-BR messages via ProblemDetails). */
 export class ApiError extends Error {
   readonly status: number;
-  constructor(status: number, message: string) {
+  /** For a rate-limit rejection (429 / login lockout): seconds to wait before retrying, when the
+   *  backend supplies it (body `retryAfterSeconds` or the standard `Retry-After` header). */
+  readonly retryAfterSeconds?: number;
+  constructor(status: number, message: string, retryAfterSeconds?: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -111,8 +115,11 @@ async function doRequest<T>(path: string, opts: RequestOptions = {}): Promise<T>
   }
 
   if (!res.ok) {
-    const problem = data as { detail?: string; title?: string } | undefined;
-    throw new ApiError(res.status, problem?.detail ?? problem?.title ?? `Erro ${res.status}`);
+    const problem = data as { detail?: string; title?: string; retryAfterSeconds?: number } | undefined;
+    // A 429 (rate limit) may carry the wait time in the body or the standard Retry-After header (seconds).
+    const header = res.headers.get("Retry-After");
+    const retryAfter = problem?.retryAfterSeconds ?? (header && /^\d+$/.test(header) ? Number(header) : undefined);
+    throw new ApiError(res.status, problem?.detail ?? problem?.title ?? `Erro ${res.status}`, retryAfter);
   }
   // Validate against the optional schema: a mismatch is logged (backend contract drift) but the data
   // still flows, so an imperfect schema never breaks a valid response. null/undefined (a 204, or "no
@@ -197,6 +204,8 @@ export interface LoginResult {
   token?: string;
   expiresAt?: string;
   session?: SessionDto;
+  /** Rate-limit lockout: seconds the caller must wait before retrying (the login screen counts it down). */
+  retryAfterSeconds?: number;
 }
 
 export interface ProfilePointDto {

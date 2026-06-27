@@ -3,17 +3,20 @@
 import { clsx } from "clsx";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
 import { login } from "@/lib/auth";
-import { EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH, USER_NAME_MAX_LENGTH } from "@/lib/limits";
+import { EMAIL_MAX_LENGTH, LOGIN_RETRY_AFTER_MAX_SECONDS, PASSWORD_MAX_LENGTH, USER_NAME_MAX_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 import { isValidEmail, sanitizeUsername } from "@/lib/users";
 
 const FIELD =
   "text-fg w-full rounded-xl border border-(--border) bg-(--surface-inset) py-3 pr-3 pl-11 outline-none transition-colors placeholder:opacity-50 focus:border-(--brand) focus:bg-(--surface-2)";
+
+/** Seconds → "M:SS" for the login lockout countdown (e.g. 300 → "5:00", 65 → "1:05", 5 → "0:05"). */
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 /** Login / password screen (Figma "Login User"). Real auth against the backend (JWT).
  *  Rendered inside the AppShell (TopBar + BottomBar stay; no sidebar while logged out). */
@@ -23,7 +26,10 @@ export function LoginScreen() {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
-  const [errorKind, setErrorKind] = useState<"connection" | undefined>(undefined);
+  const [errorKind, setErrorKind] = useState<"connection" | "lockout" | undefined>(undefined);
+  // Rate-limit lockout countdown: seconds left before a retry is allowed (backend `retryAfterSeconds`).
+  // 0 = not locked. Ticked down below; drives the disabled ENTRAR button's live "Aguarde M:SS" label.
+  const [lockSeconds, setLockSeconds] = useState(0);
   const clearError = () => {
     setError("");
     setErrorKind(undefined);
@@ -33,15 +39,37 @@ export function LoginScreen() {
   const [recoverError, setRecoverError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const locked = lockSeconds > 0;
+  // A lockout message is only meaningful while the countdown runs (once it elapses the button re-enables);
+  // a credential error always shows. Deriving this keeps the stale message out without a clear-in-effect.
+  const showInlineError = !!error && errorKind !== "connection" && (errorKind !== "lockout" || locked);
+  // Tick the lockout countdown down once a second while it is active (one stable interval; the
+  // functional updater avoids a stale closure). The interval is torn down when it reaches zero.
+  useEffect(() => {
+    if (!locked) return;
+    const id = setInterval(() => setLockSeconds((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [locked]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (locked) return; // still inside the lockout window — ignore Enter/submit
     setSubmitting(true);
     const result = await login(name, password);
     setSubmitting(false);
     if (!result.ok) {
       const msg = result.error ?? "Falha no login.";
       setError(msg);
-      setErrorKind(result.kind);
+      // A lockout carries `retryAfterSeconds`: start the (clamped) countdown and mark the kind so the
+      // button shows the live timer and the message auto-clears when it elapses. Otherwise keep the
+      // credential/connection kind (inline row vs. the connection help block).
+      const secs = result.retryAfterSeconds;
+      if (typeof secs === "number" && secs > 0) {
+        setErrorKind("lockout");
+        setLockSeconds(Math.min(Math.floor(secs), LOGIN_RETRY_AFTER_MAX_SECONDS));
+      } else {
+        setErrorKind(result.kind);
+      }
       // Also surface it as a toast (the operator may be looking away from the field). The connection
       // failure keeps its dedicated help block instead; the toast dedupe stops repeated attempts spamming.
       if (result.kind !== "connection") showToast(msg, "error");
@@ -126,7 +154,7 @@ export function LoginScreen() {
               </div>
               {/* Credential / lockout error — full width so a longer message (e.g. the rate-limit notice)
                   wraps instead of being clipped. The connection failure uses the richer help block below. */}
-              {errorKind !== "connection" && error && <p className='text-sm text-red-700 dark:text-red-400'>{error}</p>}
+              {showInlineError && <p className='text-sm text-red-700 dark:text-red-400'>{error}</p>}
 
               {/* Connection failure: a help block with possible fixes (room to wrap, unlike the inline row) */}
               {errorKind === "connection" && (
@@ -145,8 +173,12 @@ export function LoginScreen() {
               )}
             </div>
 
-            <button type='submit' disabled={submitting} className='btn-action w-full cursor-pointer rounded-xl px-5 py-3 font-semibold disabled:opacity-60'>
-              {submitting ? "ENTRANDO…" : "ENTRAR"}
+            <button
+              type='submit'
+              disabled={submitting || locked}
+              className='btn-action w-full cursor-pointer rounded-xl px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60'
+            >
+              {locked ? `Aguarde ${mmss(lockSeconds)}` : submitting ? "ENTRANDO…" : "ENTRAR"}
             </button>
 
             <p className='text-center text-xs opacity-50'>
