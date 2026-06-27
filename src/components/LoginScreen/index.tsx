@@ -181,10 +181,12 @@ export function LoginScreen() {
               {locked ? `Aguarde ${mmss(lockSeconds)}` : submitting ? "ENTRANDO…" : "ENTRAR"}
             </button>
 
-            <p className='text-center text-xs opacity-50'>
-              Dev: <span className='font-semibold'>lucas.silva</span> (Admin) · <span className='font-semibold'>vanessa</span> (Regular) · senha{" "}
-              <span className='font-semibold'>reflow1234</span>
-            </p>
+            {process.env.NODE_ENV !== "production" && (
+              <p className='text-center text-xs opacity-50'>
+                Dev: <span className='font-semibold'>lucas.silva</span> (Admin) · <span className='font-semibold'>vanessa</span> (Regular) · senha{" "}
+                <span className='font-semibold'>reflow1234</span>
+              </p>
+            )}
           </form>
         </div>
       </div>
