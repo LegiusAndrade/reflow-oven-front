@@ -44,5 +44,7 @@ next-env.d.ts
 /shoot*.mjs
 /calscroll.mjs
 
-# Claude Code local state
-.claude/
+# Claude Code: ignore local state (settings.local.json), but version shared agents/skills
+.claude/*
+!.claude/agents/
+!.claude/skills/
