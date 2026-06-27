@@ -1,15 +1,18 @@
 import type { ErrorLogEntry } from "@/lib/reports";
 import { SeverityBadge } from "./badges";
 import { DetailShell, EventList, Field, SectionTitle } from "./detailParts";
+import { FaultSnapshotChart } from "./FaultSnapshotChart";
 import { SnapshotChart } from "./SnapshotChart";
 
-/** Full detail of a fault (Figma "Report Detail Error"): the multi-signal snapshot of the
- *  failure moment, key figures, and the fault's event timeline. */
+/** Full detail of a fault (Figma "Report Detail Error"): the presentational multi-signal snapshot
+ *  of the failure moment, the raw board "black box" around the fault instant (when captured), key
+ *  figures, and the fault's event timeline. */
 export function ErrorDetail({ err, onClose }: { err: ErrorLogEntry; onClose: () => void }) {
+  const boardSnapshot = err.boardSnapshot;
   return (
     <DetailShell title={`${err.code} — ${err.message}`} onClose={onClose}>
       <div className='flex flex-col gap-6'>
-        {/* Failure snapshot */}
+        {/* Failure snapshot (presentational trace) */}
         <section>
           <SectionTitle>Snapshot da Falha</SectionTitle>
           <p className='mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm'>
@@ -27,6 +30,20 @@ export function ErrorDetail({ err, onClose }: { err: ErrorLogEntry; onClose: () 
             <SnapshotChart snapshot={err.snapshot} className='h-full w-full' />
           </div>
         </section>
+
+        {/* Fault black box: raw board telemetry in high resolution around the fault instant (only when captured) */}
+        {boardSnapshot && boardSnapshot.samples.length > 0 && (
+          <section>
+            <SectionTitle>Caixa-preta / instante da falha</SectionTitle>
+            <p className='mb-2 text-sm opacity-60'>
+              Telemetria da placa em alta resolução ({boardSnapshot.sampleIntervalMs} ms entre amostras) capturada em torno da falha; a linha
+              vertical marca o instante do disparo (t = 0).
+            </p>
+            <div className='h-[clamp(240px,46vh,400px)] rounded-xl border border-(--border) p-2'>
+              <FaultSnapshotChart snapshot={boardSnapshot} className='h-full w-full' />
+            </div>
+          </section>
+        )}
 
         {/* Key figures */}
         <section>

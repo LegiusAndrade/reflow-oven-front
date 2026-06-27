@@ -10,6 +10,7 @@ import {
   type ChangeReportQuery,
   type ErrorReportQuery,
   type ExecutionReportQuery,
+  type FaultSnapshotDto,
   type ProfilePointDto,
 } from "./api";
 import type { ProfilePoint } from "./programs";
@@ -63,7 +64,7 @@ interface ChangeSummaryDto { id: string; at: string; action: ChangeAction; targe
 
 interface ErrSummaryDto { id: string; at: string; faultTypeCode: string; severity: ErrorSeverity; message: string; userName?: string | null; programName?: string | null }
 interface SnapSeriesDto { name: string; unit: string; color: string; values: number[] }
-interface ErrDetailDto extends ErrSummaryDto { programId?: string | null; ovenTemp: number; pcbTemp: number; startAt: string; endAt: string; inputVoltage: number; outputVoltage: number; snapshot: { durationSec: number; series: SnapSeriesDto[] }; events: LogEventDto[] }
+interface ErrDetailDto extends ErrSummaryDto { programId?: string | null; ovenTemp: number; pcbTemp: number; startAt: string; endAt: string; inputVoltage: number; outputVoltage: number; snapshot: { durationSec: number; series: SnapSeriesDto[] }; boardSnapshot?: FaultSnapshotDto | null; events: LogEventDto[] }
 
 const mapEvent = (e: LogEventDto): LogEvent => ({ at: fmtTime(e.at), kind: e.kind, message: e.message });
 
@@ -238,6 +239,8 @@ const errorFromSummary = (e: ErrSummaryDto): ErrorLogEntry => ({
   outputVoltage: 0,
   events: [],
   snapshot: { durationSec: 0, series: [] },
+  // The board black box is detail-only (and optional even there) — a summary row has none.
+  boardSnapshot: undefined,
 });
 
 export async function fetchErrorDetail(id: string): Promise<ErrorLogEntry> {
@@ -252,6 +255,8 @@ export async function fetchErrorDetail(id: string): Promise<ErrorLogEntry> {
     inputVoltage: e.inputVoltage,
     outputVoltage: e.outputVoltage,
     snapshot: e.snapshot,
+    // Wire shape mirrors the frontend FaultSnapshot 1:1 (engineering units); null → omit.
+    boardSnapshot: e.boardSnapshot ?? undefined,
     events: e.events.map(mapEvent),
   };
 }

@@ -639,6 +639,62 @@ export interface ErrorSummaryRow {
   programName?: string | null;
 }
 
+// --- Error detail (GET /api/errors/{id}) ------------------------------------------------
+// Mirrors the backend ErrorDetailDto. It carries TWO distinct fault traces: `snapshot` (the
+// presentational fixed-width chart series, always present) and the optional `boardSnapshot` —
+// the board's raw GET_FAULT_SNAPSHOT "black box" buffer (high-resolution, engineering units).
+
+/** One decoded sample of the board fault-snapshot buffer (GET_FAULT_SNAPSHOT) in engineering
+ *  units (°C / V / A / RPM / % / W). Mirrors the backend BoardFaultSampleDto (camelCase wire);
+ *  `faultFlags` is a discrete bitfield (not plotted). */
+export interface FaultSnapshotSampleDto {
+  ovenTempC: number;
+  boardTempC: number;
+  vbusV: number;
+  vregV: number;
+  pdV: number;
+  currentA: number;
+  fanIntakeRpm: number;
+  fanExhaustRpm: number;
+  fanBoardRpm: number;
+  dutyIntakePct: number;
+  dutyExhaustPct: number;
+  dutyBoardPct: number;
+  mcuTempC: number;
+  vddaV: number;
+  faultFlags: number;
+  setpointC: number;
+  buckDutyPct: number;
+  powerW: number;
+}
+
+/** Board fault "black box": telemetry sampled every `sampleIntervalMs` (10 → 100 Hz) around a
+ *  fault. `samples[triggerIndex]` is the fault sample; sample i sits at
+ *  `(i - triggerIndex) * sampleIntervalMs / 1000` seconds relative to the fault instant.
+ *  Mirrors the backend BoardFaultSnapshotDto (`faultCode` is the firmware u16 code, a number). */
+export interface FaultSnapshotDto {
+  sampleIntervalMs: number;
+  triggerIndex: number;
+  faultCode: number;
+  samples: FaultSnapshotSampleDto[];
+}
+
+/** GET /api/errors/{id}. Mirrors the backend ErrorDetailDto. `snapshot` is the presentational
+ *  fixed-width trace (always sent); `boardSnapshot` is the raw board black box, present only when
+ *  the board offered one and the download succeeded (omitted/null otherwise). */
+export interface ErrorDetailDto extends ErrorSummaryRow {
+  programId?: string | null;
+  ovenTemp: number;
+  pcbTemp: number;
+  startAt: string;
+  endAt: string;
+  inputVoltage: number;
+  outputVoltage: number;
+  snapshot: FailureSnapshotDto;
+  events: ExecLogEventDto[];
+  boardSnapshot?: FaultSnapshotDto | null;
+}
+
 export interface SystemLogRow {
   at: string;
   level: SystemLogLevelWire;
@@ -762,7 +818,7 @@ export const api = {
   executions: (q: ExecutionReportQuery) => request<PagedResult<ExecutionSummaryRow>>(`/api/executions${qs(q)}`),
   execution: (id: string) => request<ExecutionDetailDto>(`/api/executions/${encodeURIComponent(id)}`),
   errors: (q: ErrorReportQuery) => request<PagedResult<ErrorSummaryRow>>(`/api/errors${qs(q)}`),
-  error: (id: string) => request<unknown>(`/api/errors/${encodeURIComponent(id)}`),
+  error: (id: string) => request<ErrorDetailDto>(`/api/errors/${encodeURIComponent(id)}`),
   changes: (q: ChangeReportQuery) => request<PagedResult<ChangeSummaryRow>>(`/api/changes${qs(q)}`),
   change: (id: string) => request<ChangeDetailDto>(`/api/changes/${encodeURIComponent(id)}`),
   systemLog: (q: SystemLogQuery) => request<PagedResult<SystemLogRow>>(`/api/system-log${qs(q)}`),

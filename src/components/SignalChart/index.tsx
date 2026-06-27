@@ -4,24 +4,48 @@ import { clsx } from "clsx";
 import { useEffect, useRef, useState } from "react";
 
 export type ChartSignal = { name: string; unit: string; color: string; values: number[] };
+/** A labelled vertical reference line at a fixed time (e.g. t = 0, the fault instant). */
+export type ChartMarker = { t: number; label?: string; color?: string };
 
 const PAD = { top: 12, right: 14, bottom: 26, left: 14 };
 const GRID = [0, 0.25, 0.5, 0.75, 1];
 const TOOLTIP_W = 212;
+const MARKER_COLOR = "#f87171"; // fault red (matches the run/Relatórios fault marker)
 
 /**
  * Interactive multi-signal line chart over a time axis. Each signal carries its own unit
  * (°C, A, V, rpm) and is normalized to its own min/max — the chart shows the *shape* of every
- * signal, not a shared scale. The x position of sample `k` is `times[k] / xMaxSec`, so a live
- * trace grows left-to-right on a fixed axis (pass `xMaxSec` = full duration).
+ * signal, not a shared scale. The x position of sample `k` maps `times[k]` across the
+ * [`xMinSec`, `xMaxSec`] domain (`xMinSec` defaults to 0, so a live trace grows left-to-right on
+ * a fixed axis; pass a negative `xMinSec` for a fault-relative axis, e.g. −1 s … +2 s).
+ *
+ * `markers` draws labelled vertical reference lines at fixed times (e.g. t = 0, the fault
+ * instant in the black box). `timePrecision` is the decimals shown on the axis ends and the
+ * hover tooltip (0 = whole seconds, the default; 2 for the millisecond-scale black box).
  *
  * Interactive: the legend toggles series on/off; hovering/dragging shows a crosshair + tooltip
  * reading every visible signal at the nearest sample (pointer events → mouse and touch).
  *
- * Backs the Relatórios fault snapshot (SnapshotChart). The live execution (INICIAR) view uses
- * the separate MultiAxisChart (real left/right axes + synced crosshair), not this component.
+ * Backs the Relatórios fault snapshots (SnapshotChart, FaultSnapshotChart). The live execution
+ * (INICIAR) view uses the separate MultiAxisChart (real left/right axes + synced crosshair).
  */
-export function SignalChart({ signals, times, xMaxSec, className }: { signals: ChartSignal[]; times: number[]; xMaxSec: number; className?: string }) {
+export function SignalChart({
+  signals,
+  times,
+  xMaxSec,
+  xMinSec = 0,
+  markers,
+  timePrecision = 0,
+  className,
+}: {
+  signals: ChartSignal[];
+  times: number[];
+  xMaxSec: number;
+  xMinSec?: number;
+  markers?: ChartMarker[];
+  timePrecision?: number;
+  className?: string;
+}) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
@@ -42,8 +66,10 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
   const ready = w > 0 && h > 0 && n > 0;
   const plotW = w - PAD.left - PAD.right;
   const plotH = h - PAD.top - PAD.bottom;
-  const span = xMaxSec > 0 ? xMaxSec : 1;
-  const sx = (k: number) => PAD.left + (Math.min(1, Math.max(0, (times[k] ?? 0) / span)) * plotW);
+  const span = xMaxSec - xMinSec > 0 ? xMaxSec - xMinSec : 1;
+  const fmtT = (t: number) => t.toFixed(timePrecision);
+  const sxT = (t: number) => PAD.left + Math.min(1, Math.max(0, (t - xMinSec) / span)) * plotW;
+  const sx = (k: number) => sxT(times[k] ?? 0);
 
   const toggle = (name: string) =>
     setHidden((prev) => {
@@ -68,7 +94,7 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
   const updateHover = (clientX: number) => {
     const rect = chartRef.current?.getBoundingClientRect();
     if (!rect || n === 0 || plotW <= 0) return;
-    const targetT = Math.min(1, Math.max(0, (clientX - rect.left - PAD.left) / plotW)) * span;
+    const targetT = xMinSec + Math.min(1, Math.max(0, (clientX - rect.left - PAD.left) / plotW)) * span;
     let best = 0;
     let bestD = Infinity;
     for (let k = 0; k < n; k++) {
@@ -81,7 +107,7 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
     setHover(best);
   };
 
-  const hoverTime = hover != null ? Math.round(times[hover] ?? 0) : 0;
+  const hoverTime = hover != null ? fmtT(times[hover] ?? 0) : "0";
   const tooltipLeft = hover != null ? Math.min(Math.max(sx(hover) + 12, 4), Math.max(4, w - TOOLTIP_W - 4)) : 0;
 
   return (
@@ -101,10 +127,10 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
             ))}
 
             <text x={PAD.left} y={h - 8} textAnchor='start' className='fill-(--fg) text-sm opacity-60'>
-              0s
+              {fmtT(xMinSec)}s
             </text>
             <text x={w - PAD.right} y={h - 8} textAnchor='end' className='fill-(--fg) text-sm opacity-60'>
-              {Math.round(xMaxSec)}s
+              {fmtT(xMaxSec)}s
             </text>
 
             {hover != null && (
@@ -114,6 +140,28 @@ export function SignalChart({ signals, times, xMaxSec, className }: { signals: C
             {scaled.map(({ signal, d }) => (
               <path key={signal.name} d={d} fill='none' stroke={signal.color} strokeWidth={2} strokeLinejoin='round' strokeLinecap='round' />
             ))}
+
+            {/* Fixed reference markers (e.g. t = 0, the fault instant) — drawn over the data */}
+            {markers?.map((m, i) => {
+              const mx = sxT(m.t);
+              const color = m.color ?? MARKER_COLOR;
+              return (
+                <g key={`marker-${i}`}>
+                  <line x1={mx} y1={PAD.top} x2={mx} y2={PAD.top + plotH} stroke={color} strokeWidth={1.5} strokeDasharray='5 3' />
+                  {m.label && (
+                    <text
+                      x={mx}
+                      y={PAD.top + 11}
+                      textAnchor='middle'
+                      className='text-sm font-semibold'
+                      style={{ fill: color, paintOrder: "stroke", stroke: "var(--card-bg)", strokeWidth: 3 }}
+                    >
+                      {m.label}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
 
             {hover != null &&
               scaled.map(({ signal, sy }) => (

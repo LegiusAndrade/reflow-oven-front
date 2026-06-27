@@ -146,6 +146,43 @@ export type FailureSnapshot = {
   series: SnapshotSeries[];
 };
 
+/** One decoded sample of the board fault-snapshot buffer (GET_FAULT_SNAPSHOT) in engineering
+ *  units (°C / V / A / RPM / % / W). Mirrors the backend BoardFaultSampleDto; `faultFlags` is a
+ *  discrete bitfield (not plotted). */
+export type FaultSnapshotSample = {
+  ovenTempC: number;
+  boardTempC: number;
+  vbusV: number;
+  vregV: number;
+  pdV: number;
+  currentA: number;
+  fanIntakeRpm: number;
+  fanExhaustRpm: number;
+  fanBoardRpm: number;
+  dutyIntakePct: number;
+  dutyExhaustPct: number;
+  dutyBoardPct: number;
+  mcuTempC: number;
+  vddaV: number;
+  faultFlags: number;
+  setpointC: number;
+  buckDutyPct: number;
+  powerW: number;
+};
+
+/** Board fault "black box": a burst of high-resolution telemetry the board captured around the
+ *  instant a fault latched. `samples[triggerIndex]` is the fault sample (t = 0); sample i sits at
+ *  `(i - triggerIndex) * sampleIntervalMs / 1000` seconds relative to it. */
+export type FaultSnapshot = {
+  /** Spacing between samples, ms (10 → 100 Hz). */
+  sampleIntervalMs: number;
+  /** Index of the sample captured at the fault instant (t = 0 on the chart). */
+  triggerIndex: number;
+  /** Firmware fault code (u16) the board latched. */
+  faultCode: number;
+  samples: FaultSnapshotSample[];
+};
+
 /** A fault/alert from the power board shown in the Relatórios → Erros tab (list + detail). */
 export type ErrorLogEntry = {
   id: string;
@@ -168,7 +205,11 @@ export type ErrorLogEntry = {
   inputVoltage: number;
   outputVoltage: number;
   events: LogEvent[];
+  /** Presentational fixed-width fault trace (the "Snapshot da Falha" chart). Always present. */
   snapshot: FailureSnapshot;
+  /** Raw board "black box" around the failure instant — present only when the board captured one
+   *  (the "Caixa-preta" section in the detail is shown only then). */
+  boardSnapshot?: FaultSnapshot;
 };
 
 /** The fault types the power board can raise (severity + code + message). Shared by the Erros
