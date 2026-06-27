@@ -4,9 +4,10 @@ import type { Program } from "@/lib/programs";
 /**
  * A program in the Initial-screen gallery: name, profile preview, usage info and a start
  * action. Fills its grid cell (height comes from the gallery), so the chart shrinks/grows
- * with the cell instead of forcing a scrollbar. `onStart` opens the execution view.
+ * with the cell instead of forcing a scrollbar. `onStart` opens the execution view; `disabled`
+ * blocks starting a run while the board has a latched fault (the fault banner explains why).
  */
-export function ProgramCard({ program, onStart }: { program: Program; onStart?: () => void }) {
+export function ProgramCard({ program, onStart, disabled }: { program: Program; onStart?: () => void; disabled?: boolean }) {
   return (
     <article className='card flex h-full min-h-0 flex-col gap-3 rounded-xl p-4'>
       <h3 className='truncate text-lg font-semibold'>{program.name}</h3>
@@ -18,7 +19,13 @@ export function ProgramCard({ program, onStart }: { program: Program; onStart?: 
 
       <p className='text-right text-sm opacity-80'>{`Execuções: ${program.runCount} | Último uso: ${program.lastUsed}`}</p>
 
-      <button type='button' onClick={onStart} className='btn-action cursor-pointer px-4 py-3.5 text-base font-semibold'>
+      <button
+        type='button'
+        onClick={onStart}
+        disabled={disabled}
+        title={disabled ? "Reconheça a falha da placa antes de iniciar" : undefined}
+        className='btn-action cursor-pointer px-4 py-3.5 text-base font-semibold disabled:cursor-not-allowed'
+      >
         INICIAR
       </button>
     </article>

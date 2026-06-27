@@ -6,6 +6,8 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { ProgramCard } from "@/components/ProgramCard";
 import { RunModal } from "@/components/RunModal";
 import { useProgramPage } from "@/hooks/useProgramPage";
+import { useStore } from "@/hooks/useStore";
+import { faultStore } from "@/lib/faults";
 import { PROGRAM_PAGE_SIZE_MAX } from "@/lib/limits";
 import { loadPrograms } from "@/lib/programStore";
 import type { Program } from "@/lib/programs";
@@ -28,6 +30,9 @@ export function ProgramGallery() {
   const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
   const [page, setPage] = useState(0);
   const [runProgram, setRunProgram] = useState<Program | null>(null);
+  // A latched board fault blocks starting any run (the fault banner explains/clears it). Fed by the
+  // same 1 Hz diagnostics tick AppShell already subscribes to — no extra connection here.
+  const faulted = useStore(faultStore) != null;
 
   useEffect(() => {
     const el = ref.current;
@@ -68,7 +73,7 @@ export function ProgramGallery() {
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: "1fr", gap: `${GAP}px` }}
       >
         {items.map((program) => (
-          <ProgramCard key={program.id} program={program} onStart={() => setRunProgram(program)} />
+          <ProgramCard key={program.id} program={program} onStart={() => setRunProgram(program)} disabled={faulted} />
         ))}
       </div>
 

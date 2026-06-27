@@ -12,6 +12,14 @@ import type { RunPhase, RunStatusKind, SensorReadingsDto, TraceSampleDto } from 
 /** A finite number — rejects NaN/Infinity, which a misbehaving board could emit. */
 const finiteNumber = z.number().refine((n) => Number.isFinite(n), { message: "número não-finito" });
 
+/** Latched board fault on the diagnostics tick (drives the fault banner). Strings only — `severity` is
+ *  a pt-BR literal we display verbatim, not pinned to an enum here. */
+const faultSchema = z.object({
+  code: z.string(),
+  severity: z.string(),
+  message: z.string(),
+});
+
 const sensorReadingsSchema = z.object({
   boardTempC: finiteNumber,
   boardFanRpm: finiteNumber,
@@ -19,6 +27,10 @@ const sensorReadingsSchema = z.object({
   ovenFanRpm: finiteNumber,
   voltageV: finiteNumber,
   currentA: finiteNumber,
+  // Optional + nullable on purpose: an older board/backend tick omits the field (→ undefined → "no
+  // fault"), present-but-null means healthy. Kept tolerant so a missing fault never drops an otherwise
+  // valid reading (which would freeze the BottomBar gauges).
+  fault: faultSchema.nullish(),
 }) satisfies z.ZodType<SensorReadingsDto>;
 
 const traceSampleSchema = z.object({

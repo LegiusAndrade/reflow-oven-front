@@ -277,6 +277,15 @@ export interface UserDto {
   canDelete: boolean;
 }
 
+/** A latched board fault carried on the 1 Hz diagnostics tick (null = healthy). `code` is the operator-
+ *  facing fault code (e.g. "E-101"); `severity` is the pt-BR severity literal (e.g. "Crítico"); `message`
+ *  is the pt-BR human-readable reason. Drives the persistent fault banner (see components/FaultBanner). */
+export interface FaultInfo {
+  code: string;
+  severity: string;
+  message: string;
+}
+
 export interface SensorReadingsDto {
   boardTempC: number;
   boardFanRpm: number;
@@ -284,6 +293,9 @@ export interface SensorReadingsDto {
   ovenFanRpm: number;
   voltageV: number;
   currentA: number;
+  // Latched critical fault reported by the board this tick, or null when healthy. Optional so an older
+  // backend tick (field absent) degrades to "no fault" instead of dropping the whole reading.
+  fault?: FaultInfo | null;
 }
 
 export interface TraceSampleDto {
@@ -762,6 +774,10 @@ export const api = {
   diagnosticsOverview: (rank?: number) => request<unknown>(`/api/diagnostics/overview${qs({ rank })}`),
   readings: () => request<SensorReadingsDto>("/api/diagnostics/readings"),
   selfTest: (id: string) => request<unknown>("/api/diagnostics/self-test", { method: "POST", body: { id } }),
+  // Acknowledge (clear) a latched board fault — any signed-in operator may call it. The board releases
+  // on a later 1 Hz tick (fault -> null), which is what actually hides the fault banner; we never hide
+  // it optimistically. Mirrors stopRun/selfTest (POST, no meaningful body).
+  acknowledgeFault: () => request<void>("/api/diagnostics/ack-fault", { method: "POST" }),
   // Omit `port` => ICMP ping; a number 1..65535 => TCP connect test. `undefined` is dropped by JSON.stringify.
   ping: (host: string, port?: number) => request<PingResultDto>("/api/network/ping", { method: "POST", body: { host, port } }),
 

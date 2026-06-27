@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import BottomBar from "@/components/BottomBar";
 import { ChangePasswordModal } from "@/components/ChangePasswordModal";
+import { FaultBanner } from "@/components/FaultBanner";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Sidebar } from "@/components/Sidebar";
 import { Toaster } from "@/components/Toaster";
@@ -181,6 +182,10 @@ export function AppShell({ children }: IAppShellProps) {
         network={{ link: sys.link, connected: sys.connected, signalPercent: sys.signalPercent }}
         user={session}
       />
+
+      {/* Persistent fault banner — self-hides when there's no latched board fault; fed by the 1 Hz
+          diagnostics tick (useLiveReadings → faultStore). Sits below the TopBar, above the content row. */}
+      <FaultBanner />
 
       {/* Content region between the bars. On xl+ the sidebar is docked (always open); below
           xl it bounds the slide-out drawer. */}
