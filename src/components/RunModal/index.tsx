@@ -7,7 +7,7 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { type Axis, MultiAxisChart, type Series } from "@/components/MultiAxisChart";
 import { useStore } from "@/hooks/useStore";
 import { RUN_MEASURED_MAX_POINTS } from "@/lib/limits";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type RunPhase } from "@/lib/api";
 import { refreshNotifications } from "@/lib/notifications";
 import type { Program } from "@/lib/programs";
 import { connectRunTelemetry } from "@/lib/realtime";
@@ -40,6 +40,9 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   const prefs = useStore(preferencesStore);
   const [status, setStatus] = useState<RunStatus>("running");
   const [elapsed, setElapsed] = useState(0);
+  // Authoritative reflow phase streamed by the backend (RunPhaseChanged); null until the first one
+  // arrives, when we fall back to the local phaseAt heuristic.
+  const [backendPhase, setBackendPhase] = useState<RunPhase | null>(null);
   const [samples, setSamples] = useState<Sample[]>(() => [
     { t: 0, alvo: profile[0]?.temp ?? 25, oven: profile[0]?.temp ?? 25, board: 30, current: 0, voltage: 0, ovenFan: 0, boardFan: 0 },
   ]);
@@ -89,6 +92,10 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
               const next = [...arr, sample];
               return next.length > RUN_MEASURED_MAX_POINTS ? next.filter((_, i) => i % 2 === 0 || i === next.length - 1) : next;
             });
+          },
+          onPhase: (p) => {
+            if (terminated.current) return; // ignore a late phase after a terminal state
+            setBackendPhase(p);
           },
           onStatus: (st) => {
             setStatus(st);
@@ -183,7 +190,8 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   }
   const rs = samples[readIdx] ?? samples[samples.length - 1];
   const progress = total ? Math.min(100, (elapsed / total) * 100) : 0;
-  const phase = phaseAt(profile, elapsed);
+  // Prefer the backend's authoritative phase; fall back to the local heuristic until the first arrives.
+  const phase = backendPhase ?? phaseAt(profile, elapsed);
   const meta = STATUS_META[status];
 
   const readings = [

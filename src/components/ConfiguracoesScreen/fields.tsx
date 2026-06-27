@@ -28,9 +28,12 @@ interface INumberFieldProps {
   step?: number;
   unit?: string;
   className?: string;
+  /** Optional field: a cleared input stays empty (emits NaN) instead of snapping to `min`/0, so a
+   *  "no value" state is reachable again. Use where empty is meaningful (e.g. the ping port = ICMP). */
+  allowEmpty?: boolean;
 }
 
-export function NumberField({ label, value, onChange, min, max, step = 1, unit, className }: INumberFieldProps) {
+export function NumberField({ label, value, onChange, min, max, step = 1, unit, className, allowEmpty = false }: INumberFieldProps) {
   const rangeHint = min !== undefined && max !== undefined ? `Mín ${min} · Máx ${max}${unit ? ` ${unit}` : ""}` : undefined;
   return (
     <label className={clsx("flex min-w-[8rem] flex-col gap-1", className)}>
@@ -43,7 +46,7 @@ export function NumberField({ label, value, onChange, min, max, step = 1, unit, 
           min={min}
           max={max}
           step={step}
-          onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          onChange={(e) => onChange(e.target.value === "" ? (allowEmpty ? NaN : 0) : Number(e.target.value))}
           onPaste={(e) => {
             // Clamp on paste so CTRL+V can't drop an out-of-range value into the field.
             const v = parseClampedPaste(e.clipboardData.getData("text"), min ?? -Infinity, max ?? Infinity);
@@ -51,6 +54,12 @@ export function NumberField({ label, value, onChange, min, max, step = 1, unit, 
             if (v !== null) onChange(v);
           }}
           onBlur={(e) => {
+            // An allowEmpty field keeps a cleared input empty (NaN) instead of snapping to min, so an
+            // optional field can be reset to "no value".
+            if (allowEmpty && e.target.value === "") {
+              if (Number.isFinite(value)) onChange(NaN);
+              return;
+            }
             // Snap the typed value into [min, max] when the field loses focus.
             const clamped = clampToRange(e.target.value === "" ? (min ?? 0) : Number(e.target.value), min ?? -Infinity, max ?? Infinity);
             if (clamped !== value) onChange(clamped);

@@ -51,7 +51,8 @@ export function RedeTab() {
 
   // --- Ping ---------------------------------------------------------------------------
   const [pingHost, setPingHost] = useState("");
-  const [pingPort, setPingPort] = useState(0);
+  // NaN = no port (the field is empty) -> ICMP ping; a finite 1..65535 -> TCP connect test.
+  const [pingPort, setPingPort] = useState(NaN);
   const [pinging, setPinging] = useState(false);
   const [pingResult, setPingResult] = useState<{ ok: boolean; lines: string[] } | null>(null);
 
@@ -128,7 +129,8 @@ export function RedeTab() {
   const runPing = async () => {
     if (!isAdmin) return;
     const host = pingHost.trim() || form.gateway || "192.168.0.1";
-    const port = pingPort > 0 ? pingPort : undefined;
+    // Empty/NaN port -> omit it so the backend does an ICMP ping; a finite port -> TCP connect test.
+    const port = Number.isFinite(pingPort) && pingPort > 0 ? pingPort : undefined;
     setPinging(true);
     setPingResult(null);
     try {
@@ -271,6 +273,7 @@ export function RedeTab() {
               onChange={setPingPort}
               min={PING_PORT_MIN}
               max={PING_PORT_MAX}
+              allowEmpty
               className='w-32'
             />
             <button
