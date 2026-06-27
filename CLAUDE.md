@@ -31,11 +31,27 @@ yarn dev        # dev server (Turbopack — default bundler in Next 16)
 yarn build      # production build (Turbopack)
 yarn start      # serve production build
 yarn lint       # ESLint
+yarn test       # Vitest (run once)
+yarn test:watch # Vitest (watch mode)
 ```
 
 This project uses **Yarn** (Classic v1 — `yarn.lock`). Use `yarn` / `yarn add`, not `npm`.
 
-No test runner is configured yet.
+### Testing
+
+**Vitest** covers the pure, **safety/security-critical** logic. Tests are **colocated** next to the code as
+`src/**/*.test.ts` (the only pattern `vitest.config.ts` globs) — currently in `src/lib/` for the Zod
+contract schemas (`apiSchemas`, `realtimeSchemas`), `auth`, `numericInput`, `run`, and `reportsClient`.
+Run a single file with `yarn test src/lib/auth.test.ts`. The default environment is **node**; a test that
+imports browser-coupled modules opts into **jsdom** by putting `// @vitest-environment jsdom` at the top of
+the file. The `@/*` alias works in tests (mirrored in `vitest.config.ts`). There are no component/render or
+E2E tests — only this unit layer.
+
+The many **`shoot*.mjs` / `*.mjs` scripts at the repo root are ad-hoc Playwright screenshot/smoke scripts**,
+**not** part of `yarn test`: each launches headless Chromium at the **1024×600** baseline against a running
+`yarn dev`, captures console/page errors, and writes screenshots to `/tmp`. Run one directly while the dev
+server is up — e.g. `node shootsmoke.mjs` (`playwright` is a devDependency for exactly this). They're
+throwaway verification helpers, not a maintained suite.
 
 ## Conventions
 
