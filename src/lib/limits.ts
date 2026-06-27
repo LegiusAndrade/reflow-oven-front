@@ -11,8 +11,9 @@ export const PROGRAM_NAME_MAX_LENGTH = 40;
 export const PROGRAM_DESCRIPTION_MAX_LENGTH = 120;
 
 /** Temperature profile — maximum number of points (segments). Mirrors the backend
- *  `DomainConstants.ProfileMaxPoints` (100); the backend rejects a save above it. */
-export const PROFILE_MAX_POINTS = 100;
+ *  `DomainConstants.ProfileMaxPoints` (50); on a run the profile is sent to the power board as
+ *  segments over RS422 (which holds at most 50), and the backend rejects a save above it. */
+export const PROFILE_MAX_POINTS = 50;
 
 /** Per-point target temperature (°C). POINT_TEMP_MIN is the minimum a user may enter for a profile
  *  point; the fixed t=0 baseline start (0 °C) is prepended automatically and is exempt from this floor.
