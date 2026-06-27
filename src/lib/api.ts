@@ -5,7 +5,7 @@
  */
 
 import type { ZodType } from "zod";
-import { autotuneHistorySchema, autotuneStatusSchema, pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
+import { autotuneHistorySchema, autotuneStatusSchema, pagedProgramsSchema, runStatusSchema, sessionSchema, settingsSchema } from "./apiSchemas";
 import { API_TIMEOUT_MS } from "./limits";
 import { logger } from "./logger";
 // Type-only import (erased at runtime, so it forms no import cycle): the report row DTOs carry
@@ -805,7 +805,7 @@ export const api = {
   purgeUser: (id: string) => request<void>(`/api/users/${encodeURIComponent(id)}/purge`, { method: "DELETE" }),
 
   // settings
-  getSettings: () => request<unknown>("/api/settings"),
+  getSettings: () => request<unknown>("/api/settings", { schema: settingsSchema }),
   updateSettings: (body: unknown) => request<unknown>("/api/settings", { method: "PUT", body }),
 
   // runs

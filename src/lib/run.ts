@@ -4,9 +4,12 @@
  * and plausible actuator readings so the execution screen can animate. TODO(backend).
  */
 
+import type { RunPhase, RunSignalId } from "./api";
 import type { ProfilePoint } from "./programs";
 
-export type RunPhase = "Aquecimento" | "Patamar" | "Pico" | "Resfriamento";
+// The pt-BR phase/signal wire literals are defined once in api.ts (the wire contract); re-export
+// them here so existing `@/lib/run` consumers keep importing them from this module.
+export type { RunPhase, RunSignalId };
 
 /** Total run length in seconds (the last setpoint's time). */
 export function totalTime(profile: ProfilePoint[]): number {
@@ -49,9 +52,8 @@ export function mmss(sec: number): string {
 
 // --- Live signals plotted on the execution chart ---------------------------------------
 
-/** The signals the execution chart can show (operator picks which in Configurações → Geral). */
-export type RunSignalId = "alvo" | "oven" | "board" | "current" | "voltage" | "ovenFan" | "boardFan";
-
+/** The signals the execution chart can show (operator picks which in Configurações → Geral).
+ *  `RunSignalId` is re-exported above from api.ts (single source of truth). */
 export type RunSignalDef = { id: RunSignalId; name: string; unit: string; color: string };
 
 /** Catalog of the execution signals (colors match the Relatórios snapshot for consistency). */

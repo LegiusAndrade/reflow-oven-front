@@ -105,6 +105,35 @@ export const autotuneStatusSchema = z.object({
   current: autotuneRun.nullish(),
 });
 
+const notificationSetting = z.object({
+  id: z.string(),
+  alert: z.string(),
+  process: z.enum(["Parar Processo", "Continuar Processo"]),
+  buzzer: z.boolean(),
+  sound: z.enum(["Contínuo", "Pulsante"]),
+  kind: z.enum(["Normal", "Atenção", "Crítica", "Grave"]),
+});
+
+/** GET /api/settings — device settings. These are safety-relevant (PID gains, oven max temp/fan,
+ *  voltage window, max extra time), so a drift in the wire shape is worth a warning. The pt-BR
+ *  enum literals (process/sound/kind) are part of the contract — pinned exactly, accents included. */
+export const settingsSchema = z.object({
+  pid: z.object({ p: z.number(), i: z.number(), d: z.number() }),
+  oven: z.object({ maxTemp: z.number(), maxFanRpm: z.number() }),
+  process: z.object({ maxExtraTimeSec: z.number() }),
+  voltage: z.object({ min: z.number(), max: z.number() }),
+  network: z.object({
+    ip: z.string(),
+    mask: z.string(),
+    gateway: z.string(),
+    dnsPrimary: z.string(),
+    dnsSecondary: z.string(),
+    staticIp: z.boolean(),
+  }),
+  notifications: z.array(notificationSetting),
+  run: z.object({ series: z.record(z.string(), z.boolean()) }),
+});
+
 /** GET /api/autotune/history — paginated past tunes ("quantas vezes foi feito" = total). */
 export const autotuneHistorySchema = z.object({
   total: z.number(),

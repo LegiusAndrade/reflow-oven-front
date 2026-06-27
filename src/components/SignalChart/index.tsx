@@ -12,6 +12,15 @@ const GRID = [0, 0.25, 0.5, 0.75, 1];
 const TOOLTIP_W = 212;
 const MARKER_COLOR = "#f87171"; // fault red (matches the run/Relatórios fault marker)
 
+/** "Nice" step (1/2/5 × 10ⁿ) so axis ticks land on round numbers (mirrors MultiAxisChart). */
+function niceStep(range: number, target: number): number {
+  const raw = range / Math.max(target, 1);
+  const mag = 10 ** Math.floor(Math.log10(raw || 1));
+  const norm = raw / mag;
+  const step = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+  return step * mag;
+}
+
 /**
  * Interactive multi-signal line chart over a time axis. Each signal carries its own unit
  * (°C, A, V, rpm) and is normalized to its own min/max — the chart shows the *shape* of every
@@ -71,6 +80,14 @@ export function SignalChart({
   const sxT = (t: number) => PAD.left + Math.min(1, Math.max(0, (t - xMinSec) / span)) * plotW;
   const sx = (k: number) => sxT(times[k] ?? 0);
 
+  // X-axis ticks anchored at 0 — so a fault-relative axis always labels t = 0 (where the "Falha"
+  // marker sits) and shows the negative side; for a 0-based axis it just yields round time ticks.
+  const xStep = niceStep(span, 6);
+  const xTicks: number[] = [];
+  for (let v = Math.ceil(xMinSec / xStep - 1e-9) * xStep; v <= xMaxSec + 1e-9; v += xStep) {
+    xTicks.push(Math.abs(v) < xStep * 1e-6 ? 0 : v);
+  }
+
   const toggle = (name: string) =>
     setHidden((prev) => {
       const next = new Set(prev);
@@ -126,12 +143,19 @@ export function SignalChart({
               <line key={f} x1={PAD.left} y1={PAD.top + plotH * f} x2={w - PAD.right} y2={PAD.top + plotH * f} className='stroke-(--fg) opacity-10' strokeWidth={1} />
             ))}
 
-            <text x={PAD.left} y={h - 8} textAnchor='start' className='fill-(--fg) text-sm opacity-60'>
-              {fmtT(xMinSec)}s
-            </text>
-            <text x={w - PAD.right} y={h - 8} textAnchor='end' className='fill-(--fg) text-sm opacity-60'>
-              {fmtT(xMaxSec)}s
-            </text>
+            {xTicks.map((t, i) => (
+              <g key={`xt-${t}`}>
+                <line x1={sxT(t)} y1={PAD.top} x2={sxT(t)} y2={PAD.top + plotH} className='stroke-(--fg) opacity-[0.07]' strokeWidth={1} />
+                <text
+                  x={sxT(t)}
+                  y={h - 8}
+                  textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
+                  className='fill-(--fg) text-sm opacity-60 tabular-nums'
+                >
+                  {fmtT(t)}s
+                </text>
+              </g>
+            ))}
 
             {hover != null && (
               <line x1={sx(hover)} y1={PAD.top} x2={sx(hover)} y2={PAD.top + plotH} className='stroke-(--fg) opacity-40' strokeWidth={1} strokeDasharray='4 4' />

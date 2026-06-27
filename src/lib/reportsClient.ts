@@ -8,25 +8,16 @@ import {
   type ChangeDiffPointDto,
   type ChangePointValueDto,
   type ChangeReportQuery,
+  type ChangeSummaryRow,
   type ErrorReportQuery,
+  type ErrorSummaryRow,
+  type ExecLogEventDto,
   type ExecutionReportQuery,
-  type FaultSnapshotDto,
+  type ExecutionSummaryRow,
   type ProfilePointDto,
 } from "./api";
 import type { ProfilePoint } from "./programs";
-import type {
-  ChangeAction,
-  ChangeDetail,
-  ChangedPointDiff,
-  ChangeLogEntry,
-  ChangePointRow,
-  ErrorLogEntry,
-  ErrorSeverity,
-  ExecutionReport,
-  ExecutionStatus,
-  LogEvent,
-  LogEventKind,
-} from "./reports";
+import type { ChangeDetail, ChangedPointDiff, ChangeLogEntry, ChangePointRow, ErrorLogEntry, ExecutionReport, LogEvent } from "./reports";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -52,30 +43,20 @@ function fmtDur(sec: number): string {
 
 const signed = (n: number, unit: string) => `${n >= 0 ? "+" : ""}${n}${unit}`;
 
-// --- API DTO shapes (subset we consume) -------------------------------------------------
-interface Paged<T> { items: T[]; total: number }
-interface ExecSummaryDto { id: string; programId?: string | null; programName: string; userName?: string | null; startedAt: string; durationSeconds: number; status: ExecutionStatus; peakTemp: number; peakCurrent: number }
-interface ProfilePtDto { t: number; temp: number; kind: "programmed" | "measured" }
-interface CompRowDto { tempProg: number; tempReal: number; timeProgSeconds: number; timeRealSeconds: number; stageIndex: number }
-interface LogEventDto { at: string; kind: LogEventKind; message: string }
-interface ExecDetailDto extends ExecSummaryDto { faultAtT?: number | null; faultAtTemp?: number | null; points: ProfilePtDto[]; comparison: CompRowDto[]; events: LogEventDto[]; trace: { durationSec: number; series: SnapSeriesDto[] }; failureReason?: string | null; errorCode?: string | null; linkedErrorId?: string | null }
+// The report DTOs are typed by the api client (api.ts), so we consume them directly — no local
+// re-declaration and no casts. The summary/detail rows are the api.ts ExecutionSummaryRow /
+// ExecutionDetailDto / ChangeSummaryRow / ChangeDetailDto / ErrorSummaryRow / ErrorDetailDto.
 
-interface ChangeSummaryDto { id: string; at: string; action: ChangeAction; target: string; userName?: string | null; detailKind: "config" | "program" }
-
-interface ErrSummaryDto { id: string; at: string; faultTypeCode: string; severity: ErrorSeverity; message: string; userName?: string | null; programName?: string | null }
-interface SnapSeriesDto { name: string; unit: string; color: string; values: number[] }
-interface ErrDetailDto extends ErrSummaryDto { programId?: string | null; ovenTemp: number; pcbTemp: number; startAt: string; endAt: string; inputVoltage: number; outputVoltage: number; snapshot: { durationSec: number; series: SnapSeriesDto[] }; boardSnapshot?: FaultSnapshotDto | null; events: LogEventDto[] }
-
-const mapEvent = (e: LogEventDto): LogEvent => ({ at: fmtTime(e.at), kind: e.kind, message: e.message });
+const mapEvent = (e: ExecLogEventDto): LogEvent => ({ at: fmtTime(e.at), kind: e.kind, message: e.message });
 
 // --- Executions -------------------------------------------------------------------------
 export async function fetchExecutions(q: ExecutionReportQuery): Promise<{ items: ExecutionReport[]; total: number }> {
-  const res = (await api.executions(q)) as Paged<ExecSummaryDto>;
+  const res = await api.executions(q);
   return { items: res.items.map((e) => execFromSummary(e)), total: res.total };
 }
 
 /** Map a summary DTO to the display row the Execuções table renders (exported for unit tests). */
-export const execFromSummary = (e: ExecSummaryDto): ExecutionReport => ({
+export const execFromSummary = (e: ExecutionSummaryRow): ExecutionReport => ({
   id: e.id,
   programName: e.programName,
   startedAt: fmtStamp(e.startedAt),
@@ -92,7 +73,7 @@ export const execFromSummary = (e: ExecSummaryDto): ExecutionReport => ({
 });
 
 export async function fetchExecutionDetail(id: string): Promise<ExecutionReport> {
-  const e = (await api.execution(id)) as ExecDetailDto;
+  const e = await api.execution(id);
   return {
     ...execFromSummary(e),
     profile: e.points.filter((p) => p.kind === "programmed").map((p) => ({ t: p.t, temp: p.temp })),
@@ -117,11 +98,11 @@ export async function fetchExecutionDetail(id: string): Promise<ExecutionReport>
 /** Fetch a page of change-log summaries. `q` may carry `before` (an ISO, strictly-earlier cursor)
  *  for the editions-comparison overlay — it is forwarded verbatim to the list call as `?before=`. */
 export async function fetchChanges(q: ChangeReportQuery): Promise<{ items: ChangeLogEntry[]; total: number }> {
-  const res = (await api.changes(q)) as Paged<ChangeSummaryDto>;
+  const res = await api.changes(q);
   return { items: res.items.map(changeFromSummary), total: res.total };
 }
 
-const changeFromSummary = (c: ChangeSummaryDto): ChangeLogEntry => ({
+const changeFromSummary = (c: ChangeSummaryRow): ChangeLogEntry => ({
   id: c.id,
   at: fmtStamp(c.at),
   atIso: c.at,
@@ -218,11 +199,11 @@ export async function fetchChangeDetail(id: string): Promise<ChangeLogEntry> {
 
 // --- Errors -----------------------------------------------------------------------------
 export async function fetchErrors(q: ErrorReportQuery): Promise<{ items: ErrorLogEntry[]; total: number }> {
-  const res = (await api.errors(q)) as Paged<ErrSummaryDto>;
+  const res = await api.errors(q);
   return { items: res.items.map(errorFromSummary), total: res.total };
 }
 
-const errorFromSummary = (e: ErrSummaryDto): ErrorLogEntry => ({
+const errorFromSummary = (e: ErrorSummaryRow): ErrorLogEntry => ({
   id: e.id,
   at: fmtStamp(e.at),
   severity: e.severity,
@@ -244,7 +225,7 @@ const errorFromSummary = (e: ErrSummaryDto): ErrorLogEntry => ({
 });
 
 export async function fetchErrorDetail(id: string): Promise<ErrorLogEntry> {
-  const e = (await api.error(id)) as ErrDetailDto;
+  const e = await api.error(id);
   return {
     ...errorFromSummary(e),
     programId: e.programId ?? "",
