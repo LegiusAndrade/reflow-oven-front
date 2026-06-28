@@ -3,6 +3,21 @@
 Histórico do que **já foi feito** (arquivado do antigo `TODO.md`). O roadmap em aberto vive em `TODO.md`;
 tarefas de backend vão para `../reflow-oven-backend/TODO.md`.
 
+## Sessão 2026-06-27 — Autotune do PID + cap do perfil (50)
+
+- [x] **Tela de Autotune do PID** (`54183a1`) — nova aba **Autotune** em Configurações (sessão técnica /
+  `CalibrationOnly`, ao lado de Calibração): disparar/cancelar (`/api/autotune/start`·`/cancel`), progresso
+  ao vivo (poll ~1 Hz de `/status`: alvo, ciclos, decorrido), **histórico** paginado (`/history`: status,
+  alvo, ciclos, Kp/Ki/Kd, quem disparou, e na falha o motivo + código E-1xx) e **aplicar/descartar** os
+  ganhos sugeridos com confirmação (antes→depois; `/apply`·`/dismiss`). Status no wire: `Executando` /
+  `Concluído` / `Falha` / `Cancelado`. (Spec detalhada mantida no `TODO.md` como referência.)
+- [x] **Perfil: cap 100 → 50 pontos** (`cb2c972`) — `PROFILE_MAX_POINTS` 100 → **50** em `src/lib/limits.ts`
+  (+ comentário), casando com `DomainConstants.ProfileMaxPoints` e a capacidade de segmentos da placa de
+  potência (RS422); o editor de perfil bloqueia acima de 50 pontos.
+- [x] **Log de Operação: filtro de período** (date range) — adicionado o par de **DatePicker** (Data inicial /
+  Data final, no padrão dos Relatórios, `from`/`to` do `ReportQuery`) ao visualizador Master-only já existente
+  (`OperationLog.tsx`, base em `67e3a5e`), além dos chips de categoria.
+
 ## Sessão 2026-06-04 — auditoria, Lixeira, permissões e polish
 
 Verificado ao vivo com os logins reais (Admin `lucas.silva`, Master `dev.pandewilly`). `tsc`/`lint` limpos.
