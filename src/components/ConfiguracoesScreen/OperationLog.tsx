@@ -2,6 +2,7 @@
 
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
+import { DatePicker } from "@/components/DatePicker";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Pagination } from "@/components/Pagination";
 import { TableScrollBox } from "@/components/TableScrollBox";
@@ -55,6 +56,17 @@ const fmtStamp = (iso: string): string => {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(2)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
+/** Today as ISO "yyyy-mm-dd" — caps the date filters at the present (same convention as Relatórios). */
+const TODAY_ISO = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+})();
+
+/** Widen a date-only bound to a raw timestamp so the backend's `>=`/`<=` stays inclusive (a `to` of
+ *  "yyyy-mm-dd" must reach end-of-day). Empty -> undefined. Mirrors the Relatórios date filter. */
+const fromTs = (d: string) => (d ? `${d}T00:00:00` : undefined);
+const toTs = (d: string) => (d ? `${d}T23:59:59.999` : undefined);
+
 /**
  * Diagnóstico → Log: the Master-only audit trail ("Log de Operação"), mirroring the print's
  * DATA · OPERADOR · TIPO · OBJETO · OBJETO ID · DADOS table. Replaces the old system/browser log.
@@ -63,6 +75,8 @@ const fmtStamp = (iso: string): string => {
  */
 export function OperationLog() {
   const [category, setCategory] = useState<OperationCategory | "all">("all");
+  const [startDate, setStartDate] = useState(""); // ISO "yyyy-mm-dd" (or "") — período filter
+  const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(0); // 0-based, for the Pagination component
   const [rows, setRows] = useState<OperationLogEntryDto[]>([]);
   const [total, setTotal] = useState(0);
@@ -77,6 +91,8 @@ export function OperationLog() {
       page: activePage + 1, // backend is 1-based
       pageSize: OPERATION_LOG_PAGE_SIZE,
       category: category === "all" ? undefined : category,
+      from: fromTs(startDate),
+      to: toTs(endDate),
     };
     api
       .operationLog(q)
@@ -94,10 +110,36 @@ export function OperationLog() {
     return () => {
       alive = false;
     };
-  }, [category, activePage]);
+  }, [category, activePage, startDate, endDate]);
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-3'>
+      {/* Período (date range) — same filter pattern as the Relatórios; narrows the whole server-paged
+          set, not just the current page. "Data final" widens to end-of-day so it stays inclusive. */}
+      <div className='flex shrink-0 flex-wrap items-center gap-3'>
+        <DatePicker
+          label='Data inicial'
+          value={startDate}
+          max={TODAY_ISO}
+          onChange={(iso) => {
+            setStartDate(iso);
+            if (iso && endDate && endDate < iso) setEndDate("");
+            setPage(0);
+          }}
+        />
+        <span className='opacity-60'>—</span>
+        <DatePicker
+          label='Data final'
+          value={endDate}
+          min={startDate}
+          max={TODAY_ISO}
+          onChange={(iso) => {
+            setEndDate(iso);
+            setPage(0);
+          }}
+        />
+      </div>
+
       {/* Category chips — "separar por tipos". Single non-wrapping row (scrolls if it overflows) so it
           costs one chrome row, not two, on the 1024×600 device. */}
       <div className='flex shrink-0 gap-1 overflow-x-auto pb-0.5'>
