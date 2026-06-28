@@ -19,7 +19,7 @@ const SIGNALS: { key: keyof FaultSnapshotSample; name: string; unit: string; col
   { key: "powerW", name: "Potência", unit: "W", color: "#fb923c" },
   { key: "buckDutyPct", name: "Duty Buck", unit: "%", color: "#facc15" },
   { key: "vbusV", name: "VBUS", unit: "V", color: "#22d3ee" },
-  { key: "vregV", name: "VREG", unit: "V", color: "#2dd4bf" },
+  { key: "vregV", name: "Saída (VREG)", unit: "V", color: "#2dd4bf" },
   { key: "pdV", name: "PD", unit: "V", color: "#38bdf8" },
   { key: "vddaV", name: "VDDA", unit: "V", color: "#818cf8" },
   { key: "dutyIntakePct", name: "Duty Entrada", unit: "%", color: "#f472b6" },
