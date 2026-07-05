@@ -38,6 +38,7 @@ export function AutotuneTab() {
   const [busy, setBusy] = useState(false);
   const [confirmApply, setConfirmApply] = useState<AutotuneRunDto | null>(null);
   const [history, setHistory] = useState<{ items: AutotuneRunDto[]; total: number } | null>(null);
+  const [historyFailed, setHistoryFailed] = useState(false);
   const [page, setPage] = useState(1);
   const [historyKey, setHistoryKey] = useState(0);
 
@@ -59,13 +60,23 @@ export function AutotuneTab() {
     };
   }, [running]);
 
-  // History page — reloads after an action via historyKey.
+  // History page — reloads after an action via historyKey. A load error becomes an explicit failed
+  // state (toast + distinct message), not an empty "Nenhum auto-tune ainda." that hides the outage.
   useEffect(() => {
     let alive = true;
     api
       .autotuneHistory(page, HISTORY_PAGE_SIZE)
-      .then((h) => alive && setHistory({ items: h.items, total: h.total }))
-      .catch(() => alive && setHistory({ items: [], total: 0 }));
+      .then((h) => {
+        if (!alive) return;
+        setHistory({ items: h.items, total: h.total });
+        setHistoryFailed(false);
+      })
+      .catch((e) => {
+        if (!alive) return;
+        setHistoryFailed(true);
+        setHistory({ items: [], total: 0 });
+        showToast(e instanceof ApiError ? e.message : "Falha ao carregar o histórico de auto-tune", "error");
+      });
     return () => {
       alive = false;
     };
@@ -209,7 +220,7 @@ export function AutotuneTab() {
               </div>
             )}
           </div>
-          <HistoryList items={history?.items ?? null} />
+          <HistoryList items={history?.items ?? null} failed={historyFailed} />
         </section>
       </div>
 
@@ -262,7 +273,7 @@ function PagerButton({ icon, disabled, onClick }: { icon: string; disabled: bool
   );
 }
 
-function HistoryList({ items }: { items: AutotuneRunDto[] | null }) {
+function HistoryList({ items, failed }: { items: AutotuneRunDto[] | null; failed?: boolean }) {
   if (items === null) {
     return (
       <div className='flex min-h-0 flex-1 items-center justify-center gap-2 opacity-60'>
@@ -272,7 +283,11 @@ function HistoryList({ items }: { items: AutotuneRunDto[] | null }) {
     );
   }
   if (items.length === 0) {
-    return <div className='flex min-h-0 flex-1 items-center justify-center text-sm opacity-60'>Nenhum auto-tune ainda.</div>;
+    return (
+      <div className='flex min-h-0 flex-1 items-center justify-center text-sm opacity-60'>
+        {failed ? "Não foi possível carregar o histórico." : "Nenhum auto-tune ainda."}
+      </div>
+    );
   }
   return (
     <TableScrollBox className='min-h-0 flex-1'>

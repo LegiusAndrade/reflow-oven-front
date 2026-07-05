@@ -723,7 +723,8 @@ export interface ErrorDetailDto extends ErrorSummaryRow {
   pcbTemp: number;
   startAt: string;
   endAt: string;
-  inputVoltage: number;
+  /** VAC — nullable on the backend (int?, omitted from the JSON when null = not measured). */
+  inputVoltage?: number | null;
   outputVoltage: number;
   snapshot: FailureSnapshotDto;
   events: ExecLogEventDto[];

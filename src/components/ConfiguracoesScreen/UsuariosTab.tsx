@@ -73,6 +73,8 @@ export function UsuariosTab() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // Distinguish a load error from a genuinely empty list (see the empty-state message + OperationLog:203).
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const el = tableAreaRef.current;
@@ -88,7 +90,13 @@ export function UsuariosTab() {
   // Refetch on mount so the list (and each row's `canDelete` flag) is current — usersStore is a
   // load-once cache that could otherwise keep stale rows (e.g. missing canDelete) from an earlier session.
   useEffect(() => {
-    void reloadUsers().finally(() => setLoaded(true));
+    reloadUsers()
+      .then(() => setFailed(false))
+      .catch((e) => {
+        setFailed(true);
+        showToast(e instanceof ApiError ? e.message : "Falha ao carregar os usuários", "error");
+      })
+      .finally(() => setLoaded(true));
   }, []);
 
   const filtered = useMemo(() => {
@@ -210,7 +218,7 @@ export function UsuariosTab() {
                 (loaded ? (
                   <tr>
                     <td colSpan={6} className='px-4 py-6 text-center opacity-60'>
-                      Nenhum usuário encontrado.
+                      {failed ? "Não foi possível carregar os usuários." : "Nenhum usuário encontrado."}
                     </td>
                   </tr>
                 ) : (

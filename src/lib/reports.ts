@@ -202,7 +202,8 @@ export type ErrorLogEntry = {
   /** "dd/mm/aa - HH:MM:SS" */
   startAt: string;
   endAt: string;
-  inputVoltage: number;
+  /** VAC, or null when the backend has no measurement (nullable on the wire) — rendered as "—". */
+  inputVoltage: number | null;
   outputVoltage: number;
   events: LogEvent[];
   /** Presentational fixed-width fault trace (the "Snapshot da Falha" chart). Always present. */

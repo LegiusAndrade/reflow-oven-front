@@ -55,7 +55,7 @@ export function ErrorDetail({ err, onClose }: { err: ErrorLogEntry; onClose: () 
             <Field label='Código'>{err.code}</Field>
             <Field label='Início da Falha'>{err.startAt}</Field>
             <Field label='Fim da Falha'>{err.endAt}</Field>
-            <Field label='Tensão Entrada'>{err.inputVoltage} VAC</Field>
+            <Field label='Tensão Entrada'>{err.inputVoltage != null ? `${err.inputVoltage} VAC` : "—"}</Field>
             <Field label='Tensão Saída'>{err.outputVoltage} VDC</Field>
             <Field label='Temp. Forno'>{err.ovenTemp} °C</Field>
             <Field label='Temp. PCB'>{err.pcbTemp} °C</Field>

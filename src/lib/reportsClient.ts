@@ -216,7 +216,8 @@ const errorFromSummary = (e: ErrorSummaryRow): ErrorLogEntry => ({
   pcbTemp: 0,
   startAt: "",
   endAt: "",
-  inputVoltage: 0,
+  // A summary row has no voltage measurement — null renders as "—" (never a fake 0 VAC).
+  inputVoltage: null,
   outputVoltage: 0,
   events: [],
   snapshot: { durationSec: 0, series: [] },
@@ -233,7 +234,8 @@ export async function fetchErrorDetail(id: string): Promise<ErrorLogEntry> {
     pcbTemp: e.pcbTemp,
     startAt: fmtStamp(e.startAt),
     endAt: fmtStamp(e.endAt),
-    inputVoltage: e.inputVoltage,
+    // Nullable on the wire (int?, omitted when null) — normalize undefined to null for the UI.
+    inputVoltage: e.inputVoltage ?? null,
     outputVoltage: e.outputVoltage,
     snapshot: e.snapshot,
     // Wire shape mirrors the frontend FaultSnapshot 1:1 (engineering units); null → omit.

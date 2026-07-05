@@ -1,13 +1,13 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useSession } from "@/hooks/useSession";
 import { useStore } from "@/hooks/useStore";
 import { api } from "@/lib/api";
 import { isMaster } from "@/lib/auth";
-import { topUsersByLogins, userStats } from "@/lib/diagnostics";
+import { userStats } from "@/lib/diagnostics";
 import { DIAG_RANK_DEFAULT, DIAG_RANK_MAX, DIAG_RANK_MIN } from "@/lib/limits";
 import type { ErrorSeverity } from "@/lib/reports";
 import { usersStore } from "@/lib/users";
@@ -55,8 +55,10 @@ function Stepper({ value, onChange }: { value: number; onChange: (_v: number) =>
 }
 
 type RankRow = { id: string; name: string; value: number; tag?: string };
+type RankStatus = "loading" | "failed" | "ready";
 
-/** A ranking block: title + Top-N stepper + a list of bars proportional to the leader. */
+/** A ranking block: title + Top-N stepper + a list of bars proportional to the leader. While the API
+ *  overview loads it shows skeleton bars; on failure a message + retry — never a fabricated ranking. */
 function RankCard({
   icon,
   title,
@@ -64,6 +66,8 @@ function RankCard({
   rows,
   count,
   onCount,
+  status,
+  onRetry,
 }: {
   icon: string;
   title: string;
@@ -71,6 +75,8 @@ function RankCard({
   rows: RankRow[];
   count: number;
   onCount: (_v: number) => void;
+  status: RankStatus;
+  onRetry: () => void;
 }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
@@ -80,27 +86,52 @@ function RankCard({
         <h4 className='flex-1 font-semibold'>{title}</h4>
         <Stepper value={count} onChange={onCount} />
       </header>
-      <ol className='flex flex-col gap-2.5'>
-        {rows.map((r, i) => (
-          <li key={r.id} className='flex items-center gap-3'>
-            <span className='w-4 shrink-0 text-right text-sm font-semibold opacity-50 tabular-nums'>{i + 1}</span>
-            <div className='min-w-0 flex-1'>
-              <div className='flex items-baseline justify-between gap-2'>
-                <span className='truncate'>
-                  {r.name}
-                  {r.tag && <span className='ml-2 text-xs opacity-50'>{r.tag}</span>}
-                </span>
-                <span className='shrink-0 text-sm font-semibold tabular-nums'>
-                  {r.value} <span className='font-normal opacity-50'>{unit}</span>
-                </span>
-              </div>
-              <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-(--surface-2)'>
-                <div className='h-full rounded-full bg-(--brand)' style={{ width: `${(r.value / max) * 100}%` }} />
-              </div>
+      {status === "loading" ? (
+        <div className='flex flex-col gap-2.5'>
+          {Array.from({ length: count }).map((_, i) => (
+            <div key={i} className='flex items-center gap-3'>
+              <span className='w-4 shrink-0 text-right text-sm opacity-30 tabular-nums'>{i + 1}</span>
+              <div className='h-4 flex-1 animate-pulse rounded bg-(--surface-2)' />
             </div>
-          </li>
-        ))}
-      </ol>
+          ))}
+        </div>
+      ) : status === "failed" ? (
+        <div className='flex flex-col items-start gap-2 py-2 text-sm opacity-70'>
+          <span>Não foi possível carregar.</span>
+          <button
+            type='button'
+            onClick={onRetry}
+            className='btn-press flex cursor-pointer items-center gap-1.5 rounded-lg border border-(--border) px-3 py-1.5 font-medium'
+          >
+            <IconGeneral icon='refresh' fill={0} className='[--icon-size:1.125rem]' />
+            Tentar novamente
+          </button>
+        </div>
+      ) : rows.length === 0 ? (
+        <p className='py-2 text-sm opacity-60'>Sem dados.</p>
+      ) : (
+        <ol className='flex flex-col gap-2.5'>
+          {rows.map((r, i) => (
+            <li key={r.id} className='flex items-center gap-3'>
+              <span className='w-4 shrink-0 text-right text-sm font-semibold opacity-50 tabular-nums'>{i + 1}</span>
+              <div className='min-w-0 flex-1'>
+                <div className='flex items-baseline justify-between gap-2'>
+                  <span className='truncate'>
+                    {r.name}
+                    {r.tag && <span className='ml-2 text-xs opacity-50'>{r.tag}</span>}
+                  </span>
+                  <span className='shrink-0 text-sm font-semibold tabular-nums'>
+                    {r.value} <span className='font-normal opacity-50'>{unit}</span>
+                  </span>
+                </div>
+                <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-(--surface-2)'>
+                  <div className='h-full rounded-full bg-(--brand)' style={{ width: `${(r.value / max) * 100}%` }} />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
@@ -114,14 +145,21 @@ export function DiagnosticoStats() {
   const [userN, setUserN] = useState(DIAG_RANK_DEFAULT);
   const [progN, setProgN] = useState(DIAG_RANK_DEFAULT);
   const [ov, setOv] = useState<Overview | null>(null);
+  const [ovFailed, setOvFailed] = useState(false);
 
-  // Authoritative counts/rankings/faults from the API; fall back to store-derived values while loading.
-  useEffect(() => {
+  // Authoritative counts/rankings/faults from the API. On failure we show an explicit failed state
+  // with retry — never a fabricated ranking synthesized from a hash (the old silent fallback). State is
+  // only set in the async then/catch (not synchronously) so the effect stays off the cascading-render path.
+  const loadOverview = useCallback(() => {
     api
       .diagnosticsOverview(DIAG_RANK_MAX)
-      .then((d) => setOv(d as Overview))
-      .catch(() => {});
+      .then((d) => {
+        setOv(d as Overview);
+        setOvFailed(false);
+      })
+      .catch(() => setOvFailed(true));
   }, []);
+  useEffect(() => loadOverview(), [loadOverview]);
 
   // Deleted-users count for the Master's extra card (MasterOnly endpoint — only fetched as the Master).
   useEffect(() => {
@@ -147,8 +185,10 @@ export function DiagnosticoStats() {
   const faults = ov?.faultsByType ?? [];
   const totalFaults = ov?.stats.failures ?? faults.reduce((sum, f) => sum + f.count, 0);
   const maxFault = Math.max(1, ...faults.map((f) => f.count));
-  const topUsers = (ov?.topUsers ?? topUsersByLogins(users, DIAG_RANK_MAX)).slice(0, userN);
+  // No synthesized fallback: empty until the API answers. The RankCards show loading/failed states.
+  const topUsers = (ov?.topUsers ?? []).slice(0, userN);
   const topProgs = (ov?.topPrograms ?? []).slice(0, progN);
+  const rankStatus: RankStatus = ovFailed ? "failed" : ov === null ? "loading" : "ready";
 
   return (
     <section className='flex flex-col gap-4'>
@@ -202,6 +242,8 @@ export function DiagnosticoStats() {
           unit='logins'
           count={userN}
           onCount={setUserN}
+          status={rankStatus}
+          onRetry={loadOverview}
           rows={topUsers.map((u) => ({ id: u.id, name: u.name, value: u.logins }))}
         />
         <RankCard
@@ -210,6 +252,8 @@ export function DiagnosticoStats() {
           unit='exec.'
           count={progN}
           onCount={setProgN}
+          status={rankStatus}
+          onRetry={loadOverview}
           rows={topProgs.map((p) => ({ id: p.id, name: p.name, value: p.runCount }))}
         />
       </div>

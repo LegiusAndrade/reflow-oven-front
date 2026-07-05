@@ -4,7 +4,7 @@ import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useStore } from "@/hooks/useStore";
 import { api, ApiError, getToken, type SystemMetricsDto, type UpdateStatusDto } from "@/lib/api";
 import { canAdminister, sessionStore } from "@/lib/auth";
-import { DEVICE_INFO, REPO_URL, type BoardInfo, type DeviceInfo } from "@/lib/deviceInfo";
+import { REPO_URL, type BoardInfo, type DeviceInfo } from "@/lib/deviceInfo";
 import { SYSTEM_METRICS_POLL_MS } from "@/lib/limits";
 import { pollWhileVisible } from "@/lib/polling";
 import { showToast } from "@/lib/toast";
@@ -12,6 +12,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
+
+/** Shown for any field the backend hasn't reported yet — never a fabricated value. */
+const DASH = "—";
 
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
@@ -74,16 +77,16 @@ function BoardCard({
 }: {
   icon: string;
   title: string;
-  board: BoardInfo;
+  board: BoardInfo | null;
   extra?: { icon: string; label: string; value: string };
 }) {
   return (
     <InfoCard icon={icon} title={title}>
       <dl className='flex flex-col gap-3'>
         {extra && <InfoRow icon={extra.icon} label={extra.label} value={extra.value} />}
-        <InfoRow icon='developer_board' label='Versão da Placa' value={board.version} />
-        <InfoRow icon='tag' label='Serial Number' value={board.serial} />
-        <InfoRow icon='av_timer' label='Horímetro' value={`${board.hours} h`} />
+        <InfoRow icon='developer_board' label='Versão da Placa' value={board?.version || DASH} />
+        <InfoRow icon='tag' label='Serial Number' value={board?.serial || DASH} />
+        <InfoRow icon='av_timer' label='Horímetro' value={board ? `${board.hours} h` : DASH} />
       </dl>
     </InfoCard>
   );
@@ -91,7 +94,8 @@ function BoardCard({
 
 /** Informação screen: device versions/serials + Pandewilly logo and a QR code to the repository. */
 export function InformacaoScreen() {
-  const [d, setD] = useState<DeviceInfo>(DEVICE_INFO);
+  // null until the backend answers — every field renders "—" meanwhile (no mock serial/firmware/IP).
+  const [d, setD] = useState<DeviceInfo | null>(null);
   const [update, setUpdate] = useState<UpdateStatusDto | null>(null);
   const [applying, setApplying] = useState(false);
   const session = useStore(sessionStore);
@@ -134,14 +138,14 @@ export function InformacaoScreen() {
           backendVersion: dto.backendVersion,
           boardIp: dto.boardIp,
           os: dto.os,
-          power: power ?? DEVICE_INFO.power,
-          control: control ?? DEVICE_INFO.control,
+          power: power ?? null,
+          control: control ?? null,
         });
       })
       .catch(() => {});
   }, []);
 
-  const freePct = d.storageTotalGB > 0 ? Math.round((d.storageFreeGB / d.storageTotalGB) * 100) : 0;
+  const freePct = d && d.storageTotalGB > 0 ? Math.round((d.storageFreeGB / d.storageTotalGB) * 100) : 0;
 
   return (
     <section className='card flex h-full flex-col gap-5 rounded-xl p-[clamp(1rem,2vw,1.5rem)]'>
@@ -206,10 +210,10 @@ export function InformacaoScreen() {
           )}
           <InfoCard icon='dashboard' title='Sistema'>
             <dl className='grid min-w-0 gap-x-8 gap-y-3 sm:grid-cols-2'>
-              <InfoRow icon='hard_drive' label='Armazenamento disponível' value={`${d.storageFreeGB} GB de ${d.storageTotalGB} GB (${freePct}%)`} />
+              <InfoRow icon='hard_drive' label='Armazenamento disponível' value={d ? `${d.storageFreeGB} GB de ${d.storageTotalGB} GB (${freePct}%)` : DASH} />
               <CpuLoadRow />
-              <InfoRow icon='lan' label='IP da Placa' value={d.boardIp} />
-              <InfoRow icon='code' label='Versão do HTML' value={d.htmlVersion} />
+              <InfoRow icon='lan' label='IP da Placa' value={d?.boardIp || DASH} />
+              <InfoRow icon='code' label='Versão do HTML' value={d?.htmlVersion || DASH} />
             </dl>
           </InfoCard>
 
@@ -218,14 +222,14 @@ export function InformacaoScreen() {
             <BoardCard
               icon='bolt'
               title='Placa de Potência'
-              board={d.power}
-              extra={{ icon: "memory", label: "Versão do Firmware", value: d.firmwareVersion }}
+              board={d?.power ?? null}
+              extra={{ icon: "memory", label: "Versão do Firmware", value: d?.firmwareVersion || DASH }}
             />
             <BoardCard
               icon='developer_board'
               title='Placa de Controle'
-              board={d.control}
-              extra={{ icon: "dns", label: "Versão do Backend", value: d.backendVersion }}
+              board={d?.control ?? null}
+              extra={{ icon: "dns", label: "Versão do Backend", value: d?.backendVersion || DASH }}
             />
           </div>
         </div>
