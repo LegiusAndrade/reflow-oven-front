@@ -226,4 +226,6 @@ export const FAULT_CATALOG: FaultType[] = [
   { severity: "Alerta", code: "E-140", message: "Dissipador acima do limite (NTC)" },
   { severity: "Aviso", code: "E-150", message: "Ventoinha 1 com rotação abaixo do esperado" },
   { severity: "Aviso", code: "E-160", message: "Subtensão na entrada 127 VAC" },
+  { severity: "Crítico", code: "E-170", message: "Sobretemperatura da placa de potência" },
+  { severity: "Crítico", code: "E-180", message: "Falha de pré-carga do barramento DC" },
 ];
