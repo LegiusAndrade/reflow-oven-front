@@ -21,7 +21,7 @@ Leia `reflow-oven-front/CLAUDE.md` (seção "UI & styling") e abra `src/app/glob
 Todo campo/lista editável tem teto explícito em **`src/lib/limits.ts`** — ao desenhar inputs/listas, respeite e exiba esses limites (não desenhe um input/lista "infinito").
 
 ## Verificação visual (faça sempre)
-Depois de mudar UI, **confira no baseline 1024×600**: suba `yarn dev` e rode um script Playwright (`node shoot<algo>.mjs`, viewport 1024×600) para tirar screenshot e pegar erros de console — a skill **`frontend-verify`** tem o passo a passo. Atenção: **scrollbars não renderizam em screenshot headless** (overlay, largura 0); confira a reserva da pista por medição de DOM (`offsetWidth − clientWidth`) ou subindo o Chromium com `--disable-features=OverlayScrollbar`.
+Depois de mudar UI, **confira no baseline 1024×600**: suba `yarn dev` e rode um script Playwright (`node scripts/screenshots/shoot<algo>.mjs`, viewport 1024×600) para tirar screenshot e pegar erros de console — a skill **`frontend-verify`** tem o passo a passo. Atenção: **scrollbars não renderizam em screenshot headless** (overlay, largura 0); confira a reserva da pista por medição de DOM (`offsetWidth − clientWidth`) ou subindo o Chromium com `--disable-features=OverlayScrollbar`.
 
 ## Regras
 Texto da UI em **pt-BR**; identificadores/classes/commits em inglês. Combine com o estilo existente; não reescreva a chrome compartilhada (`AppShell`/TopBar/BottomBar/drawer) sem necessidade. Nunca commite sem o usuário pedir (branch `develop`).

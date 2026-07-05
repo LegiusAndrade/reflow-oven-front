@@ -17,7 +17,7 @@ Leia `reflow-oven-front/CLAUDE.md` (seção Testing) e o `vitest.config.ts`. Olh
 - Não há testes de componente/render nem E2E nessa camada — só unit.
 
 ## Verificação visual (Playwright)
-Os muitos **`*.mjs` na raiz do front são scripts Playwright** ad-hoc (não fazem parte do `yarn test`): cada um sobe Chromium headless na base **1024×600** contra um `yarn dev` rodando, captura erros de console/página e salva screenshots em `/tmp`. Rode um com `node shootsmoke.mjs` (com o dev server no ar). Use-os — ou derive um novo — para conferir uma tela após uma mudança. A skill **`frontend-verify`** tem o passo a passo e um template.
+Os muitos **`*.mjs` em `scripts/screenshots/` são scripts Playwright** ad-hoc (não fazem parte do `yarn test`): cada um sobe Chromium headless na base **1024×600** contra um `yarn dev` rodando, captura erros de console/página e salva screenshots em `/tmp`. Rode um com `node scripts/screenshots/shootsmoke.mjs` (com o dev server no ar). Use-os — ou derive um novo — para conferir uma tela após uma mudança. A skill **`frontend-verify`** tem o passo a passo e um template.
 
 ## Regras
 Código de teste em inglês (identificadores/comentários), como o resto do projeto. Cada teste deve falhar pela razão certa: ao cobrir um bug, escreva primeiro o teste que o reproduz, depois conserte. Não baixe a cobertura afrouxando asserts. Nunca commite sem o usuário pedir (branch `develop`).

@@ -5,7 +5,7 @@ description: Verificação visual/smoke de telas do reflow-oven-front com Playwr
 
 # Verificação visual do reflow-oven-front (Playwright 1024×600)
 
-O front tem dezenas de scripts `*.mjs` na raiz (`shoot*.mjs`) que são verificações Playwright **ad-hoc** — não fazem parte do `yarn test`. Cada um sobe Chromium headless no viewport **1024×600** (a base do touchscreen), navega numa tela contra o dev server, captura erros de console/página e salva screenshot(s) em `/tmp`.
+O front tem dezenas de scripts `*.mjs` em `scripts/screenshots/` (`shoot*.mjs`) que são verificações Playwright **ad-hoc** — não fazem parte do `yarn test`. Cada um sobe Chromium headless no viewport **1024×600** (a base do touchscreen), navega numa tela contra o dev server, captura erros de console/página e salva screenshot(s) em `/tmp`.
 
 ## Pré-requisitos
 1. **Backend no ar** (a UI depende dele): ver `reflow-oven-backend` — PostgreSQL + `dotnet run`, porta `5248`.
@@ -14,12 +14,12 @@ O front tem dezenas de scripts `*.mjs` na raiz (`shoot*.mjs`) que são verifica�
 
 ## Rodar um script existente
 ```bash
-node shootsmoke.mjs        # exemplo de smoke; veja os outros shoot*.mjs como referência de navegação/login
+node scripts/screenshots/shootsmoke.mjs   # exemplo de smoke; veja os outros shoot*.mjs como referência de navegação/login
 ```
 Login do seed do backend: `lucas.silva` / `reflow1234` (ou o técnico `calibracao` / `calibra`).
 
 ## Template para uma nova checagem
-Crie `shoot<algo>.mjs` na raiz do front seguindo o padrão dos existentes:
+Crie `shoot<algo>.mjs` em `scripts/screenshots/` seguindo o padrão dos existentes:
 ```js
 import { chromium } from "playwright";
 

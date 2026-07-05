@@ -41,8 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Playwright visual-verification scratch scripts (local only, not part of the app)
-/shoot*.mjs
-/calscroll.mjs
+/scripts/screenshots/
 
 # Claude Code: ignore local state (settings.local.json), but version shared agents/skills
 .claude/*

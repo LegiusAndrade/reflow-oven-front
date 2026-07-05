@@ -19,7 +19,7 @@ The UI talks to the .NET backend (`../reflow-oven-backend`) — the former `loca
 
 - **`src/lib/api.ts`** — typed REST client. Base URL from `NEXT_PUBLIC_API_URL` (default `http://localhost:5248`); the JWT is held in a client-only **in-memory** var (the server reads the httpOnly cookie instead — see Auth) and concurrent identical GETs are de-duplicated; throws `ApiError` carrying the backend's pt-BR ProblemDetails message. Covers every endpoint.
 - **`src/lib/realtime.ts`** — SignalR clients for `/hubs/telemetry` (live run trace) and `/hubs/diagnostics` (1 Hz sensor readings); the token is sent via `accessTokenFactory` (async, falling back to `ws-token`).
-- **Auth (BFF + httpOnly cookie)** — login/logout/`ws-token` are Next Route Handlers under `app/api/auth/` that set/clear an `httpOnly` `reflow_token` cookie; the backend stays a plain **Bearer** API. `src/middleware.ts` guards routes by the cookie, and the server reads it per-request via `src/lib/serverAuth.ts` (`getServerToken`) — this is what enables SSR. The client keeps the token in memory, hydrated from `ws-token`. `src/lib/auth.ts` keeps `login`/`logout`/`refreshSession` + the role gates (`canAccess`); `AppShell` bootstraps the token (`bootDone`) and validates on load.
+- **Auth (BFF + httpOnly cookie)** — login/logout/`ws-token` are Next Route Handlers under `app/api/auth/` that set/clear an `httpOnly` `reflow_token` cookie; the backend stays a plain **Bearer** API. `src/middleware.ts` guards routes by the cookie, and the server *can* read it per-request via `src/lib/serverAuth.ts` (`getServerToken`). **The app is currently fully client-rendered** — every route ships the same shell + spinner and hydrates on the client (`AppShell`'s boot gate), and no page fetches on the server yet; the BFF/`getServerToken` plumbing needed for SSR is in place but only `ws-token` uses it today (adopting SSR is a deliberate future decision). The client keeps the token in memory, hydrated from `ws-token`. `src/lib/auth.ts` keeps `login`/`logout`/`refreshSession` + the role gates (`canAccess`); `AppShell` bootstraps the token (`bootDone`) and validates on load.
 - **Stores** — `programStore`, `usersStore` and `settingsStore` (via `apiStore.ts`'s `createApiStore`) are API-backed but keep the `useStore`/snapshot surface, so screens are largely unchanged; `reportsClient.ts` feeds the Relatórios tables/overlays. Mutations call the API and surface errors as toasts.
 - **Run** — `RunModal` starts/stops a run via REST and streams its trace over SignalR; `useLiveReadings` feeds the BottomBar from the diagnostics hub.
 - Set `NEXT_PUBLIC_API_URL` in `.env.local` (see `.env.example`). **The backend must be running** (`dotnet run` + PostgreSQL) for the app to work; seeded dev login `lucas.silva` / `reflow1234`.
@@ -47,10 +47,11 @@ imports browser-coupled modules opts into **jsdom** by putting `// @vitest-envir
 the file. The `@/*` alias works in tests (mirrored in `vitest.config.ts`). There are no component/render or
 E2E tests — only this unit layer.
 
-The many **`shoot*.mjs` / `*.mjs` scripts at the repo root are ad-hoc Playwright screenshot/smoke scripts**,
+The many **`shoot*.mjs` / `*.mjs` scripts under `scripts/screenshots/` are ad-hoc Playwright screenshot/smoke scripts**,
 **not** part of `yarn test`: each launches headless Chromium at the **1024×600** baseline against a running
-`yarn dev`, captures console/page errors, and writes screenshots to `/tmp`. Run one directly while the dev
-server is up — e.g. `node shootsmoke.mjs` (`playwright` is a devDependency for exactly this). They're
+`yarn dev`, captures console/page errors, and writes screenshots to `/tmp` (the `shootmanual*.mjs` ones write the
+user-manual images to `docs/manual-img/`). Run one directly while the dev server is up — e.g.
+`node scripts/screenshots/shootsmoke.mjs` (`playwright` is a devDependency for exactly this). They're
 throwaway verification helpers, not a maintained suite.
 
 ## Conventions

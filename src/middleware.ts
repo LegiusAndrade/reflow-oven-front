@@ -5,10 +5,12 @@ import { AUTH_COOKIE } from "@/lib/authCookie";
 const PUBLIC_PATHS = ["/login"];
 
 /**
- * Server-side auth guard: redirect to /login when there's no auth cookie on a protected route (so an
- * authed page never renders — important once those pages fetch on the server), and bounce a signed-in
- * user away from /login. Role-based access stays in AppShell (it can read the decoded session). The
- * matcher below skips API routes, Next internals, fonts and static files.
+ * Edge auth guard: redirect to /login when there's no auth cookie on a protected route, and bounce a
+ * signed-in user away from /login. NOTE the app is currently fully client-rendered — every route ships
+ * the same shell/spinner and hydrates on the client (see AppShell), so no page renders authed data on
+ * the server. This guard therefore governs which URL is reachable, not server-withheld data; it's
+ * ready for SSR if that's ever adopted. Role-based access stays in AppShell (it reads the decoded
+ * session). The matcher below skips API routes, Next internals, fonts and static files.
  */
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
