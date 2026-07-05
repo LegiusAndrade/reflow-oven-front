@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Clock } from "./Clock";
 import { IconGeneral } from "../Icon/IconGeneral";
 import IconNotification, { IIconNotificationProps } from "../Icon/Notification";
 import IconWifi, { IIconWifiProps } from "../Icon/Wifi";
@@ -58,7 +59,7 @@ export default function TopBar({ network, connectedServer, statusNotification, u
           {/* No tema de login (sem usuário) o toggle não faz sentido — só aparece autenticado. */}
           {user && <ThemeToggle />}
         </div>
-        <span className='tabular-nums sm:text-2xl'>{"12:20 09/05/25"}</span>
+        <Clock />
       </div>
     </div>
   );
