@@ -1,7 +1,7 @@
 /**
- * Live readings reported by the STM32 power board over RS422.
- * The serial bridge lives in a separate repo; this UI only consumes the data,
- * so for now we render placeholder values (see {@link MOCK_READINGS}).
+ * Live readings reported by the STM32 power board over RS422 and streamed to the UI over SignalR
+ * (the diagnostics hub). This UI only consumes the data — see `useLiveReadings`, which returns `null`
+ * until the first real tick, so no placeholder/mock value is ever displayed.
  */
 export type SensorReadings = {
   /** Power-board heatsink temperature (NTC), in °C */
@@ -16,16 +16,6 @@ export type SensorReadings = {
   voltageV: number;
   /** Output current via Hall sensor, in A */
   currentA: number;
-};
-
-/** Placeholder readings mirroring the Figma "Initial Page" mockup. */
-export const MOCK_READINGS: SensorReadings = {
-  boardTempC: 80,
-  boardFanRpm: 2000,
-  ovenTempC: 30,
-  ovenFanRpm: 2000,
-  voltageV: 110,
-  currentA: 20,
 };
 
 /** Display a live reading: RPM as a whole number, everything else (°C/V/A) with one decimal. */

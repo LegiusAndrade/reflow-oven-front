@@ -146,6 +146,11 @@ export const DIAG_RANK_MIN = 3;
 export const DIAG_RANK_MAX = 10;
 export const DIAG_RANK_DEFAULT = 5;
 
+/** Janela sem novo tick do hub de diagnóstico (1 Hz) após a qual as leituras ao vivo são consideradas
+ *  "sem sinal" (conexão perdida): a BottomBar/Diagnóstico esmaecem e marcam stale em vez de exibir
+ *  valores congelados como se fossem atuais. ~3 ticks de folga. */
+export const DIAGNOSTICS_STALE_MS = 3000;
+
 // --- Execução (live run) ---------------------------------------------------------------
 
 /** Max samples kept in the live measured trace; it is decimated past this so a long run

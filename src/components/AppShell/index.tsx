@@ -22,7 +22,6 @@ import { logger } from "@/lib/logger";
 import { notificationsStore, refreshNotifications, startNotificationsPolling, unreadCount } from "@/lib/notifications";
 import { preferencesStore } from "@/lib/preferences";
 import { DEFAULT_RUN_SERIES } from "@/lib/run";
-import { MOCK_READINGS } from "@/lib/sensors";
 import { applyTheme } from "@/lib/theme";
 
 export interface IAppShellProps {
@@ -43,7 +42,7 @@ export function AppShell({ children }: IAppShellProps) {
   // (see `blocked`) and the data effects below, so nothing fetches before the in-memory token is
   // hydrated from the cookie (on a hard reload the session loads from cache before the token does).
   const [bootDone, setBootDone] = useState(false);
-  const liveReadings = useLiveReadings(MOCK_READINGS);
+  const live = useLiveReadings();
   const drawerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -230,13 +229,13 @@ export function AppShell({ children }: IAppShellProps) {
         <Toaster />
       </div>
 
-      <BottomBar readings={liveReadings} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} showMenu={Boolean(session)} />
+      <BottomBar readings={live.readings} stale={live.stale} menuOpen={drawerOpen} onMenuClick={() => setDrawerOpen((o) => !o)} showMenu={Boolean(session)} />
 
       <VirtualKeyboard />
 
       {/* Forced change: a user still on the system-issued provisional password must set a new one
-          before doing anything else. Non-dismissable (forced) and cleared once refreshSession()
-          returns a session with mustChangePassword no longer set. */}
+          before doing anything else. Non-dismissable (forced) and cleared once changePassword()
+          (lib/auth) stores the fresh session — minted with mustChangePassword no longer set. */}
       <ChangePasswordModal open={Boolean(session?.mustChangePassword)} onClose={() => {}} forced />
 
       {/* Self-service change-password (triggered from the Sidebar "Trocar senha"). Mounted here at the

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { useLiveReadings } from "@/hooks/useLiveReadings";
 import { api, ApiError } from "@/lib/api";
-import { formatReading, MOCK_READINGS } from "@/lib/sensors";
+import { formatReading } from "@/lib/sensors";
 import { showToast } from "@/lib/toast";
 import { SystemLogModal } from "./SystemLogModal";
 
@@ -22,7 +22,10 @@ const TESTS = [
 
 /** Diagnóstico → Sensores sub-tab: live sensor readings + mock self-tests of the actuators/links. */
 export function DiagnosticoSensores() {
-  const r = useLiveReadings(MOCK_READINGS);
+  const { readings, stale } = useLiveReadings();
+  // "Live" only when a recent tick exists — drives the per-row health chip and the "—" placeholders.
+  const live = readings != null && !stale;
+  const val = (v: number | undefined, unit: string): string => (readings == null ? "—" : formatReading(v as number, unit));
   const [tests, setTests] = useState<Record<string, TestState>>({});
   const [logOpen, setLogOpen] = useState(false);
 
@@ -39,12 +42,12 @@ export function DiagnosticoSensores() {
   const runAll = () => TESTS.forEach((t) => runTest(t.id));
 
   const sensors = [
-    { icon: "thermostat", label: "Temp. Grelha", value: formatReading(r.ovenTempC, "°C"), unit: "°C" },
-    { icon: "device_thermostat", label: "Temp. Dissipador", value: formatReading(r.boardTempC, "°C"), unit: "°C" },
-    { icon: "bolt", label: "Tensão Saída", value: formatReading(r.voltageV, "V"), unit: "V" },
-    { icon: "electric_meter", label: "Corrente Saída", value: formatReading(r.currentA, "A"), unit: "A" },
-    { icon: "mode_fan", label: "RPM Fan Forno", value: formatReading(r.ovenFanRpm, "rpm"), unit: "rpm" },
-    { icon: "mode_fan", label: "RPM Fan Dissipador", value: formatReading(r.boardFanRpm, "rpm"), unit: "rpm" },
+    { icon: "thermostat", label: "Temp. Grelha", value: val(readings?.ovenTempC, "°C"), unit: "°C" },
+    { icon: "device_thermostat", label: "Temp. Dissipador", value: val(readings?.boardTempC, "°C"), unit: "°C" },
+    { icon: "bolt", label: "Tensão Saída", value: val(readings?.voltageV, "V"), unit: "V" },
+    { icon: "electric_meter", label: "Corrente Saída", value: val(readings?.currentA, "A"), unit: "A" },
+    { icon: "mode_fan", label: "RPM Fan Forno", value: val(readings?.ovenFanRpm, "rpm"), unit: "rpm" },
+    { icon: "mode_fan", label: "RPM Fan Dissipador", value: val(readings?.boardFanRpm, "rpm"), unit: "rpm" },
   ];
 
   return (
@@ -71,9 +74,10 @@ export function DiagnosticoSensores() {
                   {s.value} <span className='text-sm font-normal opacity-60'>{s.unit}</span>
                 </p>
               </div>
-              <span className='ml-auto inline-flex shrink-0 items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400'>
-                <span className='size-2 rounded-full bg-emerald-400' aria-hidden='true' />
-                OK
+              {/* Health derived from the tick freshness — not a hardcoded "OK". Stale/absent → "Sem sinal". */}
+              <span className={clsx("ml-auto inline-flex shrink-0 items-center gap-1 text-sm", live ? "text-emerald-700 dark:text-emerald-400" : "opacity-60")}>
+                <span className={clsx("size-2 rounded-full", live ? "bg-emerald-400" : "bg-current opacity-50")} aria-hidden='true' />
+                {live ? "OK" : "Sem sinal"}
               </span>
             </div>
           ))}
