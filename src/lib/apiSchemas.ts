@@ -25,6 +25,16 @@ export const sessionSchema = z.object({
   chartSeries: z.record(z.string(), z.boolean()).optional(),
 });
 
+/** POST /api/auth/change-password — mirror of the backend ChangePasswordResult. Changing your own
+ *  password revokes every token minted under the old one, so the response carries a FRESH token +
+ *  session (same shape as login's): the client swaps its JWT and stays signed in. */
+export const changePasswordResultSchema = z.object({
+  ok: z.boolean(),
+  token: z.string(),
+  expiresAt: z.string(),
+  session: sessionSchema,
+});
+
 const profilePoint = z.object({ t: z.number(), temp: z.number() });
 const profileSegment = z.object({ temp: z.number(), durationSec: z.number(), ramp: rampShape });
 

@@ -69,6 +69,43 @@ export async function logout(): Promise<void> {
   sessionStore.set(null);
 }
 
+/**
+ * Self-service password change via the BFF route. The backend revokes every token minted under the
+ * OLD password and mints a fresh one (ChangePasswordResult); the BFF swaps the httpOnly cookie and
+ * this adopts the new token + session locally, so the operator STAYS signed in. Never call
+ * refreshSession() with the old token after a change — it is revoked and would 401 → forced logout.
+ * Returns `{ ok, error }`; the error is the backend's pt-BR message (shown inline by the modal).
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
+  let res: Response;
+  try {
+    res = await fetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  } catch {
+    return { ok: false, error: "Não foi possível conectar ao servidor. Verifique a rede e se o servidor está ligado." };
+  }
+
+  type BffChangePasswordResponse = { ok?: boolean; error?: string; token?: string; session?: Session };
+  let data: BffChangePasswordResponse;
+  try {
+    data = (await res.json()) as BffChangePasswordResponse;
+  } catch {
+    return { ok: false, error: "Resposta inválida do servidor." };
+  }
+  if (!data.ok || !data.token || !data.session) {
+    return { ok: false, error: data.error ?? "Não foi possível alterar a senha. Tente novamente." };
+  }
+
+  // Adopt the fresh credentials: in-memory token (REST + SignalR accessTokenFactory) and the session
+  // (clears mustChangePassword, so the forced-change modal closes via AppShell's session gate).
+  setToken(data.token);
+  sessionStore.set(data.session);
+  return { ok: true };
+}
+
 /** Re-validate the stored token against the API; clears the session if it is missing/expired.
  *  AppShell reacts to the resulting sessionStore change to apply the per-user theme/prefs. */
 export async function refreshSession(): Promise<void> {

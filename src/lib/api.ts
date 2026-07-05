@@ -5,7 +5,15 @@
  */
 
 import type { ZodType } from "zod";
-import { autotuneHistorySchema, autotuneStatusSchema, pagedProgramsSchema, runStatusSchema, sessionSchema, settingsSchema } from "./apiSchemas";
+import {
+  autotuneHistorySchema,
+  autotuneStatusSchema,
+  changePasswordResultSchema,
+  pagedProgramsSchema,
+  runStatusSchema,
+  sessionSchema,
+  settingsSchema,
+} from "./apiSchemas";
 import { API_TIMEOUT_MS } from "./limits";
 import { logger } from "./logger";
 // Type-only import (erased at runtime, so it forms no import cycle): the report row DTOs carry
@@ -65,6 +73,9 @@ interface RequestOptions {
   signal?: AbortSignal;
   /** Set false to skip the Authorization header (login / forgot-password). */
   auth?: boolean;
+  /** Explicit Bearer token override — for server-side BFF Route Handlers, where the in-memory token
+   *  doesn't exist (getToken() is null on the server) and the JWT comes from the httpOnly cookie. */
+  token?: string;
   /** Optional zod schema to validate the response against — logs a warning on mismatch (see apiSchemas). */
   schema?: ZodType;
 }
@@ -72,7 +83,7 @@ interface RequestOptions {
 async function doRequest<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
   if (opts.body !== undefined) headers["Content-Type"] = "application/json";
-  const token = getToken();
+  const token = opts.token ?? getToken();
   if (token && opts.auth !== false) headers["Authorization"] = `Bearer ${token}`;
 
   // Bound every request: abort if the server doesn't answer in time, and turn a refused/dropped
@@ -206,6 +217,18 @@ export interface LoginResult {
   session?: SessionDto;
   /** Rate-limit lockout: seconds the caller must wait before retrying (the login screen counts it down). */
   retryAfterSeconds?: number;
+}
+
+/** POST /api/auth/change-password — mirrors the backend ChangePasswordResult. Changing your own
+ *  password revokes every token minted under the OLD password, so the response carries a FRESH
+ *  token + session (same shape as login's success fields): the caller must swap its stored JWT for
+ *  `token` — replaying /api/auth/me with the old one would 401 and log the operator out. */
+export interface ChangePasswordResult {
+  ok: boolean;
+  token: string;
+  /** ISO 8601 expiry of the fresh token (drives the auth cookie's max-age, as on login). */
+  expiresAt: string;
+  session: SessionDto;
 }
 
 export interface ProfilePointDto {
@@ -762,9 +785,16 @@ export const api = {
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<SessionDto>("/api/auth/me", { schema: sessionSchema }),
   forgotPassword: (email: string) => request<{ ok: boolean }>("/api/auth/forgot-password", { method: "POST", body: { email }, auth: false }),
-  // Authenticated self-service password change (also used to clear a forced provisional-password change).
-  changePassword: (currentPassword: string, newPassword: string) =>
-    request<{ ok: boolean }>("/api/auth/change-password", { method: "POST", body: { currentPassword, newPassword } }),
+  // Authenticated self-service password change (also used to clear a forced provisional-password
+  // change). Returns a FRESH token + session (the old-password tokens are revoked server-side) — see
+  // ChangePasswordResult. `token` lets the BFF route call it with the cookie JWT (server-side).
+  changePassword: (currentPassword: string, newPassword: string, token?: string) =>
+    request<ChangePasswordResult>("/api/auth/change-password", {
+      method: "POST",
+      body: { currentPassword, newPassword },
+      token,
+      schema: changePasswordResultSchema,
+    }),
 
   // per-user preferences (theme + execution-chart series). PUT is full-replace — always send the
   // complete object. The technician/calibration session returns 403 (preferences in-session only).

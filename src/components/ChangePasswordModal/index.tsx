@@ -4,8 +4,7 @@ import { useState } from "react";
 import { PasswordLine } from "@/components/ConfiguracoesScreen/fields";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { Modal } from "@/components/Modal";
-import { api, ApiError } from "@/lib/api";
-import { refreshSession } from "@/lib/auth";
+import { changePassword } from "@/lib/auth";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/limits";
 import { showToast } from "@/lib/toast";
 
@@ -20,7 +19,8 @@ export interface IChangePasswordModalProps {
 /**
  * Self-service "Trocar senha" dialog available to every role from the sidebar drawer. Collects the
  * current password plus a new password (typed twice), validates locally against the shared
- * PASSWORD_MIN/MAX limits, then calls api.changePassword. Backend errors (e.g. "Senha atual
+ * PASSWORD_MIN/MAX limits, then calls changePassword (lib/auth) — the BFF flow that swaps the revoked
+ * JWT for the freshly minted one, keeping the operator signed in. Backend errors (e.g. "Senha atual
  * incorreta.") are shown inline; success fires a toast and closes. Sized for the 1024×600 touchscreen.
  */
 export function ChangePasswordModal({ open, onClose, forced = false }: IChangePasswordModalProps) {
@@ -67,16 +67,17 @@ export function ChangePasswordModal({ open, onClose, forced = false }: IChangePa
     }
 
     setSubmitting(true);
-    try {
-      await api.changePassword(current, next);
-      // Refresh the session so the forced-change flag (mustChangePassword) clears for the UI.
-      await refreshSession();
-      showToast("Senha alterada com sucesso.", "success");
-      onClose();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Não foi possível alterar a senha. Tente novamente.");
+    // The change revokes every token minted under the old password; changePassword (lib/auth) adopts
+    // the FRESH token + session from the response — cookie, memory and sessionStore — so the operator
+    // stays signed in (and the forced-change flag clears) without replaying /me on the revoked token.
+    const result = await changePassword(current, next);
+    if (!result.ok) {
+      setError(result.error ?? "Não foi possível alterar a senha. Tente novamente.");
       setSubmitting(false);
+      return;
     }
+    showToast("Senha alterada com sucesso.", "success");
+    onClose();
   };
 
   // In forced mode the Modal renders no header/close button and the backdrop is non-dismissable

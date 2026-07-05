@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
+import { changePasswordResultSchema, pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
 
 const session = { id: "u1", name: "lucas.silva", role: "Admin", loginAt: 1_700_000_000_000, theme: "system" };
 const program = { id: "p1", name: "QFN 197", runCount: 3, profile: [{ t: 0, temp: 25 }], favorite: false, canDelete: true };
@@ -24,6 +24,17 @@ describe("sessionSchema", () => {
   it("rejects an unknown role or a missing required field", () => {
     expect(sessionSchema.safeParse({ ...session, role: "Root" }).success).toBe(false);
     expect(sessionSchema.safeParse({ id: session.id, name: session.name, role: session.role, loginAt: session.loginAt }).success).toBe(false);
+  });
+});
+
+describe("changePasswordResultSchema", () => {
+  it("accepts the fresh token + session minted after a self password-change", () => {
+    const result = { ok: true, token: "jwt-novo", expiresAt: "2026-07-03T20:00:00Z", session };
+    expect(changePasswordResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it("rejects the legacy { ok } shape (no fresh token/session)", () => {
+    expect(changePasswordResultSchema.safeParse({ ok: true }).success).toBe(false);
   });
 });
 
