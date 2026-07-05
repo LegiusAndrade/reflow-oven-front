@@ -1,13 +1,18 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export type Series = { name: string; color: string; values: number[]; unit?: string };
 /** One Y axis: a unit label and the series that share its (real-valued) scale. */
 export type Axis = { unit: string; series: Series[] };
 
 const GRID = [0, 0.5, 1];
+
+// Plot insets (px). Kept as module constants so the memoized path builder can reference the two it
+// needs (top/left) as stable values without listing the per-render `pad` object as a dependency.
+const PAD_TOP = 28;
+const PAD_LEFT = 48;
 
 /** "Nice" step (1/2/5 × 10ⁿ) so axis ticks land on round numbers. */
 function niceStep(range: number, target: number): number {
@@ -70,28 +75,49 @@ export function MultiAxisChart({
     return () => ro.disconnect();
   }, []);
 
-  const pad = { top: 28, bottom: 30, left: 48, right: right ? 48 : 16 };
+  const pad = { top: PAD_TOP, bottom: 30, left: PAD_LEFT, right: right ? 48 : 16 };
   const n = times.length;
   const ready = w > 0 && h > 0 && n > 0;
   const plotW = w - pad.left - pad.right;
   const plotH = h - pad.top - pad.bottom;
   const span = xMaxSec > 0 ? xMaxSec : 1;
 
-  const leftVisible = left.series.filter((s) => !hidden.has(s.name));
-  const rightVisible = right?.series.filter((s) => !hidden.has(s.name)) ?? [];
-  const [lLo, lHi] = rangeOf(leftVisible.length ? leftVisible : left.series, background ? background.points.map((p) => p.v) : []);
-  const [rLo, rHi] = rangeOf(rightVisible.length ? rightVisible : (right?.series ?? []));
+  const leftSeries = left.series;
+  const rightSeries = right?.series;
+  const leftVisible = leftSeries.filter((s) => !hidden.has(s.name));
+  const rightVisible = rightSeries?.filter((s) => !hidden.has(s.name)) ?? [];
+  // Y ranges — memoized so a crosshair pointermove (which re-renders on hoverTime) doesn't re-scan
+  // every value via rangeOf's spread. Recompute only when the data/visibility/background change.
+  const [lLo, lHi] = useMemo(() => {
+    const vis = leftSeries.filter((s) => !hidden.has(s.name));
+    return rangeOf(vis.length ? vis : leftSeries, background ? background.points.map((p) => p.v) : []);
+  }, [leftSeries, hidden, background]);
+  const [rLo, rHi] = useMemo(() => {
+    const vis = rightSeries?.filter((s) => !hidden.has(s.name)) ?? [];
+    return rangeOf(vis.length ? vis : (rightSeries ?? []));
+  }, [rightSeries, hidden]);
 
   const sx = (t: number) => pad.left + Math.min(1, Math.max(0, t / span)) * plotW;
   const syL = (v: number) => pad.top + plotH - ((v - lLo) / (lHi - lLo || 1)) * plotH;
   const syR = (v: number) => pad.top + plotH - ((v - rLo) / (rHi - rLo || 1)) * plotH;
 
-  const linePath = (vals: number[], sy: (_v: number) => number) =>
-    vals.map((v, k) => `${k === 0 ? "M" : "L"}${sx(times[k] ?? 0).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
-
-  const bgPath = background?.points.length
-    ? background.points.map((p, k) => `${k === 0 ? "M" : "L"}${sx(p.t).toFixed(1)},${syL(p.v).toFixed(1)}`).join(" ")
-    : null;
+  // The expensive part: up to 600 points × several series × 3 charts. The line/background paths depend
+  // only on the data + size + scale, never on the crosshair — so memoize the `d` strings (keyed on the
+  // stable refs the parent already memoizes) instead of rebuilding them on every pointermove.
+  const paths = useMemo(() => {
+    const psx = (t: number) => PAD_LEFT + Math.min(1, Math.max(0, t / span)) * plotW;
+    const psyL = (v: number) => PAD_TOP + plotH - ((v - lLo) / (lHi - lLo || 1)) * plotH;
+    const psyR = (v: number) => PAD_TOP + plotH - ((v - rLo) / (rHi - rLo || 1)) * plotH;
+    const line = (vals: number[], sy: (_v: number) => number) =>
+      vals.map((v, k) => `${k === 0 ? "M" : "L"}${psx(times[k] ?? 0).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
+    const lv = leftSeries.filter((s) => !hidden.has(s.name));
+    const rv = rightSeries?.filter((s) => !hidden.has(s.name)) ?? [];
+    return {
+      left: lv.map((s) => ({ name: s.name, color: s.color, d: line(s.values, psyL) })),
+      right: rv.map((s) => ({ name: s.name, color: s.color, d: line(s.values, psyR) })),
+      bg: background?.points.length ? background.points.map((p, k) => `${k === 0 ? "M" : "L"}${psx(p.t).toFixed(1)},${psyL(p.v).toFixed(1)}`).join(" ") : null,
+    };
+  }, [leftSeries, rightSeries, hidden, times, background, span, plotW, plotH, lLo, lHi, rLo, rHi]);
 
   // Time gridlines/labels.
   const xStep = niceStep(xMaxSec, 5);
@@ -196,15 +222,15 @@ export function MultiAxisChart({
             )}
 
             {/* Expected (programmed) reference, faded */}
-            {bgPath && <path d={bgPath} fill='none' stroke={background!.color} strokeWidth={1.5} strokeDasharray='5 4' opacity={0.4} strokeLinejoin='round' />}
+            {paths.bg && <path d={paths.bg} fill='none' stroke={background!.color} strokeWidth={1.5} strokeDasharray='5 4' opacity={0.4} strokeLinejoin='round' />}
 
             {hi >= 0 && <line x1={sx(times[hi] ?? 0)} y1={pad.top} x2={sx(times[hi] ?? 0)} y2={pad.top + plotH} className='stroke-(--fg) opacity-40' strokeWidth={1} strokeDasharray='4 4' />}
 
-            {leftVisible.map((s) => (
-              <path key={s.name} d={linePath(s.values, syL)} fill='none' stroke={s.color} strokeWidth={2} strokeLinejoin='round' strokeLinecap='round' />
+            {paths.left.map((p) => (
+              <path key={p.name} d={p.d} fill='none' stroke={p.color} strokeWidth={2} strokeLinejoin='round' strokeLinecap='round' />
             ))}
-            {rightVisible.map((s) => (
-              <path key={s.name} d={linePath(s.values, syR)} fill='none' stroke={s.color} strokeWidth={2} strokeLinejoin='round' strokeLinecap='round' />
+            {paths.right.map((p) => (
+              <path key={p.name} d={p.d} fill='none' stroke={p.color} strokeWidth={2} strokeLinejoin='round' strokeLinecap='round' />
             ))}
 
             {/* Live value labels at the end of each line — value only, in the series colour */}

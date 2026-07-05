@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
 import { type Axis, MultiAxisChart, type Series } from "@/components/MultiAxisChart";
@@ -151,6 +151,52 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [program.id, invalid]);
 
+  const enabled = prefs.chartSeries ?? DEFAULT_RUN_SERIES;
+  // Rebuild the series (and, downstream, the SVG paths) only when the data or the enabled set changes —
+  // NOT on every crosshair pointermove. hoverTime lives above and re-renders the modal on each move; the
+  // times/series here don't depend on it, so memoizing keyed on [samples, enabled, profile] stops the
+  // per-move O(n) rebuild of thousands of points (and gives the chart stable refs to memoize its paths).
+  const { times, tempSeries, tempBg, hasTemp, viLeft, viRight, rpmSeries, anyChart } = useMemo(() => {
+    // Destructure the toggles up front: reading `enabled.current` directly trips the React Compiler's
+    // ref (.current) heuristic and blocks preserving this memoization.
+    const { alvo, oven, board, voltage, current, ovenFan, boardFan } = enabled;
+    const times = samples.map((s) => s.t);
+    const mkSeries = (id: RunSignalId, accessor: (_s: Sample) => number): Series => ({ name: SIG[id].name, color: SIG[id].color, unit: SIG[id].unit, values: samples.map(accessor) });
+
+    // Chart 1 — temperatures (shared °C axis) with the full expected profile faded behind.
+    const tempSeries: Series[] = [];
+    // Alvo (setpoint) as a live line with its value at the tip — drawn first so the measured Grelha
+    // line sits on top of it; the full programmed profile still shows faded behind (tempBg) as context.
+    if (alvo) tempSeries.push(mkSeries("alvo", (s) => Math.round(s.alvo)));
+    if (oven) tempSeries.push(mkSeries("oven", (s) => Math.round(s.oven)));
+    if (board) tempSeries.push(mkSeries("board", (s) => Math.round(s.board)));
+    const tempBg = alvo ? { color: SIG.alvo.color, points: profile.map((p) => ({ t: p.t, v: p.temp })) } : undefined;
+    const hasTemp = tempSeries.length > 0 || Boolean(tempBg);
+
+    // Chart 2 — tensão (eixo esquerdo, V) + corrente (eixo direito, A) no mesmo gráfico.
+    const vSeries = voltage ? mkSeries("voltage", (s) => Math.round(s.voltage)) : null;
+    const iSeries = current ? mkSeries("current", (s) => Number(s.current.toFixed(1))) : null;
+    let viLeft: Axis | null = null;
+    let viRight: Axis | undefined;
+    if (vSeries && iSeries) {
+      viLeft = { unit: "V (V)", series: [vSeries] };
+      viRight = { unit: "I (A)", series: [iSeries] };
+    } else if (vSeries) {
+      viLeft = { unit: "V (V)", series: [vSeries] };
+    } else if (iSeries) {
+      viLeft = { unit: "I (A)", series: [iSeries] };
+    }
+
+    // Chart 3 — fan speeds (shared rpm axis).
+    const rpmSeries: Series[] = [];
+    if (ovenFan) rpmSeries.push(mkSeries("ovenFan", (s) => Math.round(s.ovenFan)));
+    if (boardFan) rpmSeries.push(mkSeries("boardFan", (s) => Math.round(s.boardFan)));
+
+    const anyChart = hasTemp || Boolean(viLeft) || rpmSeries.length > 0;
+    return { times, tempSeries, tempBg, hasTemp, viLeft, viRight, rpmSeries, anyChart };
+  }, [samples, enabled, profile]);
+
+  // Early return kept below all hooks (useMemo above) so the hook order stays stable across renders.
   if (invalid) {
     return (
       <div className='fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-sm'>
@@ -171,41 +217,6 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
       </div>
     );
   }
-
-  const enabled = prefs.chartSeries ?? DEFAULT_RUN_SERIES;
-  const times = samples.map((s) => s.t);
-  const mkSeries = (id: RunSignalId, accessor: (_s: Sample) => number): Series => ({ name: SIG[id].name, color: SIG[id].color, unit: SIG[id].unit, values: samples.map(accessor) });
-
-  // Chart 1 — temperatures (shared °C axis) with the full expected profile faded behind.
-  const tempSeries: Series[] = [];
-  // Alvo (setpoint) as a live line with its value at the tip — drawn first so the measured Grelha
-  // line sits on top of it; the full programmed profile still shows faded behind (tempBg) as context.
-  if (enabled.alvo) tempSeries.push(mkSeries("alvo", (s) => Math.round(s.alvo)));
-  if (enabled.oven) tempSeries.push(mkSeries("oven", (s) => Math.round(s.oven)));
-  if (enabled.board) tempSeries.push(mkSeries("board", (s) => Math.round(s.board)));
-  const tempBg = enabled.alvo ? { color: SIG.alvo.color, points: profile.map((p) => ({ t: p.t, v: p.temp })) } : undefined;
-  const hasTemp = tempSeries.length > 0 || Boolean(tempBg);
-
-  // Chart 2 — tensão (eixo esquerdo, V) + corrente (eixo direito, A) no mesmo gráfico.
-  const vSeries = enabled.voltage ? mkSeries("voltage", (s) => Math.round(s.voltage)) : null;
-  const iSeries = enabled.current ? mkSeries("current", (s) => Number(s.current.toFixed(1))) : null;
-  let viLeft: Axis | null = null;
-  let viRight: Axis | undefined;
-  if (vSeries && iSeries) {
-    viLeft = { unit: "V (V)", series: [vSeries] };
-    viRight = { unit: "I (A)", series: [iSeries] };
-  } else if (vSeries) {
-    viLeft = { unit: "V (V)", series: [vSeries] };
-  } else if (iSeries) {
-    viLeft = { unit: "I (A)", series: [iSeries] };
-  }
-
-  // Chart 3 — fan speeds (shared rpm axis).
-  const rpmSeries: Series[] = [];
-  if (enabled.ovenFan) rpmSeries.push(mkSeries("ovenFan", (s) => Math.round(s.ovenFan)));
-  if (enabled.boardFan) rpmSeries.push(mkSeries("boardFan", (s) => Math.round(s.boardFan)));
-
-  const anyChart = hasTemp || Boolean(viLeft) || rpmSeries.length > 0;
 
   // Readings strip reflects the hovered instant (synced with the crosshair) or the latest sample.
   let readIdx = samples.length - 1;
