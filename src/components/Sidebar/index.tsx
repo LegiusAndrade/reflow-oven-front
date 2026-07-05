@@ -40,16 +40,19 @@ export function Sidebar({ className, onTrocarSenha }: { className?: string; onTr
         <>
           <div className='sidebar-separator h-0.5 rounded-full blur-[2px]' />
 
-          {/* Nav — items stay at the top; the current route is highlighted */}
-          <nav className='flex flex-col gap-3'>
+          {/* Nav — items stay at the top; the current route is highlighted. Scrolls (min-h-0 + flex-1)
+              so on the short 1024×600 drawer the account block below always stays inside the sheet
+              instead of overflowing onto the BottomBar/close button (Admin/Master have more routes). */}
+          <nav className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto'>
             {items.map((item) => (
               <LinkButton key={item.href} label={item.label} icon={item.icon} href={item.href} active={pathname === item.href} />
             ))}
           </nav>
 
           {/* Account self-service (Trocar senha) + Logout pinned to the bottom (user + theme moved
-              to the TopBar to save sidebar space). "Trocar senha" shows for ALL roles — no canAccess gate. */}
-          <div className='mt-auto flex flex-col gap-2'>
+              to the TopBar to save sidebar space). "Trocar senha" shows for ALL roles — no canAccess gate.
+              shrink-0 so it never compresses — only the nav above scrolls. */}
+          <div className='mt-auto flex shrink-0 flex-col gap-2'>
             <div className='sidebar-separator h-0.5 rounded-full blur-[2px]' />
             <button
               type='button'

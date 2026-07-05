@@ -118,6 +118,7 @@ export function VirtualKeyboard() {
   const keyboard = useRef<{ setInput: (_value: string) => void } | null>(null);
   const activeEl = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const pendingSync = useRef<string | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
   const syncBuffer = useCallback((value: string) => {
     if (keyboard.current) keyboard.current.setInput(value);
@@ -171,6 +172,26 @@ export function VirtualKeyboard() {
     };
   }, [openFor, close, open, isDeviceScreen]);
 
+  // Reserve layout space while open: publish the sheet's height as --vk-height on <html>
+  // (consumed as padding-bottom by the AppShell root and the Modal overlay, see globals.css)
+  // so scroll containers shrink instead of being covered, then re-run scrollIntoView after
+  // the reflow so the focused field actually lands above the keyboard. The ResizeObserver
+  // also tracks layer switches (numeric/symbols have fewer rows than the qwerty layers).
+  useEffect(() => {
+    if (!isDeviceScreen || !open) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty("--vk-height", `${sheet.offsetHeight}px`);
+      activeEl.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+    observer.observe(sheet); // fires once on observe, right after the sheet mounts
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--vk-height");
+    };
+  }, [open, isDeviceScreen]);
+
   const handleChange = useCallback((input: string) => {
     const el = activeEl.current;
     if (!el) return;
@@ -209,7 +230,7 @@ export function VirtualKeyboard() {
   if (!isDeviceScreen || !open) return null;
 
   return createPortal(
-    <div className='vk-sheet' role='group' aria-label='Teclado virtual' onMouseDown={(e) => e.preventDefault()}>
+    <div ref={sheetRef} className='vk-sheet' role='group' aria-label='Teclado virtual' onMouseDown={(e) => e.preventDefault()}>
       <Keyboard
         keyboardRef={(r) => {
           keyboard.current = r;

@@ -320,6 +320,19 @@
   background: var(--sidebar-bg);
 }
 
+/* On the short 1024×600 touchscreen the drawer is tight; compact the logo/gaps so an Admin's full
+   nav + account block fit without scrolling (the nav still scrolls if it can't — see Sidebar). */
+@media (max-height: 640px) {
+  .sidebar {
+    gap: 0.375rem;
+    padding: 0.375rem;
+  }
+  .sidebar > img {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
 .sidebar-separator {
   background: var(--sidebar-separator-bg);
   opacity: 0.8;
@@ -452,6 +465,14 @@
    semantic tokens. Selectors are scoped under .vk-sheet so they
    win over the library's .hg-* rules regardless of import order.
    --------------------------------------------------------- */
+
+/* Height of the open keyboard sheet. VirtualKeyboard publishes the measured value on <html>
+   while open (back to 0 when closed); the AppShell root and the Modal overlay reserve it as
+   padding-bottom so fields near the bottom of the screen can scroll above the keyboard. */
+:root {
+  --vk-height: 0px;
+}
+
 .vk-sheet {
   position: fixed;
   inset-inline: 0;

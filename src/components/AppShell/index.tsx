@@ -173,8 +173,11 @@ export function AppShell({ children }: IAppShellProps) {
     );
   }
 
+  // pb reserves the on-screen keyboard's height (--vk-height, set by VirtualKeyboard while
+  // open, 0 otherwise) so the layout — and every scroll container in it — shrinks above the
+  // docked keyboard instead of being covered by it.
   return (
-    <div className='text-fg flex h-screen flex-col overflow-hidden'>
+    <div className='text-fg flex h-screen flex-col overflow-hidden pb-(--vk-height)'>
       <TopBar
         statusNotification={{ amount: unread, status: unread > 0 ? "ACTIVE" : "NONE" }}
         connectedServer={sys.centralOnline}

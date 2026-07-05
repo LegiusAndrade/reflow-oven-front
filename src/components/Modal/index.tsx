@@ -19,6 +19,10 @@ export interface IModalProps {
  * in/out via CSS. While closed it's `inert` + `aria-hidden`, so it can't be focused or
  * clicked. Esc and a backdrop click both close; focus moves in on open and is restored on
  * close. Pass content as `children`; size the panel with `panelClassName`.
+ *
+ * The overlay is `fixed`, so it ignores the AppShell's keyboard inset: it reserves the
+ * on-screen keyboard's height (--vk-height, 0 while closed) itself, shifting the centering
+ * area up and capping the panel so a focused field can scroll above the keyboard.
  */
 export function Modal({ open, title, onClose, children, panelClassName }: IModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -41,7 +45,10 @@ export function Modal({ open, title, onClose, children, panelClassName }: IModal
     <div
       inert={!open}
       aria-hidden={!open}
-      className={clsx("fixed inset-0 z-[100] grid place-items-center p-4 transition-opacity duration-200", open ? "opacity-100" : "pointer-events-none opacity-0")}
+      className={clsx(
+        "fixed inset-0 z-[100] grid place-items-center p-4 pb-[calc(1rem+var(--vk-height))] transition-opacity duration-200",
+        open ? "opacity-100" : "pointer-events-none opacity-0"
+      )}
     >
       {/* Backdrop */}
       <button type='button' aria-label='Fechar' tabIndex={-1} onClick={onClose} className='absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm' />
@@ -53,7 +60,7 @@ export function Modal({ open, title, onClose, children, panelClassName }: IModal
         aria-modal='true'
         aria-label={title}
         className={clsx(
-          "card relative z-10 flex flex-col rounded-2xl border border-(--border) transition-all duration-200",
+          "card relative z-10 flex max-h-[calc(100vh-2rem-var(--vk-height))] flex-col rounded-2xl border border-(--border) transition-all duration-200",
           open ? "scale-100 opacity-100" : "scale-95 opacity-0",
           panelClassName ?? "h-[85vh] w-[min(90vw,80rem)]"
         )}
