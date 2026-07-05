@@ -126,7 +126,9 @@ export const SYSTEM_LOG_POLL_MS = 2000;
  *  de polling acima, então ticks consecutivos nunca disparam o mesmo toast duas vezes. */
 export const TOAST_DEDUPE_MS = 5000;
 
-/** Atrasos (ms) do reconnect automático do SignalR: [0, 0, 2 s, 5 s, 10 s], depois desiste. */
+/** Backoff (ms) dos hubs SignalR, usado tanto pelo auto-reconnect nativo quanto pelo retry do start
+ *  inicial (ver realtime.ts). A última entrada é o teto e **repete indefinidamente** — o kiosk nunca
+ *  desiste de reconectar após uma queda (antes desistia em ~17 s e ficava cego até um reload). */
 export const SIGNALR_RECONNECT_DELAYS_MS = [0, 0, 2000, 5000, 10000];
 
 // --- Logger ---------------------------------------------------------------------------

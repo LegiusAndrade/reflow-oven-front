@@ -48,8 +48,14 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
   ]);
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
+  // Telemetry connection dropped mid-run (SignalR reconnecting) — surfaces "Reconectando…" so the modal
+  // doesn't look alive while frozen. Cleared once re-subscribed.
+  const [connLost, setConnLost] = useState(false);
   const stopTelemetry = useRef<(() => void) | null>(null);
   const terminated = useRef(false);
+  // True between an SignalR drop and the next successful (re)subscribe — gates the GET /api/runs/status
+  // re-sync to real reconnects (not the first connect).
+  const wasReconnecting = useRef(false);
 
   // Start the run on the backend and stream its live trace over SignalR.
   useEffect(() => {
@@ -104,6 +110,31 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
           onCompleted: () => {
             showToast(`Execução de "${program.name}" concluída`);
             finish();
+          },
+          onConnectionChange: (state) => {
+            if (state === "reconnecting") {
+              wasReconnecting.current = true;
+              setConnLost(true);
+              return;
+            }
+            // (Re)connected and re-subscribed to the run group.
+            setConnLost(false);
+            // Only re-sync after an actual drop (not the first connect): messages during the outage
+            // were missed, so pull the authoritative status and reconcile elapsed/phase/terminal state.
+            if (!wasReconnecting.current || terminated.current) return;
+            wasReconnecting.current = false;
+            void api
+              .runStatus()
+              .then((st) => {
+                if (!st || terminated.current) return;
+                setElapsed(st.elapsedSeconds);
+                setBackendPhase(st.phase);
+                if (st.status === "done" || st.status === "aborted") {
+                  setStatus(st.status);
+                  finish();
+                }
+              })
+              .catch(() => {});
           },
         });
       })
@@ -223,6 +254,12 @@ export function RunModal({ program, onClose }: { program: Program; onClose: () =
               <p className={clsx("text-sm font-semibold", meta.cls)}>
                 {meta.label}
                 {status === "running" && <span className='ml-2 opacity-70'>· {phase}</span>}
+                {status === "running" && connLost && (
+                  <span className='ml-2 inline-flex items-center gap-1 align-middle font-medium text-amber-600 dark:text-amber-400'>
+                    <IconGeneral icon='sync_problem' fill={1} className='[--icon-size:1rem]' />
+                    Reconectando…
+                  </span>
+                )}
               </p>
               <h1 className='truncate text-xl font-semibold'>{program.name}</h1>
             </div>
