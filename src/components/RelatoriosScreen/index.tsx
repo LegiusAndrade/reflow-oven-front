@@ -2,6 +2,7 @@
 
 import { clsx } from "clsx";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "@/components/DatePicker";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
@@ -79,7 +80,18 @@ const TODAY_ISO = (() => {
 const fromTs = (d: string) => (d ? `${d}T00:00:00` : undefined);
 const toTs = (d: string) => (d ? `${d}T23:59:59.999` : undefined);
 
+/** Date-only "yyyy-mm-dd" from the deep-link `?until=` param (a full ISO is trimmed to its date
+ *  part); null when absent or malformed, so a bad param can never poison the filter. */
+const normalizeUntilParam = (raw: string | null): string | null => {
+  const d = (raw ?? "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+};
+
 export function RelatoriosScreen() {
+  // Deep link from the retention purge-warning notification: /relatorios?until=yyyy-mm-dd presets
+  // the end-date filter so the operator lands on exactly the records the next sweep will delete.
+  const untilParam = normalizeUntilParam(useSearchParams().get("until"));
+
   const [tab, setTab] = useState<Tab>("execucoes");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -87,6 +99,19 @@ export function RelatoriosScreen() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(0);
+
+  // Adopt the deep-link preset as a render-time adjustment keyed on the param (the codebase pattern,
+  // cf. NotificacoesScreen's entryUnread): it applies on mount AND when a new deep link re-navigates
+  // an already-mounted screen, yet never re-forces the filter once the operator changes it.
+  const [seenUntil, setSeenUntil] = useState<string | null>(null);
+  if (untilParam !== seenUntil) {
+    setSeenUntil(untilParam);
+    if (untilParam) {
+      setStartDate("");
+      setEndDate(untilParam);
+      setPage(0);
+    }
+  }
 
   // Server-side rows + filtered total for the ACTIVE tab only (one tab is fetched at a time).
   const [executions, setExecutions] = useState<ExecutionReport[]>([]);

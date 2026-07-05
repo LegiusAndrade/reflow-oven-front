@@ -1,10 +1,13 @@
 "use client";
 
 import { clsx } from "clsx";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { IconGeneral } from "@/components/Icon/IconGeneral";
+import { useSession } from "@/hooks/useSession";
 import { useStore } from "@/hooks/useStore";
+import { canAccess } from "@/lib/auth";
 import { type AppNotification, clearAll, formatNotificationStamp, markAllRead, notificationsStore, refreshNotifications } from "@/lib/notifications";
 
 const KIND_META: Record<AppNotification["kind"], { icon: string; cls: string }> = {
@@ -19,6 +22,19 @@ const KIND_META: Record<AppNotification["kind"], { icon: string; cls: string }> 
  *  fade to "read" (lighter) on the next one. "Limpar tudo" deletes the whole feed on the backend. */
 export function NotificacoesScreen() {
   const list = useStore(notificationsStore);
+  const router = useRouter();
+  const session = useSession();
+
+  // A deep link is only offered when the operator can actually open its target — a Regular user
+  // can't reach /relatorios (AppShell's guard would bounce them home), so their card stays plain.
+  const canOpenReports = session != null && canAccess(session.role, "/relatorios", session.calibration);
+
+  /** Follow a notification's deep link: land on Relatórios with the end-date filter preset to
+   *  `until`, so the operator sees exactly the records the next retention sweep will delete. */
+  const openDeepLink = (n: AppNotification) => {
+    if (n.deepLink?.tab !== "relatorios") return;
+    router.push(`/relatorios?until=${encodeURIComponent(n.deepLink.until.slice(0, 10))}`);
+  };
 
   // Snapshot which items were unread when the screen opened, so they stay visually "new" for THIS
   // visit even after we mark everything read below. Captured (once) at the first render where the
@@ -63,11 +79,9 @@ export function NotificacoesScreen() {
             const meta = KIND_META[n.kind];
             // "New this visit": unread on entry, or arrived unread while the screen is open.
             const unread = (entryUnread?.has(n.id) ?? false) || !n.read;
-            return (
-              <li
-                key={n.id}
-                className={clsx("card flex items-start gap-3 rounded-xl border border-(--border) p-3 transition-opacity", !unread && "opacity-55")}
-              >
+            const actionable = canOpenReports && n.deepLink?.tab === "relatorios";
+            const content = (
+              <>
                 <IconGeneral icon={meta.icon} fill={1} className={`shrink-0 [--icon-size:1.5rem] ${meta.cls}`} />
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-start justify-between gap-2'>
@@ -75,8 +89,31 @@ export function NotificacoesScreen() {
                     <span className='shrink-0 text-xs opacity-50 tabular-nums'>{formatNotificationStamp(n.at)}</span>
                   </div>
                   <p className='text-sm opacity-70'>{n.message}</p>
+                  {actionable && (
+                    <span className='mt-1 inline-flex items-center gap-1 text-sm font-semibold text-(--brand)'>
+                      Ver em Relatórios
+                      <IconGeneral icon='chevron_right' fill={0} className='[--icon-size:1.125rem]' />
+                    </span>
+                  )}
                 </div>
                 {unread && <span className='mt-1.5 size-2 shrink-0 rounded-full bg-(--brand)' aria-label='Não lida' />}
+              </>
+            );
+            return (
+              <li key={n.id} className={clsx("card rounded-xl border border-(--border) transition-opacity", !unread && "opacity-55")}>
+                {actionable ? (
+                  // Deep-linked card (the purge warning): tapping it opens Relatórios filtered to the
+                  // records the sweep will delete (everything up to `until`).
+                  <button
+                    type='button'
+                    onClick={() => openDeepLink(n)}
+                    className='btn-press flex w-full cursor-pointer items-start gap-3 rounded-xl p-3 text-left hover:bg-(--hover)'
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div className='flex items-start gap-3 p-3'>{content}</div>
+                )}
               </li>
             );
           })}

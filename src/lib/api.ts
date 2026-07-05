@@ -9,6 +9,7 @@ import {
   autotuneHistorySchema,
   autotuneStatusSchema,
   changePasswordResultSchema,
+  notificationsSchema,
   pagedProgramsSchema,
   runStatusSchema,
   sessionSchema,
@@ -351,6 +352,15 @@ export interface UpdateStatusDto {
   updateAvailable: boolean;
 }
 
+/** Deep-link target a notification may carry (the retention purge warning): points at the
+ *  Relatórios screen with the date filter preset to `until`, so the operator lands on exactly the
+ *  records the next daily retention sweep will delete. */
+export interface NotificationDeepLinkDto {
+  tab: "relatorios";
+  /** ISO date — the sweep's cutoff: records up to this date will be deleted. */
+  until: string;
+}
+
 export interface NotificationDto {
   id: string;
   kind: "info" | "error" | "warning" | "update";
@@ -359,6 +369,8 @@ export interface NotificationDto {
   title: string;
   message: string;
   read: boolean;
+  /** Optional deep link (null/omitted on ordinary notifications — only the purge warning sends one). */
+  deepLink?: NotificationDeepLinkDto | null;
 }
 
 export interface UnreadCountDto {
@@ -882,7 +894,7 @@ export const api = {
   device: () => request<DeviceInfoDto>("/api/device"),
 
   // notifications
-  listNotifications: (limit?: number) => request<NotificationDto[]>(`/api/notifications${qs({ limit })}`),
+  listNotifications: (limit?: number) => request<NotificationDto[]>(`/api/notifications${qs({ limit })}`, { schema: notificationsSchema }),
   unreadNotificationCount: () => request<UnreadCountDto>("/api/notifications/unread-count"),
   markNotificationRead: (id: string) => request<void>(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "POST" }),
   markAllNotificationsRead: () => request<void>("/api/notifications/read-all", { method: "POST" }),

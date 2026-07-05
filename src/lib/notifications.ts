@@ -4,7 +4,7 @@
  * App notifications feed. Backs the TopBar bell badge and the Notificações screen. The data
  * comes from the backend over REST and is POLLED (no SignalR) — see {@link startNotificationsPolling}.
  */
-import { api, type NotificationDto } from "./api";
+import { api, type NotificationDeepLinkDto, type NotificationDto } from "./api";
 import { NOTIFICATION_MAX_ITEMS, NOTIFICATION_POLL_MS } from "./limits";
 import type { JsonStore } from "./localStore";
 import { logger } from "./logger";
@@ -21,6 +21,9 @@ export interface AppNotification {
   /** epoch ms */
   at: number;
   read: boolean;
+  /** Deep-link carried by the retention purge warning (null on ordinary notifications) — the
+   *  Notificações screen renders it as a tap target into Relatórios with the date filter preset. */
+  deepLink: NotificationDeepLinkDto | null;
 }
 
 // --- Store ------------------------------------------------------------------------------
@@ -61,6 +64,7 @@ function mapNotification(dto: NotificationDto): AppNotification {
     message: dto.message,
     at: Date.parse(dto.at),
     read: dto.read,
+    deepLink: dto.deepLink ?? null,
   };
 }
 

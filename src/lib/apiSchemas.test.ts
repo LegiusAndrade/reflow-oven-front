@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changePasswordResultSchema, pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
+import { changePasswordResultSchema, notificationsSchema, pagedProgramsSchema, runStatusSchema, sessionSchema } from "./apiSchemas";
 
 const session = { id: "u1", name: "lucas.silva", role: "Admin", loginAt: 1_700_000_000_000, theme: "system" };
 const program = { id: "p1", name: "QFN 197", runCount: 3, profile: [{ t: 0, temp: 25 }], favorite: false, canDelete: true };
@@ -35,6 +35,28 @@ describe("changePasswordResultSchema", () => {
 
   it("rejects the legacy { ok } shape (no fresh token/session)", () => {
     expect(changePasswordResultSchema.safeParse({ ok: true }).success).toBe(false);
+  });
+});
+
+describe("notificationsSchema", () => {
+  const notification = {
+    id: "n1",
+    kind: "warning",
+    at: "2026-07-03T12:00:00Z",
+    title: "Limpeza de retenção",
+    message: "Registros antigos serão removidos na próxima varredura.",
+    read: false,
+  };
+
+  it("accepts items with the deepLink absent, null, or set (the purge warning)", () => {
+    expect(notificationsSchema.safeParse([notification]).success).toBe(true);
+    expect(notificationsSchema.safeParse([{ ...notification, deepLink: null }]).success).toBe(true);
+    expect(notificationsSchema.safeParse([{ ...notification, deepLink: { tab: "relatorios", until: "2026-06-03" } }]).success).toBe(true);
+  });
+
+  it("rejects an unknown deepLink tab or feed kind", () => {
+    expect(notificationsSchema.safeParse([{ ...notification, deepLink: { tab: "programas", until: "2026-06-03" } }]).success).toBe(false);
+    expect(notificationsSchema.safeParse([{ ...notification, kind: "critical" }]).success).toBe(false);
   });
 });
 

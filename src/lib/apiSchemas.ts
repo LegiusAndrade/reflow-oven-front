@@ -151,3 +151,22 @@ export const autotuneHistorySchema = z.object({
   pageSize: z.number(),
   items: z.array(autotuneRun),
 });
+
+/** Deep-link target a feed notification may carry (the retention purge warning): points at the
+ *  Relatórios screen with the date filter preset to `until` (ISO date) — i.e. the records the next
+ *  daily retention sweep will delete. The `tab` literal is the wire contract. */
+const notificationDeepLink = z.object({ tab: z.literal("relatorios"), until: z.string() });
+
+/** GET /api/notifications — the TopBar bell / Notificações feed. `deepLink` is optional/null
+ *  (today only the purge warning carries one); `kind` uses the lowercase wire literals. */
+export const notificationsSchema = z.array(
+  z.object({
+    id: z.string(),
+    kind: z.enum(["info", "warning", "error", "update"]),
+    at: z.string(),
+    title: z.string(),
+    message: z.string(),
+    read: z.boolean(),
+    deepLink: notificationDeepLink.nullish(),
+  })
+);
